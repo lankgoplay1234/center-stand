@@ -10,6 +10,7 @@
 - `GAME-003` Playwright 전투 스모크 테스트 완료 조건 최종 검수
 - `GAME-006` 전투 업그레이드 6종의 구매·능력치 반영·상태 유지 완료 조건 최종 검수
 - `FX-001` 여섯 공격 전략의 실제 피해 숫자와 100적 풀링 상한 완료 조건 최종 검수
+- `COMBAT-002` 캐릭터별 넉백 방향·강도·제외·화면 경계 완료 조건 최종 검수
 
 ### Verified
 
@@ -18,6 +19,7 @@
 - Playwright desktop/mobile 핵심 전투 22개 통과, 전용 10분 endurance 2개 의도적 건너뜀
 - UpgradeData·UpgradeSystem 10개 테스트와 desktop/mobile 업그레이드 흐름 8개 통과
 - 여섯 전략 피해 전달·실제 피해량 24개 테스트와 desktop/mobile 100적 피해 숫자 풀 검사 통과
+- KnockbackSystem·CharacterData 10개 테스트와 desktop/mobile 100적 넉백 경로 통과
 
 ## 0.26.0 - 2026-07-12
 

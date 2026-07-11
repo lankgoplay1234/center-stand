@@ -77,6 +77,7 @@
 
 ## 최근 테스트 결과
 
+- 2026-07-12 `COMBAT-002` 최종 검수: 캐릭터별 넉백 프로필·방향·0강도·화면 경계 10개 단위 테스트와 desktop/mobile 100적 경로 통과, `DONE` 전환
 - 2026-07-12 `FX-001` 최종 검수: 6개 전략 피해 전달·실제 피해량 24개 단위 테스트와 100적 피해 숫자 풀 120개 상한 desktop/mobile 검사 통과, `DONE` 전환
 - 2026-07-12 `GAME-006` 최종 검수: UpgradeData·UpgradeSystem 10개 단위 테스트와 desktop/mobile 구매·MAX·피드백·부활 유지 8개 통과, `DONE` 전환
 - 2026-07-12 `GAME-003` 최종 검수: Playwright desktop/mobile 핵심 전투 22개 통과, 10분 endurance 2개는 전용 명령으로 분리되어 의도적으로 건너뜀, `DONE` 전환
