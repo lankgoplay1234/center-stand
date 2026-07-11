@@ -31,6 +31,7 @@ npm run lint
 npm run test
 npm run build
 npm run test:e2e
+npm run test:e2e:endurance
 ```
 
 대상 탐색 성능 비교는 다음 명령으로 재현할 수 있습니다.
@@ -38,6 +39,8 @@ npm run test:e2e
 ```bash
 npm run benchmark:targeting
 ```
+
+`test:e2e:endurance`는 모바일 100적 전투를 실제 시간 10분 동안 측정하므로 필요할 때 별도로 실행합니다.
 
 ## GitHub 작업 흐름
 

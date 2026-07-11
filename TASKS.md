@@ -214,11 +214,22 @@
 - ID: PERF-002
 - 작업명: 실제 모바일 장시간 전투 성능 측정
 - 우선순위: MEDIUM
-- 상태: BACKLOG
+- 상태: REVIEW
 - 설명: 100마리 이상 전투와 장시간 스테이지 진행에서 모바일 FPS, 활성 객체 수, 메모리 증가, 발열 체감을 측정하고 성능 기준을 문서화한다.
 - 완료 조건: 대표 모바일 환경의 10분 이상 측정 결과와 재현 절차가 기록되고, 병목이 발견되면 기능 제거 없이 후속 최적화 작업으로 분리된다.
 - 관련 파일: `docs/PERFORMANCE.md`, `GameScene.ts`, `EnemyManager.ts`, `EffectsManager.ts`, `tests/e2e/`
 - 테스트 방법: 실제 모바일 브라우저 수동 측정, 100 적 개발 테스트, Playwright 장시간 스모크 테스트
+
+## PERF-003
+
+- ID: PERF-003
+- 작업명: 모바일 100적 전투 30 FPS 하위 구간 최적화
+- 우선순위: HIGH
+- 상태: BACKLOG
+- 설명: PERF-002 Pixel 5 에뮬레이션에서 측정된 하위 10% 26.84 FPS를 30 FPS 이상으로 높인다. 기능·적 수·피해 효과를 제거하지 않고 `EnemyPool.getActive()` 할당, 프레임별 활성 수 계산, 피해 텍스트 풀 포화 경로를 우선 프로파일링한다.
+- 완료 조건: 동일 10분·100~140적 조건에서 하위 10% FPS가 30 이상이고, 피해 텍스트 풀 상한 120과 전투 결과가 유지된다.
+- 관련 파일: `EnemyPool.ts`, `EnemyManager.ts`, `DamageTextPool.ts`, `GameScene.ts`, `tests/e2e/performance.spec.ts`
+- 테스트 방법: 단위 회귀 테스트, `npm run test:e2e:endurance`, 실제 모바일 기기 발열·배터리 수동 검수
 
 ## GIT-001
 
