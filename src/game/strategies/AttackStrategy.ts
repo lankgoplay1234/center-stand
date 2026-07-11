@@ -1,5 +1,5 @@
 import type { TargetCandidate } from '../systems/TargetingSystem';
-import type { AttackType } from '../types/GameTypes';
+import type { AttackMotionData, AttackType } from '../types/GameTypes';
 
 export interface AttackSource {
   x: number;
@@ -17,7 +17,16 @@ export interface AttackEffectPoint {
   y: number;
 }
 
+export interface CharacterMotionEffect {
+  type: 'CHARACTER_MOTION';
+  motion: AttackMotionData;
+  from: AttackEffectPoint;
+  targets: readonly AttackEffectPoint[];
+  radius: number;
+}
+
 export type AttackEffect =
+  | CharacterMotionEffect
   | { type: 'ARC_OVERCHARGE'; x: number; y: number; radius: number }
   | { type: 'AREA_MELEE'; x: number; y: number; radius: number }
   | { type: 'AREA_MAGIC'; x: number; y: number; radius: number }

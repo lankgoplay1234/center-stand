@@ -1,6 +1,7 @@
 import { UPGRADE_ORDER } from './UpgradeData';
 import type { CharacterData } from '../types/GameTypes';
 import { ARC_OVERCHARGE, rangeAreaBoost, validateSpecialAbilityData } from './SpecialAbilityData';
+import { ATTACK_MOTIONS, validateAttackMotionData } from './AttackMotionData';
 
 export const CHARACTERS: readonly CharacterData[] = [
   {
@@ -17,6 +18,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     projectileSpeed: 720,
     knockbackForce: 12,
     attackType: 'SINGLE_TARGET',
+    attackMotion: ATTACK_MOTIONS.ARC_SHOT,
     growthProfile: 'STEADY',
     upgradeEfficiency: {
       attackDamage: 1, attackSpeed: 1, targetCount: 1, defense: 1, maxHealth: 1, specialAbility: 1,
@@ -37,6 +39,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     projectileSpeed: 1,
     knockbackForce: 34,
     attackType: 'AREA_MELEE',
+    attackMotion: ATTACK_MOTIONS.BLADE_SWEEP,
     growthProfile: 'EARLY',
     upgradeEfficiency: {
       attackDamage: 0.8, attackSpeed: 0.85, targetCount: 1, defense: 0.85, maxHealth: 0.85, specialAbility: 0.8,
@@ -57,6 +60,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     projectileSpeed: 560,
     knockbackForce: 10,
     attackType: 'MULTI_TARGET',
+    attackMotion: ATTACK_MOTIONS.BASTION_VOLLEY,
     growthProfile: 'EARLY',
     upgradeEfficiency: {
       attackDamage: 0.85, attackSpeed: 0.85, targetCount: 1, defense: 0.8, maxHealth: 0.8, specialAbility: 0.85,
@@ -77,6 +81,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     projectileSpeed: 1,
     knockbackForce: 0,
     attackType: 'AREA_MAGIC',
+    attackMotion: ATTACK_MOTIONS.RUNE_CAST,
     growthProfile: 'SCALING',
     upgradeEfficiency: {
       attackDamage: 1.35, attackSpeed: 1.25, targetCount: 1, defense: 1.15, maxHealth: 1.15, specialAbility: 1.35,
@@ -97,6 +102,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     projectileSpeed: 920,
     knockbackForce: 8,
     attackType: 'PIERCING',
+    attackMotion: ATTACK_MOTIONS.NEEDLE_BURST,
     growthProfile: 'STEADY',
     upgradeEfficiency: {
       attackDamage: 1.05, attackSpeed: 1, targetCount: 1, defense: 0.95, maxHealth: 0.95, specialAbility: 1.05,
@@ -117,6 +123,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     projectileSpeed: 1,
     knockbackForce: 0,
     attackType: 'CHAIN',
+    attackMotion: ATTACK_MOTIONS.STORM_SURGE,
     growthProfile: 'SCALING',
     upgradeEfficiency: {
       attackDamage: 1.25, attackSpeed: 1.2, targetCount: 1, defense: 1.1, maxHealth: 1.1, specialAbility: 1.3,
@@ -140,6 +147,7 @@ export function validateCharacterData(character: CharacterData): string[] {
   }
   if (character.projectileSpeed <= 0) errors.push('projectileSpeed must be positive');
   if (character.knockbackForce < 0) errors.push('knockbackForce cannot be negative');
+  errors.push(...validateAttackMotionData(character.attackMotion));
   errors.push(...validateSpecialAbilityData(character.specialAbility));
   if (character.specialAbility?.type === 'ARC_OVERCHARGE' && character.attackType !== 'SINGLE_TARGET') {
     errors.push('ARC_OVERCHARGE requires SINGLE_TARGET attackType');

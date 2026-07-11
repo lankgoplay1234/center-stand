@@ -21,6 +21,15 @@ const CHARACTER_CARDS: readonly CharacterCardPoint[] = [
   { id: 'storm-conductor', x: 530, y: 685 },
 ];
 
+const CHARACTER_MOTION_STYLES = [
+  'ARC_SHOT',
+  'BLADE_SWEEP',
+  'BASTION_VOLLEY',
+  'RUNE_CAST',
+  'NEEDLE_BURST',
+  'STORM_SURGE',
+] as const;
+
 async function clickGamePoint(page: Page, gameX: number, gameY: number): Promise<void> {
   const canvas = page.locator('canvas');
   await expect(canvas).toBeVisible();
@@ -68,6 +77,52 @@ test('selects all six characters and enters combat', async ({ page }) => {
     return scene?.enemies?.activeCount ?? 0;
   })).toBeGreaterThan(0);
   expect(runtimeErrors).toEqual([]);
+});
+
+test('renders a distinct pooled attack motion for every character', async ({ page }) => {
+  for (let index = 0; index < CHARACTER_CARDS.length; index += 1) {
+    const card = CHARACTER_CARDS[index]!;
+    await clickGamePoint(page, card.x, card.y);
+    await clickGamePoint(page, 360, 900);
+    await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+    await expect.poll(() => page.evaluate(() => {
+      const game = window.__CENTER_STAND_GAME__;
+      const scene = game?.scene.getScene('GameScene') as unknown as
+        { enemies?: { activeCount: number } } | undefined;
+      return scene?.enemies?.activeCount ?? 0;
+    })).toBeGreaterThan(0);
+
+    const motion = await page.evaluate(() => {
+      const game = window.__CENTER_STAND_GAME__;
+      const scene = game?.scene.getScene('GameScene') as unknown as {
+        player: { x: number; y: number };
+        enemies: { activeEnemies: Array<{ setPosition: (x: number, y: number) => void }> };
+        combat: { update: (time: number) => void };
+        effects: {
+          attackMotionStats: { active: number; poolSize: number; totalShown: number; lastStyle: string | null };
+        };
+      };
+      const enemy = scene.enemies.activeEnemies[0];
+      if (!enemy) throw new Error('Expected an enemy for attack motion test');
+      enemy.setPosition(scene.player.x + 40, scene.player.y);
+      scene.combat.update(1_000_000);
+      return scene.effects.attackMotionStats;
+    });
+
+    expect(motion.lastStyle).toBe(CHARACTER_MOTION_STYLES[index]);
+    expect(motion.totalShown).toBeGreaterThan(0);
+    expect(motion.poolSize).toBe(12);
+    expect(motion.active).toBeLessThanOrEqual(motion.poolSize);
+
+    if (index < CHARACTER_CARDS.length - 1) {
+      await page.evaluate(() => {
+        const game = window.__CENTER_STAND_GAME__;
+        const scene = game?.scene.getScene('GameScene');
+        scene?.scene.start('CharacterSelectScene');
+      });
+      await expect.poll(() => activeSceneKey(page)).toBe('CharacterSelectScene');
+    }
+  }
 });
 
 test('pushes a standard enemy away from the player when hit', async ({ page }) => {

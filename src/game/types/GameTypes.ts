@@ -8,6 +8,21 @@ export type AttackType =
 
 export type GrowthProfile = 'EARLY' | 'STEADY' | 'SCALING';
 export type UpgradeEffectCurve = 'LINEAR' | 'SQRT';
+export type AttackMotionStyle =
+  | 'ARC_SHOT'
+  | 'BLADE_SWEEP'
+  | 'BASTION_VOLLEY'
+  | 'RUNE_CAST'
+  | 'NEEDLE_BURST'
+  | 'STORM_SURGE';
+
+export interface AttackMotionData {
+  style: AttackMotionStyle;
+  primaryColor: number;
+  accentColor: number;
+  durationMs: number;
+  pulseScale: number;
+}
 
 interface SpecialAbilityBase {
   id: string;
@@ -43,6 +58,7 @@ export interface CharacterData {
   projectileSpeed: number;
   knockbackForce: number;
   attackType: AttackType;
+  attackMotion: AttackMotionData;
   growthProfile: GrowthProfile;
   upgradeEfficiency: Readonly<Record<UpgradeId, number>>;
   specialAbility: SpecialAbilityData | null;

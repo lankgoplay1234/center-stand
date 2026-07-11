@@ -19,6 +19,7 @@ export class Player extends Phaser.GameObjects.Container {
   readonly upgradeEfficiency: Readonly<Record<UpgradeId, number>>;
 
   private readonly core: Phaser.GameObjects.Arc;
+  private readonly sight: Phaser.GameObjects.Triangle;
 
   constructor(scene: Phaser.Scene, x: number, y: number, character: CharacterData) {
     super(scene, x, y);
@@ -35,16 +36,39 @@ export class Player extends Phaser.GameObjects.Container {
     this.knockbackForce = character.knockbackForce;
     this.upgradeEfficiency = character.upgradeEfficiency;
 
-    const aura = scene.add.circle(0, 0, 43, 0x35d9ff, 0.14).setStrokeStyle(2, 0x72e7ff, 0.45);
-    this.core = scene.add.circle(0, 0, 25, 0x35d9ff).setStrokeStyle(5, 0xe5fbff, 0.9);
-    const sight = scene.add.triangle(8, -2, 0, 0, 24, 7, 0, 14, 0xffffff, 0.9);
-    this.add([aura, this.core, sight]);
+    const { primaryColor, accentColor } = character.attackMotion;
+    const aura = scene.add.circle(0, 0, 43, primaryColor, 0.14).setStrokeStyle(2, accentColor, 0.45);
+    this.core = scene.add.circle(0, 0, 25, primaryColor).setStrokeStyle(5, accentColor, 0.9);
+    this.sight = scene.add.triangle(8, -2, 0, 0, 24, 7, 0, 14, accentColor, 0.9);
+    this.add([aura, this.core, this.sight]);
     scene.add.existing(this);
     scene.tweens.add({ targets: aura, scale: 1.18, alpha: 0.2, duration: 720, yoyo: true, repeat: -1 });
   }
 
   get totalTargetCount(): number {
     return calculateTotalTargetCount(this.baseTargetCount, this.bonusTargetCount);
+  }
+
+  playAttackMotion(target?: { x: number; y: number }): void {
+    if (target) this.setRotation(Math.atan2(target.y - this.y, target.x - this.x));
+    const { durationMs, pulseScale } = this.character.attackMotion;
+    this.scene.tweens.killTweensOf(this.core);
+    this.scene.tweens.killTweensOf(this.sight);
+    this.core.setScale(1).setAlpha(1);
+    this.sight.setScale(1).setAlpha(1);
+    this.scene.tweens.add({
+      targets: [this.core, this.sight],
+      scaleX: pulseScale,
+      scaleY: 0.82,
+      alpha: 0.72,
+      duration: durationMs / 2,
+      yoyo: true,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        this.core.setScale(1).setAlpha(1);
+        this.sight.setScale(1).setAlpha(1);
+      },
+    });
   }
 
   takeDamage(rawDamage: number): number {
@@ -57,7 +81,7 @@ export class Player extends Phaser.GameObjects.Container {
       alpha: 0.4,
       duration: 70,
       yoyo: true,
-      onComplete: () => this.core.setFillStyle(0x35d9ff).setAlpha(1),
+      onComplete: () => this.core.setFillStyle(this.character.attackMotion.primaryColor).setAlpha(1),
     });
     return applied;
   }

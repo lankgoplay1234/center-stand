@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CHARACTERS, validateCharacterData } from './CharacterData';
 import { ARC_OVERCHARGE } from './SpecialAbilityData';
+import { ATTACK_MOTIONS } from './AttackMotionData';
 
 describe('character data', () => {
   it('contains valid unique characters', () => {
@@ -8,7 +9,25 @@ describe('character data', () => {
     expect(new Set(CHARACTERS.map((character) => character.id)).size).toBe(CHARACTERS.length);
     expect(new Set(CHARACTERS.map((character) => character.attackType)).size).toBe(6);
     expect(new Set(CHARACTERS.map((character) => character.growthProfile)).size).toBe(3);
+    expect(new Set(CHARACTERS.map((character) => character.attackMotion.style)).size).toBe(6);
     for (const character of CHARACTERS) expect(validateCharacterData(character)).toEqual([]);
+  });
+
+  it('assigns a distinct reusable motion profile to every character', () => {
+    expect(CHARACTERS.map((character) => character.attackMotion)).toEqual([
+      ATTACK_MOTIONS.ARC_SHOT,
+      ATTACK_MOTIONS.BLADE_SWEEP,
+      ATTACK_MOTIONS.BASTION_VOLLEY,
+      ATTACK_MOTIONS.RUNE_CAST,
+      ATTACK_MOTIONS.NEEDLE_BURST,
+      ATTACK_MOTIONS.STORM_SURGE,
+    ]);
+    const invalid = {
+      ...CHARACTERS[0]!,
+      attackMotion: { ...ATTACK_MOTIONS.ARC_SHOT, durationMs: 0, pulseScale: 1 },
+    };
+    expect(validateCharacterData(invalid)).toContain('attackMotion.durationMs must be positive');
+    expect(validateCharacterData(invalid)).toContain('attackMotion.pulseScale must be greater than 1');
   });
 
   it('rejects invalid combat values', () => {
