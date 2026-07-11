@@ -102,7 +102,6 @@ export interface EnemyVisualProfile {
 export type UpgradeId =
   | 'attackDamage'
   | 'attackSpeed'
-  | 'targetCount'
   | 'defense'
   | 'maxHealth'
   | 'specialAbility';

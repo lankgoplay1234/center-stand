@@ -13,7 +13,6 @@ export class UpgradeSystem {
   private readonly states: Record<UpgradeId, UpgradeState> = {
     attackDamage: this.createState('attackDamage'),
     attackSpeed: this.createState('attackSpeed'),
-    targetCount: this.createState('targetCount'),
     defense: this.createState('defense'),
     maxHealth: this.createState('maxHealth'),
     specialAbility: this.createState('specialAbility'),
@@ -71,9 +70,6 @@ export class UpgradeSystem {
         break;
       case 'attackSpeed':
         this.player.attackSpeed += effect;
-        break;
-      case 'targetCount':
-        this.player.bonusTargetCount += Math.round(effect);
         break;
       case 'defense':
         this.player.defense += effect;

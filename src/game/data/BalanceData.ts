@@ -41,7 +41,7 @@ export function calculateProjectedCombatScore(character: CharacterData, upgradeL
     calculateUpgradeEffect(UPGRADE_DEFINITIONS[id], upgradeLevel, character.upgradeEfficiency[id]);
   const damage = character.attackDamage + effect('attackDamage');
   const speed = character.attackSpeed + effect('attackSpeed');
-  const targets = character.baseTargetCount + effect('targetCount');
+  const targets = character.baseTargetCount;
   const health = character.maxHealth + effect('maxHealth');
   const defense = character.defense + effect('defense');
   return damage * speed * Math.sqrt(targets) + health * 0.08 + defense * 3;

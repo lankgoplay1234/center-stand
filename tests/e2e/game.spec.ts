@@ -86,9 +86,12 @@ test('pauses combat, continues the same run, and returns home', async ({ page })
   await clickGamePoint(page, 510, 116);
   await expect.poll(() => page.evaluate(() => {
     const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as
-      { isPaused?: boolean } | undefined;
-    return scene?.isPaused ?? false;
-  })).toBe(true);
+      { isPaused?: boolean; audio?: { state: { paused: boolean; bgmPlaying: boolean } } } | undefined;
+    return scene ? { isPaused: scene.isPaused, audio: scene.audio?.state } : null;
+  })).toEqual(expect.objectContaining({
+    isPaused: true,
+    audio: expect.objectContaining({ paused: true, bgmPlaying: false }),
+  }));
   const pausedAt = await page.evaluate(() => {
     const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as
       { run: { elapsedSeconds: number } };
@@ -105,9 +108,12 @@ test('pauses combat, continues the same run, and returns home', async ({ page })
   await clickGamePoint(page, 360, 620);
   await expect.poll(() => page.evaluate(() => {
     const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as
-      { isPaused?: boolean } | undefined;
-    return scene?.isPaused ?? true;
-  })).toBe(false);
+      { isPaused?: boolean; audio?: { state: { paused: boolean; bgmPlaying: boolean } } } | undefined;
+    return scene ? { isPaused: scene.isPaused, audio: scene.audio?.state } : null;
+  })).toEqual(expect.objectContaining({
+    isPaused: false,
+    audio: expect.objectContaining({ paused: false, bgmPlaying: true }),
+  }));
   await expect.poll(() => page.evaluate(() => {
     const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as
       { run: { elapsedSeconds: number } };
@@ -158,6 +164,73 @@ test('toggles double speed and resets to normal for a fresh run', async ({ page 
       { gameSpeed?: number } | undefined;
     return scene?.gameSpeed ?? 0;
   })).toBe(1);
+});
+
+test('buys every-mob clear repeatedly with rewards and an increased next price', async ({ page }) => {
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+
+  const before = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      enemies: {
+        activeCount: number;
+        activeEnemies: Array<{ goldReward: number }>;
+        spawnBurst: (count: number, stats: unknown) => void;
+      };
+      projectiles: { activeCount: number };
+      run: { gold: number; earnedGold: number; kills: number };
+      stages: { stats: unknown };
+      ui: { update: (...args: unknown[]) => void };
+      player: unknown;
+      upgrades: unknown;
+      mobClear: { state: { currentCost: number; usageCount: number } };
+    };
+    scene.enemies.spawnBurst(Math.max(0, 100 - scene.enemies.activeCount), scene.stages.stats);
+    scene.run.gold = 1_000;
+    const reward = scene.enemies.activeEnemies.reduce((sum, enemy) => sum + enemy.goldReward, 0);
+    scene.ui.update(
+      scene.player,
+      scene.run,
+      1,
+      scene.upgrades,
+      scene.mobClear.state,
+      scene.enemies.activeCount,
+      scene.projectiles.activeCount,
+    );
+    return {
+      enemies: scene.enemies.activeCount,
+      reward,
+      kills: scene.run.kills,
+      earnedGold: scene.run.earnedGold,
+    };
+  });
+  expect(before.enemies).toBeGreaterThanOrEqual(100);
+
+  await clickGamePoint(page, 588, 1065);
+  const after = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      enemies: { activeCount: number };
+      projectiles: { activeCount: number };
+      run: { gold: number; earnedGold: number; kills: number };
+      mobClear: { state: { currentCost: number; usageCount: number } };
+    };
+    return {
+      enemies: scene.enemies.activeCount,
+      projectiles: scene.projectiles.activeCount,
+      gold: scene.run.gold,
+      earnedGold: scene.run.earnedGold,
+      kills: scene.run.kills,
+      mobClear: scene.mobClear.state,
+    };
+  });
+  expect(after).toEqual({
+    enemies: 0,
+    projectiles: 0,
+    gold: before.reward,
+    earnedGold: before.earnedGold + before.reward,
+    kills: before.kills + before.enemies,
+    mobClear: { currentCost: 1_300, usageCount: 1 },
+  });
 });
 
 test('renders a distinct pooled attack motion for every character', async ({ page }) => {
@@ -593,7 +666,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
           attackAreaRadius: number;
           specialAbilityLevel: number;
           upgradeEfficiency: {
-            attackDamage: number; attackSpeed: number; targetCount: number;
+            attackDamage: number; attackSpeed: number;
             defense: number; maxHealth: number;
           };
         };
@@ -651,8 +724,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
       + calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackDamage, 1, initialStats.efficiency.attackDamage),
     attackSpeed: initialStats.attackSpeed
       + calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackSpeed, 1, initialStats.efficiency.attackSpeed),
-    bonusTargetCount: initialStats.bonusTargetCount
-      + Math.round(calculateUpgradeEffect(UPGRADE_DEFINITIONS.targetCount, 1, initialStats.efficiency.targetCount)),
+    bonusTargetCount: initialStats.bonusTargetCount,
     defense: initialStats.defense
       + calculateUpgradeEffect(UPGRADE_DEFINITIONS.defense, 1, initialStats.efficiency.defense),
     maxHealth: initialStats.maxHealth
@@ -747,7 +819,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
       stages: { currentStage: number };
       upgrades: { getState: (id: string) => { level: number } };
     };
-    const upgradeIds = ['attackDamage', 'attackSpeed', 'targetCount', 'defense', 'maxHealth', 'specialAbility'];
+    const upgradeIds = ['attackDamage', 'attackSpeed', 'defense', 'maxHealth', 'specialAbility'];
     return {
       attackDamage: scene.player.attackDamage,
       deaths: scene.run.deaths,
@@ -761,7 +833,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
     deaths: 0,
     gold: 0,
     stage: 1,
-    upgradeLevels: [0, 0, 0, 0, 0, 0],
+    upgradeLevels: [0, 0, 0, 0, 0],
   });
   expect(runtimeErrors).toEqual([]);
 });

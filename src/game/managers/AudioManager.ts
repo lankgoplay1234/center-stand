@@ -12,6 +12,7 @@ export interface AudioBackend {
 export interface AudioManagerState {
   unlocked: boolean;
   muted: boolean;
+  paused: boolean;
   bgmPlaying: boolean;
   upgradeEffectCount: number;
   attackEffectCount: number;
@@ -143,6 +144,7 @@ class WebAudioBackend implements AudioBackend {
 export class AudioManager {
   private unlocked = false;
   private muted = false;
+  private paused = false;
   private bgmPlaying = false;
   private upgradeEffectCount = 0;
   private attackEffectCount = 0;
@@ -156,6 +158,7 @@ export class AudioManager {
     return {
       unlocked: this.unlocked,
       muted: this.muted,
+      paused: this.paused,
       bgmPlaying: this.bgmPlaying,
       upgradeEffectCount: this.upgradeEffectCount,
       attackEffectCount: this.attackEffectCount,
@@ -170,8 +173,8 @@ export class AudioManager {
       if (this.destroyed) return;
       this.unlocked = true;
       this.backend.startBgm();
-      this.bgmPlaying = true;
-      this.backend.setMuted(this.muted);
+      this.bgmPlaying = !this.paused;
+      this.backend.setMuted(this.muted || this.paused);
     }).catch(() => {
       // 오디오를 차단한 브라우저에서도 게임은 계속 진행합니다.
     }).finally(() => {
@@ -182,19 +185,26 @@ export class AudioManager {
 
   toggleMuted(): boolean {
     this.muted = !this.muted;
-    this.backend.setMuted(this.muted);
+    this.backend.setMuted(this.muted || this.paused);
     return this.muted;
   }
 
+  setPaused(paused: boolean): void {
+    if (this.destroyed || this.paused === paused) return;
+    this.paused = paused;
+    this.bgmPlaying = this.unlocked && !paused;
+    this.backend.setMuted(this.muted || paused);
+  }
+
   playUpgradeSuccess(): boolean {
-    if (!this.unlocked || this.muted || this.destroyed) return false;
+    if (!this.unlocked || this.muted || this.paused || this.destroyed) return false;
     this.backend.playUpgradeSuccess();
     this.upgradeEffectCount += 1;
     return true;
   }
 
   playAttack(style: AttackMotionStyle): boolean {
-    if (!this.unlocked || this.muted || this.destroyed) return false;
+    if (!this.unlocked || this.muted || this.paused || this.destroyed) return false;
     this.backend.playAttack(style);
     this.attackEffectCount += 1;
     this.lastAttackStyle = style;

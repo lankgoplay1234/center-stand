@@ -29,19 +29,18 @@ const MIN_CLEAR_PRESSURE = 1;
 const MAX_CLEAR_PRESSURE = 2.5;
 
 const ROLE_EXPOSURE: Readonly<Record<AttackType, number>> = {
-  SINGLE_TARGET: 0.79,
-  MULTI_TARGET: 3.5,
-  AREA_MELEE: 1.8,
-  AREA_MAGIC: 1.15,
-  PIERCING: 0.75,
-  CHAIN: 0.85,
+  SINGLE_TARGET: 1.31,
+  MULTI_TARGET: 4.4,
+  AREA_MELEE: 2.48,
+  AREA_MAGIC: 0.99,
+  PIERCING: 1.38,
+  CHAIN: 1.22,
 };
 
 function emptyAllocation(): Record<UpgradeId, number> {
   return {
     attackDamage: 0,
     attackSpeed: 0,
-    targetCount: 0,
     defense: 0,
     maxHealth: 0,
     specialAbility: 0,

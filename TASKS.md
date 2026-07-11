@@ -1,5 +1,16 @@
 # Task Backlog
 
+## GAME-008
+
+- ID: GAME-008
+- 작업명: 모든 몹 제거 소모 행동과 일시정지 BGM 연동
+- 우선순위: HIGH
+- 상태: REVIEW
+- 설명: `공격 대상 수` 구매형 업그레이드를 제거하고 같은 HUD 자리에 반복 구매 가능한 `모든 몹 제거` 버튼을 추가한다. 구매 시 현재 활성 몬스터와 추적 투사체를 정리하고 제거한 적의 골드·처치 보상을 지급하며, 일시정지 중에는 BGM을 들리지 않게 하고 계속 진행하면 기존 음소거 설정을 유지한 채 다시 재생한다.
+- 완료 조건: 공격 대상 수가 업그레이드 목록과 버튼에서 제거되고 캐릭터 고유 기본 대상 수는 유지된다. 첫 비용은 1,000G이며 사용마다 30% 증가하고, 골드와 활성 적이 충분할 때만 실행되어 제거한 적 보상을 지급한다. 일시정지/재개 시 BGM 상태가 정확히 전환되며 사용자 BGM OFF 설정은 보존된다.
+- 관련 파일: `GameTypes.ts`, `UpgradeData.ts`, `UpgradeSystem.ts`, `CharacterData.ts`, `UIManager.ts`, `GameScene.ts`, `EnemyManager.ts`, `AudioManager.ts`, 밸런스 시뮬레이션 및 테스트
+- 테스트 방법: 제거 비용·구매 경계·무보상 적 정리·일시정지 오디오 상태 단위 테스트, desktop/mobile Playwright 회귀, 전체 품질 검사
+
 ## COMBAT-003
 
 - ID: COMBAT-003

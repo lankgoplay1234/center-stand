@@ -69,9 +69,20 @@ export class EnemyManager {
     enemy.deactivate();
   }
 
-  destroyAll(): void {
+  destroyAll(): number {
+    const clearedCount = this.activeCount;
     this.pool.releaseAll();
     this.spawnAccumulator = 0;
+    return clearedCount;
+  }
+
+  clearWithRewards(): { clearedEnemies: number; rewardGold: number } {
+    const activeEnemies = this.activeEnemies;
+    const rewardGold = activeEnemies.reduce((sum, enemy) => sum + enemy.goldReward, 0);
+    const clearedEnemies = activeEnemies.length;
+    this.pool.releaseAll();
+    this.spawnAccumulator = 0;
+    return { clearedEnemies, rewardGold };
   }
 
   clearForStageTransition(delayMs: number): number {

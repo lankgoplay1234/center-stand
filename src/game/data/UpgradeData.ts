@@ -7,7 +7,6 @@ function formatValue(value: number): string {
 export const UPGRADE_ORDER: readonly UpgradeId[] = [
   'attackDamage',
   'attackSpeed',
-  'targetCount',
   'defense',
   'maxHealth',
   'specialAbility',
@@ -34,16 +33,6 @@ export const UPGRADE_DEFINITIONS: Readonly<Record<UpgradeId, UpgradeDefinition>>
     maxLevel: MAX_UPGRADE_LEVEL,
     effectLabel: (level, efficiency = 1) => `+${calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackSpeed, level, efficiency).toFixed(2)} 공격/초`,
   },
-  targetCount: {
-    id: 'targetCount',
-    name: '공격 대상 수',
-    baseCost: 35,
-    costGrowth: 1.045,
-    effectPerLevel: 1,
-    effectCurve: 'SQRT',
-    maxLevel: MAX_UPGRADE_LEVEL,
-    effectLabel: (level, efficiency = 1) => `+${formatValue(calculateUpgradeEffect(UPGRADE_DEFINITIONS.targetCount, level, efficiency))} 대상`,
-  },
   defense: {
     id: 'defense',
     name: '방어력',
@@ -65,7 +54,7 @@ export const UPGRADE_DEFINITIONS: Readonly<Record<UpgradeId, UpgradeDefinition>>
   specialAbility: {
     id: 'specialAbility',
     name: '특수 강화',
-    baseCost: 45,
+    baseCost: 39,
     costGrowth: 1.04,
     effectPerLevel: 8,
     secondaryEffectPerLevel: 4,

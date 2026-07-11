@@ -52,6 +52,27 @@ describe('AudioManager', () => {
     expect(backend.playAttack).toHaveBeenCalledTimes(6);
   });
 
+  it('silences BGM while paused and restores it without losing the user mute setting', async () => {
+    const backend = createBackend();
+    const audio = new AudioManager(backend);
+    await audio.unlock();
+
+    audio.setPaused(true);
+    expect(audio.state).toEqual(expect.objectContaining({ paused: true, muted: false, bgmPlaying: false }));
+    expect(backend.setMuted).toHaveBeenLastCalledWith(true);
+    expect(audio.playAttack('ARC_SHOT')).toBe(false);
+
+    audio.setPaused(false);
+    expect(audio.state).toEqual(expect.objectContaining({ paused: false, muted: false, bgmPlaying: true }));
+    expect(backend.setMuted).toHaveBeenLastCalledWith(false);
+
+    audio.toggleMuted();
+    audio.setPaused(true);
+    audio.setPaused(false);
+    expect(audio.state).toEqual(expect.objectContaining({ paused: false, muted: true, bgmPlaying: true }));
+    expect(backend.setMuted).toHaveBeenLastCalledWith(true);
+  });
+
   it('stops BGM state and disposes its backend once', async () => {
     const backend = createBackend();
     const audio = new AudioManager(backend);

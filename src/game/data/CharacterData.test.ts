@@ -73,7 +73,7 @@ describe('character data', () => {
       'bastion-gunner': 'defense',
       'rune-mage': 'attackSpeed',
       'needle-striker': 'attackDamage',
-      'storm-conductor': 'targetCount',
+      'storm-conductor': 'attackSpeed',
     });
     for (const character of CHARACTERS) {
       expect(character.upgradeFocus.primary).not.toBe(character.upgradeFocus.secondary);

@@ -5,7 +5,6 @@ import {
   UPGRADE_ORDER,
   calculateTotalUpgradeCost,
   calculateUpgradeCost,
-  calculateUpgradeEffect,
   canUpgrade,
 } from './UpgradeData';
 
@@ -18,13 +17,13 @@ describe('upgrade cost', () => {
   });
 
   it('increases with each level', () => {
-    const upgrade = UPGRADE_DEFINITIONS.targetCount;
+    const upgrade = UPGRADE_DEFINITIONS.defense;
     expect(calculateUpgradeCost(upgrade, 2)).toBeGreaterThan(calculateUpgradeCost(upgrade, 1));
   });
 
-  it('defines all six upgrades with a level 99 cap in display order', () => {
+  it('defines the five persistent upgrades with a level 99 cap in display order', () => {
     expect(UPGRADE_ORDER).toEqual([
-      'attackDamage', 'attackSpeed', 'targetCount', 'defense', 'maxHealth', 'specialAbility',
+      'attackDamage', 'attackSpeed', 'defense', 'maxHealth', 'specialAbility',
     ]);
     for (const id of UPGRADE_ORDER) {
       const definition = UPGRADE_DEFINITIONS[id];
@@ -43,10 +42,8 @@ describe('upgrade cost', () => {
     }
   });
 
-  it('uses diminishing returns for target count while preserving the first upgrade', () => {
-    const definition = UPGRADE_DEFINITIONS.targetCount;
-    expect(calculateUpgradeEffect(definition, 0)).toBe(0);
-    expect(calculateUpgradeEffect(definition, 1)).toBe(1);
-    expect(calculateUpgradeEffect(definition, 99)).toBe(10);
+  it('does not expose target count as a persistent upgrade', () => {
+    expect(UPGRADE_ORDER).not.toContain('targetCount');
+    expect(UPGRADE_DEFINITIONS).not.toHaveProperty('targetCount');
   });
 });

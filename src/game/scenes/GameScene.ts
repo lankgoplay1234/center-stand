@@ -15,6 +15,7 @@ import { CombatSystem } from '../systems/CombatSystem';
 import { PLAYER_CRITICAL_CHANCE, resolveCriticalHit } from '../systems/CriticalHitSystem';
 import { canPlayerTakeDamage, revivePlayer } from '../systems/ReviveSystem';
 import { UpgradeSystem } from '../systems/UpgradeSystem';
+import { MobClearSystem } from '../systems/MobClearSystem';
 import { scaleGameDelta, toggleGameSpeed, type GameSpeed } from '../systems/GameSpeedSystem';
 import type { RunStats, UpgradeId } from '../types/GameTypes';
 
@@ -26,6 +27,7 @@ export class GameScene extends Phaser.Scene {
   private effects!: EffectsManager;
   private audio!: AudioManager;
   private upgrades!: UpgradeSystem;
+  private mobClear!: MobClearSystem;
   private combat!: CombatSystem;
   private ui!: UIManager;
   private gameEnded = false;
@@ -67,6 +69,7 @@ export class GameScene extends Phaser.Scene {
     });
     this.projectiles = new ProjectileManager(this, (enemy, damage) => this.handleEnemyHit(enemy, damage));
     this.upgrades = new UpgradeSystem(this.player);
+    this.mobClear = new MobClearSystem();
     this.combat = new CombatSystem(this.player, this.enemies, this.projectiles, {
       applyInstantDamage: (enemy, damage) => this.handleEnemyHit(enemy, damage),
       emitEffect: (effect) => this.effects.showAttackEffect(effect),
@@ -79,6 +82,7 @@ export class GameScene extends Phaser.Scene {
       () => this.audio.toggleMuted(),
       () => this.pauseGame(),
       () => this.toggleGameSpeed(),
+      () => this.purchaseMobClear(),
     );
     this.ui.showStageTransition(1);
     void this.audio.unlock();
@@ -98,7 +102,15 @@ export class GameScene extends Phaser.Scene {
     this.enemies.update(this.simulationTime, scaledDelta, this.stages.stats);
     this.combat.update(this.simulationTime);
     this.projectiles.update(scaledDelta);
-    this.ui.update(this.player, this.run, this.stages.currentStage, this.upgrades, this.enemies.activeCount, this.projectiles.activeCount);
+    this.ui.update(
+      this.player,
+      this.run,
+      this.stages.currentStage,
+      this.upgrades,
+      this.mobClear.state,
+      this.enemies.activeCount,
+      this.projectiles.activeCount,
+    );
   }
 
   private createArena(): void {
@@ -167,6 +179,7 @@ export class GameScene extends Phaser.Scene {
   private pauseGame(): void {
     if (this.gameEnded || this.awaitingRevive || this.isPaused) return;
     this.isPaused = true;
+    this.audio.setPaused(true);
     this.ui.showPauseOptions(
       () => this.continueGame(),
       () => this.restartFromCharacterSelect(),
@@ -176,6 +189,7 @@ export class GameScene extends Phaser.Scene {
   private continueGame(): void {
     if (!this.isPaused || this.gameEnded) return;
     this.isPaused = false;
+    this.audio.setPaused(false);
     this.ui.hidePauseOptions();
   }
 
@@ -220,6 +234,23 @@ export class GameScene extends Phaser.Scene {
     this.audio.playUpgradeSuccess();
     this.ui.pulseUpgrade(id);
     this.cameras.main.flash(65, 30, 150, 170, false);
+  }
+
+  private purchaseMobClear(): void {
+    if (this.gameEnded || this.awaitingRevive || this.isPaused) return;
+    const result = this.mobClear.purchase(
+      this.run.gold,
+      this.enemies.activeCount,
+      () => this.enemies.clearWithRewards(),
+    );
+    if (!result.success) return;
+    this.run.gold = result.gold;
+    this.run.earnedGold += result.rewardGold;
+    this.run.kills += result.clearedEnemies;
+    this.projectiles.destroyAll();
+    this.effects.showStageClear(this.player.x, this.player.y);
+    this.cameras.main.flash(180, 255, 75, 105, false);
+    this.cameras.main.shake(180, 0.006);
   }
 
   private runStressTest(): void {

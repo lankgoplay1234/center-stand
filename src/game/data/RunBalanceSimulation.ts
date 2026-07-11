@@ -39,12 +39,12 @@ export const MIN_LATE_STAGE_CLEAR_RATIO = 1;
 export const MIN_SURVIVABLE_HITS = 8;
 
 export const ROLE_COMPLETION_ALLOCATIONS: Readonly<Record<string, UpgradeAllocation>> = {
-  'arc-ranger': { attackDamage: 60, attackSpeed: 90, targetCount: 35, defense: 70, maxHealth: 70, specialAbility: 75 },
-  'blade-warden': { attackDamage: 55, attackSpeed: 55, targetCount: 45, defense: 78, maxHealth: 90, specialAbility: 77 },
-  'bastion-gunner': { attackDamage: 50, attackSpeed: 55, targetCount: 80, defense: 90, maxHealth: 80, specialAbility: 45 },
-  'rune-mage': { attackDamage: 70, attackSpeed: 95, targetCount: 45, defense: 65, maxHealth: 65, specialAbility: 60 },
-  'needle-striker': { attackDamage: 60, attackSpeed: 80, targetCount: 80, defense: 65, maxHealth: 65, specialAbility: 50 },
-  'storm-conductor': { attackDamage: 65, attackSpeed: 70, targetCount: 85, defense: 60, maxHealth: 60, specialAbility: 60 },
+  'arc-ranger': { attackDamage: 35, attackSpeed: 99, defense: 90, maxHealth: 90, specialAbility: 86 },
+  'blade-warden': { attackDamage: 65, attackSpeed: 70, defense: 85, maxHealth: 95, specialAbility: 85 },
+  'bastion-gunner': { attackDamage: 70, attackSpeed: 75, defense: 95, maxHealth: 90, specialAbility: 70 },
+  'rune-mage': { attackDamage: 80, attackSpeed: 99, defense: 75, maxHealth: 75, specialAbility: 71 },
+  'needle-striker': { attackDamage: 50, attackSpeed: 99, defense: 85, maxHealth: 80, specialAbility: 86 },
+  'storm-conductor': { attackDamage: 85, attackSpeed: 90, defense: 75, maxHealth: 70, specialAbility: 80 },
 };
 
 export function getRoleCompletionAllocation(character: CharacterData): UpgradeAllocation {
@@ -88,14 +88,9 @@ export function estimateRunGold(killRatio = EXPECTED_RUN_KILL_RATIO): number {
 }
 
 function calculateTargetCapacity(character: CharacterData, allocation: UpgradeAllocation): number {
-  const targetBonus = Math.round(calculateUpgradeEffect(
-    UPGRADE_DEFINITIONS.targetCount,
-    allocation.targetCount,
-    character.upgradeEfficiency.targetCount,
-  ));
   if (character.attackType === 'SINGLE_TARGET') return 1;
   if (character.attackType === 'MULTI_TARGET' || character.attackType === 'PIERCING' || character.attackType === 'CHAIN') {
-    return character.baseTargetCount + targetBonus;
+    return character.baseTargetCount;
   }
   const radiusBonus = calculateSecondaryUpgradeEffect(
     UPGRADE_DEFINITIONS.specialAbility,
@@ -170,7 +165,7 @@ export function simulateStageCombat(
     character.upgradeEfficiency.maxHealth,
   );
   const enemyHealth = BASIC_ENEMY.health * stageStats.enemyHealthMultiplier;
-  const baseHitsPerEnemy = Math.ceil(enemyHealth / damage);
+  const baseHitsPerEnemy = enemyHealth / damage;
   const hitsPerEnemy = Math.max(
     1,
     baseHitsPerEnemy / calculateAverageDamageMultiplier(character, allocation),

@@ -22,18 +22,18 @@ function createPlayer(
     specialAbilityLevel: 0,
     applyUpgradeVisual: vi.fn(),
     upgradeEfficiency: {
-      attackDamage: 1, attackSpeed: 1, targetCount: 1, defense: 1, maxHealth: 1, specialAbility: 1,
+      attackDamage: 1, attackSpeed: 1, defense: 1, maxHealth: 1, specialAbility: 1,
       ...efficiencyOverrides,
     },
   } as unknown as Player;
 }
 
 describe('UpgradeSystem', () => {
-  it('applies all six upgrades to live player stats', () => {
+  it('applies all five persistent upgrades to live player stats', () => {
     const player = createPlayer();
     const upgrades = new UpgradeSystem(player);
     const ids: readonly UpgradeId[] = [
-      'attackDamage', 'attackSpeed', 'targetCount', 'defense', 'maxHealth', 'specialAbility',
+      'attackDamage', 'attackSpeed', 'defense', 'maxHealth', 'specialAbility',
     ];
     let gold = 10_000;
     for (const id of ids) {
@@ -45,14 +45,14 @@ describe('UpgradeSystem', () => {
 
     expect(player.attackDamage).toBe(16);
     expect(player.attackSpeed).toBeCloseTo(2.09);
-    expect(player.bonusTargetCount).toBe(1);
+    expect(player.bonusTargetCount).toBe(0);
     expect(player.defense).toBeCloseTo(3.8);
     expect(player.maxHealth).toBe(116);
     expect(player.health).toBe(96);
     expect(player.attackRange).toBe(208);
     expect(player.attackAreaRadius).toBe(44);
-    expect(upgrades.totalLevels).toBe(6);
-    expect(player.applyUpgradeVisual).toHaveBeenLastCalledWith(6);
+    expect(upgrades.totalLevels).toBe(5);
+    expect(player.applyUpgradeVisual).toHaveBeenLastCalledWith(5);
   });
 
   it('does not change stats or level when gold is insufficient', () => {
@@ -84,7 +84,7 @@ describe('UpgradeSystem', () => {
     const upgrades = new UpgradeSystem(player);
 
     expect(upgrades.getEffectLabel('specialAbility')).toContain('아크 과충전');
-    expect(upgrades.purchase('specialAbility', 100)).toEqual({ success: true, gold: 55 });
+    expect(upgrades.purchase('specialAbility', 100)).toEqual({ success: true, gold: 61 });
     expect(player.specialAbilityLevel).toBe(1);
     expect(player.attackRange).toBe(200);
     expect(player.attackAreaRadius).toBe(40);
@@ -95,7 +95,7 @@ describe('UpgradeSystem', () => {
     const player = createPlayer();
     const upgrades = new UpgradeSystem(player);
     const ids: readonly UpgradeId[] = [
-      'attackDamage', 'attackSpeed', 'targetCount', 'defense', 'maxHealth', 'specialAbility',
+      'attackDamage', 'attackSpeed', 'defense', 'maxHealth', 'specialAbility',
     ];
     let gold = 1_000_000;
     for (const id of ids) {
@@ -115,6 +115,6 @@ describe('UpgradeSystem', () => {
       expect(upgrades.purchase(id, goldAtMax)).toEqual({ success: false, gold: goldAtMax });
       expect(upgrades.getState(id).level).toBe(99);
     }
-    expect(player.bonusTargetCount).toBe(10);
+    expect(player.bonusTargetCount).toBe(0);
   });
 });

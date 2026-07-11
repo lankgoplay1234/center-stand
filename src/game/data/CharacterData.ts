@@ -22,7 +22,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.ARC_SHOT,
     growthProfile: 'STEADY',
     upgradeEfficiency: {
-      attackDamage: 1.4, attackSpeed: 1, targetCount: 0.65, defense: 0.85, maxHealth: 0.8, specialAbility: 1.3,
+      attackDamage: 1.4, attackSpeed: 1, defense: 0.85, maxHealth: 0.6, specialAbility: 1.3,
     },
     upgradeFocus: { primary: 'attackDamage', secondary: 'specialAbility', description: '공격력으로 한 발 처치선을 앞당기는 정밀 화력형' },
     specialAbility: ARC_OVERCHARGE,
@@ -45,7 +45,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.BLADE_SWEEP,
     growthProfile: 'EARLY',
     upgradeEfficiency: {
-      attackDamage: 0.75, attackSpeed: 0.75, targetCount: 0.6, defense: 0.9, maxHealth: 1.3, specialAbility: 0.8,
+      attackDamage: 0.75, attackSpeed: 0.75, defense: 0.9, maxHealth: 1.3, specialAbility: 0.8,
     },
     upgradeFocus: { primary: 'maxHealth', secondary: 'defense', description: '최대 체력으로 근접 노출을 버티는 생존형' },
     specialAbility: BLADE_FURY,
@@ -68,9 +68,9 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.BASTION_VOLLEY,
     growthProfile: 'EARLY',
     upgradeEfficiency: {
-      attackDamage: 0.75, attackSpeed: 0.75, targetCount: 1, defense: 1.3, maxHealth: 0.75, specialAbility: 0.55,
+      attackDamage: 0.75, attackSpeed: 0.75, defense: 1.3, maxHealth: 0.75, specialAbility: 0.55,
     },
-    upgradeFocus: { primary: 'defense', secondary: 'targetCount', description: '방어력으로 피해를 줄이며 다중 포화를 유지하는 탱커형' },
+    upgradeFocus: { primary: 'defense', secondary: 'maxHealth', description: '방어력과 최대 체력으로 짧은 사거리의 전투를 버티는 탱커형' },
     specialAbility: rangeAreaBoost('saturation-fire', '분산 포화', '특수 강화가 사격 사거리와 효과 범위를 확장합니다.'),
   },
   {
@@ -91,7 +91,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.RUNE_CAST,
     growthProfile: 'SCALING',
     upgradeEfficiency: {
-      attackDamage: 1.15, attackSpeed: 1.8, targetCount: 0.7, defense: 1, maxHealth: 1, specialAbility: 1.55,
+      attackDamage: 1.15, attackSpeed: 1.8, defense: 0.8, maxHealth: 0.75, specialAbility: 1.55,
     },
     upgradeFocus: { primary: 'attackSpeed', secondary: 'specialAbility', description: '공격 속도로 광역 마법의 반복 주기를 줄이는 주문형' },
     specialAbility: rangeAreaBoost('rune-burst', '룬 폭발', '특수 강화가 주문 사거리와 폭발 범위를 확장합니다.'),
@@ -114,9 +114,9 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.NEEDLE_BURST,
     growthProfile: 'STEADY',
     upgradeEfficiency: {
-      attackDamage: 1.4, attackSpeed: 0.8, targetCount: 1.15, defense: 0.8, maxHealth: 0.75, specialAbility: 1.1,
+      attackDamage: 1.4, attackSpeed: 0.8, defense: 0.8, maxHealth: 0.75, specialAbility: 1.1,
     },
-    upgradeFocus: { primary: 'attackDamage', secondary: 'targetCount', description: '높은 기본 연사에 공격력을 더하는 관통 화력형' },
+    upgradeFocus: { primary: 'attackDamage', secondary: 'specialAbility', description: '높은 기본 연사에 공격력과 관통 폭을 더하는 관통 화력형' },
     specialAbility: rangeAreaBoost('piercing-beam', '관통 광선', '특수 강화가 광선 사거리와 관통 폭을 확장합니다.'),
   },
   {
@@ -137,9 +137,9 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.STORM_SURGE,
     growthProfile: 'SCALING',
     upgradeEfficiency: {
-      attackDamage: 1.05, attackSpeed: 1.2, targetCount: 1.7, defense: 0.9, maxHealth: 0.9, specialAbility: 1.45,
+      attackDamage: 1.15, attackSpeed: 1.5, defense: 0.9, maxHealth: 0.9, specialAbility: 1.45,
     },
-    upgradeFocus: { primary: 'targetCount', secondary: 'specialAbility', description: '연쇄 대상을 늘려 밀집 적을 지우는 확산형' },
+    upgradeFocus: { primary: 'attackSpeed', secondary: 'specialAbility', description: '시전 속도와 연쇄 거리를 키워 밀집 적을 지우는 확산형' },
     specialAbility: rangeAreaBoost('chain-lightning', '연쇄 번개', '특수 강화가 시전 사거리와 연쇄 거리를 확장합니다.'),
   },
 ];

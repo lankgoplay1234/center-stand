@@ -1,8 +1,10 @@
 import type Phaser from 'phaser';
 import { UPGRADE_ORDER, canUpgrade } from '../data/UpgradeData';
+import { MOB_CLEAR_NAME } from '../data/MobClearData';
 import type { Player } from '../entities/Player';
 import type { GameSpeed } from '../systems/GameSpeedSystem';
 import type { UpgradeSystem } from '../systems/UpgradeSystem';
+import type { MobClearState } from '../systems/MobClearSystem';
 import type { RunStats, UpgradeId } from '../types/GameTypes';
 
 interface UpgradeButton {
@@ -28,6 +30,7 @@ export class UIManager {
   private readonly soundText: Phaser.GameObjects.Text;
   private readonly speedText: Phaser.GameObjects.Text;
   private readonly buttons = new Map<UpgradeId, UpgradeButton>();
+  private readonly mobClearButton: Omit<UpgradeButton, 'id'>;
   private deathOverlay: Phaser.GameObjects.Container | null = null;
   private pauseOverlay: Phaser.GameObjects.Container | null = null;
 
@@ -38,6 +41,7 @@ export class UIManager {
     onToggleMute: () => boolean,
     onPauseRequested: () => void,
     onToggleSpeed: () => GameSpeed,
+    onMobClear: () => void,
   ) {
     scene.add.rectangle(360, 54, 680, 78, 0x090d1a, 0.78).setStrokeStyle(2, 0x33446c).setDepth(30);
     this.healthText = this.label(42, 34, '', 21).setOrigin(0, 0);
@@ -52,9 +56,11 @@ export class UIManager {
       { x: 132, y: 1182 }, { x: 360, y: 1182 }, { x: 588, y: 1182 },
     ];
     UPGRADE_ORDER.forEach((id, index) => {
-      const point = positions[index]!;
+      const positionIndex = index < 2 ? index : index + 1;
+      const point = positions[positionIndex]!;
       this.createUpgradeButton(point.x, point.y, id);
     });
+    this.mobClearButton = this.createMobClearButton(positions[2]!.x, positions[2]!.y, onMobClear);
 
     const soundBg = scene.add.rectangle(642, 116, 116, 36, 0x17263a, 0.92).setStrokeStyle(2, 0x4d7890)
       .setDepth(40).setInteractive({ useHandCursor: true });
@@ -80,7 +86,15 @@ export class UIManager {
     }
   }
 
-  update(player: Player, run: RunStats, stage: number, upgrades: UpgradeSystem, activeEnemies: number, activeProjectiles: number): void {
+  update(
+    player: Player,
+    run: RunStats,
+    stage: number,
+    upgrades: UpgradeSystem,
+    mobClear: MobClearState,
+    activeEnemies: number,
+    activeProjectiles: number,
+  ): void {
     this.healthText.setText(`HP  ${Math.ceil(player.health)} / ${player.maxHealth}`);
     this.healthText.setColor(player.health / player.maxHealth < 0.3 ? '#ff6b83' : '#bff7ff');
     this.goldText.setText(`GOLD  ${run.gold}`);
@@ -107,6 +121,15 @@ export class UIManager {
       if (affordable) button.background.setInteractive({ useHandCursor: true });
       else button.background.disableInteractive();
     }
+    const canClear = activeEnemies > 0 && run.gold >= mobClear.currentCost;
+    this.mobClearButton.text.setText(
+      `${MOB_CLEAR_NAME}\n현재 ${activeEnemies}마리 · 사용 ${mobClear.usageCount}회\n비용 ${mobClear.currentCost} G`,
+    );
+    this.mobClearButton.background.setFillStyle(canClear ? 0x5a2130 : 0x1a2030, 1)
+      .setStrokeStyle(2, canClear ? 0xff6b83 : 0x3a4358, canClear ? 0.95 : 0.65);
+    this.mobClearButton.container.setAlpha(canClear ? 1 : 0.62);
+    if (canClear) this.mobClearButton.background.setInteractive({ useHandCursor: true });
+    else this.mobClearButton.background.disableInteractive();
   }
 
   pulseUpgrade(id: UpgradeId): void {
@@ -242,6 +265,21 @@ export class UIManager {
     const container = this.scene.add.container(x, y, [background, text]).setDepth(32);
     background.on('pointerup', () => this.onUpgrade(id));
     this.buttons.set(id, { container, background, text, id });
+  }
+
+  private createMobClearButton(
+    x: number,
+    y: number,
+    onMobClear: () => void,
+  ): Omit<UpgradeButton, 'id'> {
+    const background = this.scene.add.rectangle(0, 0, 210, 94, 0x1a2030)
+      .setStrokeStyle(2, 0x3a4358);
+    const text = this.scene.add.text(0, 0, '', {
+      fontFamily: 'Arial, sans-serif', fontSize: '15px', color: '#fff1f3', align: 'center', lineSpacing: 3,
+    }).setOrigin(0.5);
+    const container = this.scene.add.container(x, y, [background, text]).setDepth(32);
+    background.on('pointerup', onMobClear);
+    return { container, background, text };
   }
 
   private label(x: number, y: number, value: string, size: number): Phaser.GameObjects.Text {
