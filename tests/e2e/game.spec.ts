@@ -222,6 +222,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
           maxHealth: number;
           attackRange: number;
           attackAreaRadius: number;
+          specialAbilityLevel: number;
         };
         run: { gold: number };
     };
@@ -234,6 +235,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
       maxHealth: scene.player.maxHealth,
       attackRange: scene.player.attackRange,
       attackAreaRadius: scene.player.attackAreaRadius,
+      specialAbilityLevel: scene.player.specialAbilityLevel,
     };
   });
   await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
@@ -255,6 +257,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
           maxHealth: number;
           attackRange: number;
           attackAreaRadius: number;
+          specialAbilityLevel: number;
         };
       } | undefined;
     const player = scene?.player;
@@ -267,6 +270,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
       maxHealth: player.maxHealth,
       attackRange: player.attackRange,
       attackAreaRadius: player.attackAreaRadius,
+      specialAbilityLevel: player.specialAbilityLevel,
     };
   })).toEqual({
     attackDamage: initialStats.attackDamage + 6,
@@ -274,8 +278,9 @@ test('preserves gold and upgrades across revival, then returns to character sele
     bonusTargetCount: initialStats.bonusTargetCount + 1,
     defense: initialStats.defense + 0.8,
     maxHealth: initialStats.maxHealth + 16,
-    attackRange: initialStats.attackRange + 8,
-    attackAreaRadius: initialStats.attackAreaRadius + 4,
+    attackRange: initialStats.attackRange,
+    attackAreaRadius: initialStats.attackAreaRadius,
+    specialAbilityLevel: initialStats.specialAbilityLevel + 1,
   });
 
   const deathState = await page.evaluate(() => {
@@ -283,7 +288,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
     const scene = game?.scene.getScene('GameScene') as unknown as {
       awaitingRevive: boolean;
       handlePlayerDeath: () => void;
-      player: { attackDamage: number; health: number };
+      player: { attackDamage: number; health: number; specialAbilityLevel: number };
       run: { deaths: number; gold: number };
     };
     scene.player.health = 0;
@@ -293,12 +298,14 @@ test('preserves gold and upgrades across revival, then returns to character sele
       attackDamage: scene.player.attackDamage,
       deaths: scene.run.deaths,
       gold: scene.run.gold,
+      specialAbilityLevel: scene.player.specialAbilityLevel,
     };
   });
   expect(deathState.awaitingRevive).toBe(true);
   expect(deathState.attackDamage).toBe(initialStats.attackDamage + 6);
   expect(deathState.deaths).toBe(1);
   expect(deathState.gold).toBeGreaterThan(0);
+  expect(deathState.specialAbilityLevel).toBe(1);
 
   await clickGamePoint(page, 360, 650);
   await expect.poll(() => page.evaluate(() => {
@@ -306,7 +313,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
     const scene = game?.scene.getScene('GameScene') as unknown as {
       awaitingRevive?: boolean;
       invulnerableUntil?: number;
-      player?: { attackDamage: number; health: number; maxHealth: number };
+      player?: { attackDamage: number; health: number; maxHealth: number; specialAbilityLevel: number };
       run?: { deaths: number; gold: number };
     } | undefined;
     if (!scene?.player || !scene.run) return null;
@@ -318,6 +325,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
       health: scene.player.health,
       invulnerable: (scene.invulnerableUntil ?? 0) > 0,
       maxHealth: scene.player.maxHealth,
+      specialAbilityLevel: scene.player.specialAbilityLevel,
     };
   })).toEqual({
     attackDamage: deathState.attackDamage,
@@ -327,6 +335,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
     health: initialStats.maxHealth + 16,
     invulnerable: true,
     maxHealth: initialStats.maxHealth + 16,
+    specialAbilityLevel: 1,
   });
 
   await page.evaluate(() => {

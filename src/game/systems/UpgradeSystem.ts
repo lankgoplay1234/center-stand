@@ -5,6 +5,7 @@ import {
   calculateUpgradeEffect,
   canUpgrade,
 } from '../data/UpgradeData';
+import { calculateOverchargeDamageMultiplier } from '../data/SpecialAbilityData';
 import type { Player } from '../entities/Player';
 import type { UpgradeId, UpgradeState } from '../types/GameTypes';
 
@@ -26,6 +27,17 @@ export class UpgradeSystem {
 
   getEfficiency(id: UpgradeId): number {
     return this.player.upgradeEfficiency[id];
+  }
+
+  getEffectLabel(id: UpgradeId): string {
+    const state = this.states[id];
+    const efficiency = this.getEfficiency(id);
+    const ability = this.player.character.specialAbility;
+    if (id === 'specialAbility' && ability?.type === 'ARC_OVERCHARGE') {
+      const multiplier = calculateOverchargeDamageMultiplier(ability, state.level, efficiency);
+      return `${ability.name} ${ability.triggerEveryAttacks}번째 공격 ×${multiplier.toFixed(2)}`;
+    }
+    return state.definition.effectLabel(state.level, efficiency);
   }
 
   isMaxLevel(id: UpgradeId): boolean {
@@ -63,8 +75,12 @@ export class UpgradeSystem {
         this.player.health = Math.min(this.player.maxHealth, this.player.health + effect);
         break;
       case 'specialAbility':
-        this.player.attackRange += effect;
-        this.player.attackAreaRadius += secondaryEffect;
+        if (this.player.character.specialAbility?.type === 'ARC_OVERCHARGE') {
+          this.player.specialAbilityLevel = state.level;
+        } else {
+          this.player.attackRange += effect;
+          this.player.attackAreaRadius += secondaryEffect;
+        }
         break;
     }
     return { success: true, gold: nextGold };

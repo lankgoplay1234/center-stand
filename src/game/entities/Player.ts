@@ -15,6 +15,7 @@ export class Player extends Phaser.GameObjects.Container {
   bonusTargetCount = 0;
   projectileSpeed: number;
   knockbackForce: number;
+  specialAbilityLevel = 0;
   readonly upgradeEfficiency: Readonly<Record<UpgradeId, number>>;
 
   private readonly core: Phaser.GameObjects.Arc;

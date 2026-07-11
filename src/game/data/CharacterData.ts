@@ -1,5 +1,6 @@
 import { UPGRADE_ORDER } from './UpgradeData';
 import type { CharacterData } from '../types/GameTypes';
+import { ARC_OVERCHARGE, rangeAreaBoost, validateSpecialAbilityData } from './SpecialAbilityData';
 
 export const CHARACTERS: readonly CharacterData[] = [
   {
@@ -20,7 +21,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     upgradeEfficiency: {
       attackDamage: 1, attackSpeed: 1, targetCount: 1, defense: 1, maxHealth: 1, specialAbility: 1,
     },
-    specialAbility: null,
+    specialAbility: ARC_OVERCHARGE,
   },
   {
     id: 'blade-warden',
@@ -40,7 +41,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     upgradeEfficiency: {
       attackDamage: 0.8, attackSpeed: 0.85, targetCount: 1, defense: 0.85, maxHealth: 0.85, specialAbility: 0.8,
     },
-    specialAbility: '회전 검격',
+    specialAbility: rangeAreaBoost('spinning-slash', '회전 검격', '특수 강화가 검격 사거리와 범위를 확장합니다.'),
   },
   {
     id: 'bastion-gunner',
@@ -60,7 +61,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     upgradeEfficiency: {
       attackDamage: 0.85, attackSpeed: 0.85, targetCount: 1, defense: 0.8, maxHealth: 0.8, specialAbility: 0.85,
     },
-    specialAbility: '분산 포화',
+    specialAbility: rangeAreaBoost('saturation-fire', '분산 포화', '특수 강화가 사격 사거리와 효과 범위를 확장합니다.'),
   },
   {
     id: 'rune-mage',
@@ -80,7 +81,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     upgradeEfficiency: {
       attackDamage: 1.35, attackSpeed: 1.25, targetCount: 1, defense: 1.15, maxHealth: 1.15, specialAbility: 1.35,
     },
-    specialAbility: '룬 폭발',
+    specialAbility: rangeAreaBoost('rune-burst', '룬 폭발', '특수 강화가 주문 사거리와 폭발 범위를 확장합니다.'),
   },
   {
     id: 'needle-striker',
@@ -100,7 +101,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     upgradeEfficiency: {
       attackDamage: 1.05, attackSpeed: 1, targetCount: 1, defense: 0.95, maxHealth: 0.95, specialAbility: 1.05,
     },
-    specialAbility: '관통 광선',
+    specialAbility: rangeAreaBoost('piercing-beam', '관통 광선', '특수 강화가 광선 사거리와 관통 폭을 확장합니다.'),
   },
   {
     id: 'storm-conductor',
@@ -120,7 +121,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     upgradeEfficiency: {
       attackDamage: 1.25, attackSpeed: 1.2, targetCount: 1, defense: 1.1, maxHealth: 1.1, specialAbility: 1.3,
     },
-    specialAbility: '연쇄 번개',
+    specialAbility: rangeAreaBoost('chain-lightning', '연쇄 번개', '특수 강화가 시전 사거리와 연쇄 거리를 확장합니다.'),
   },
 ];
 
@@ -139,6 +140,10 @@ export function validateCharacterData(character: CharacterData): string[] {
   }
   if (character.projectileSpeed <= 0) errors.push('projectileSpeed must be positive');
   if (character.knockbackForce < 0) errors.push('knockbackForce cannot be negative');
+  errors.push(...validateSpecialAbilityData(character.specialAbility));
+  if (character.specialAbility?.type === 'ARC_OVERCHARGE' && character.attackType !== 'SINGLE_TARGET') {
+    errors.push('ARC_OVERCHARGE requires SINGLE_TARGET attackType');
+  }
   for (const id of UPGRADE_ORDER) {
     const efficiency = character.upgradeEfficiency[id];
     if (!Number.isFinite(efficiency) || efficiency <= 0) errors.push(`upgradeEfficiency.${id} must be positive`);

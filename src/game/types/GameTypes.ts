@@ -9,6 +9,26 @@ export type AttackType =
 export type GrowthProfile = 'EARLY' | 'STEADY' | 'SCALING';
 export type UpgradeEffectCurve = 'LINEAR' | 'SQRT';
 
+interface SpecialAbilityBase {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface RangeAreaBoostAbilityData extends SpecialAbilityBase {
+  type: 'RANGE_AREA_BOOST';
+}
+
+export interface ArcOverchargeAbilityData extends SpecialAbilityBase {
+  type: 'ARC_OVERCHARGE';
+  triggerEveryAttacks: number;
+  baseDamageMultiplier: number;
+  damageMultiplierPerLevel: number;
+  maxDamageMultiplier: number;
+}
+
+export type SpecialAbilityData = RangeAreaBoostAbilityData | ArcOverchargeAbilityData;
+
 export interface CharacterData {
   id: string;
   name: string;
@@ -25,7 +45,7 @@ export interface CharacterData {
   attackType: AttackType;
   growthProfile: GrowthProfile;
   upgradeEfficiency: Readonly<Record<UpgradeId, number>>;
-  specialAbility: string | null;
+  specialAbility: SpecialAbilityData | null;
 }
 
 export interface EnemyData {

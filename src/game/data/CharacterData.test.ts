@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CHARACTERS, validateCharacterData } from './CharacterData';
+import { ARC_OVERCHARGE } from './SpecialAbilityData';
 
 describe('character data', () => {
   it('contains valid unique characters', () => {
@@ -34,5 +35,18 @@ describe('character data', () => {
     expect(byId.get('needle-striker')?.knockbackForce).toBeGreaterThan(0);
     expect(byId.get('rune-mage')?.knockbackForce).toBe(0);
     expect(byId.get('storm-conductor')?.knockbackForce).toBe(0);
+  });
+
+  it('assigns the first unique ability to the Arc Ranger and validates its attack contract', () => {
+    const arcRanger = CHARACTERS.find((character) => character.id === 'arc-ranger')!;
+    expect(arcRanger.specialAbility).toEqual(ARC_OVERCHARGE);
+
+    const invalid = {
+      ...arcRanger,
+      attackType: 'MULTI_TARGET' as const,
+      specialAbility: { ...ARC_OVERCHARGE, triggerEveryAttacks: 0 },
+    };
+    expect(validateCharacterData(invalid)).toContain('specialAbility.triggerEveryAttacks must be a positive integer');
+    expect(validateCharacterData(invalid)).toContain('ARC_OVERCHARGE requires SINGLE_TARGET attackType');
   });
 });

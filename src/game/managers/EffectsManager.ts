@@ -61,6 +61,9 @@ export class EffectsManager {
 
   showAttackEffect(effect: AttackEffect): void {
     switch (effect.type) {
+      case 'ARC_OVERCHARGE':
+        this.showAreaWave(effect.x, effect.y, effect.radius, 0x45e7ff, 0xfff2a8);
+        break;
       case 'AREA_MELEE':
         this.showAreaWave(effect.x, effect.y, effect.radius, 0x63f4ff, 0xa8fbff);
         break;
