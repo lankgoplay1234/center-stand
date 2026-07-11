@@ -102,6 +102,7 @@
 
 ## 최근 테스트 결과
 
+- 2026-07-12 역할 밸런스·방향 공격·무기음·2배속 통합 검수: typecheck·lint·Vitest 26개 파일/121개·build 성공, Playwright desktop/mobile 26개 성공·endurance 2개 의도적 분리
 - 2026-07-12 `SPEED-001`: 시뮬레이션 델타·전투 시계·트윈을 함께 전환하는 1배/2배 토글과 새 런 초기화 구현, desktop/mobile 검사 통과
 - 2026-07-12 `AUDIO-002`: 여섯 공격 모션별 고유 무기음, 빈 공격 제외, 음소거·잠금·정리 경계 구현 및 단위 테스트 통과
 - 2026-07-12 `COMBAT-003`: 블레이드 워든 45도·바스티온 90도/115 사거리 판정과 전용 부채꼴 효과 구현. 각도·거리·대상 제한 단위 테스트 및 사망 모델 통과
@@ -178,8 +179,8 @@
 ## 현재 빌드 상태
 
 - PASS — Vite production build 생성 완료
-- PASS — Vitest 25개 파일·115개 테스트 통과
-- PASS — Playwright desktop/mobile 22개 통과, 10분 endurance 2개 의도적 분리
+- PASS — Vitest 26개 파일·121개 테스트 통과
+- PASS — Playwright desktop/mobile 26개 통과, 10분 endurance 2개 의도적 분리
 - PASS — GitHub Actions 품질 검사와 GitHub Pages 배포 완료
 - 공개 저장소: https://github.com/lankgoplay1234/center-stand
 - 공개 게임: https://lankgoplay1234.github.io/center-stand/
