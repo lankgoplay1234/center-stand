@@ -84,6 +84,9 @@ export class EffectsManager {
       case 'ARC_OVERCHARGE':
         this.showAreaWave(effect.x, effect.y, effect.radius, 0x45e7ff, 0xfff2a8);
         break;
+      case 'BLADE_FURY':
+        this.showAreaWave(effect.x, effect.y, effect.radius, 0xff8a3d, 0xfff0a3);
+        break;
       case 'AREA_MELEE':
         this.showAreaWave(effect.x, effect.y, effect.radius, 0x63f4ff, 0xa8fbff);
         break;

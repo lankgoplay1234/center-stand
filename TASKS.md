@@ -318,3 +318,14 @@
 - 완료 조건: 누적 업그레이드 구간별 최소 5단계 외형이 존재하고 부활 시 유지·새 런 시 초기화된다. 외형 갱신은 기존 오브젝트를 재사용하고 공격 판정과 100~140적 성능에 영향을 주지 않는다.
 - 관련 파일: `Player.ts`, `UpgradeSystem.ts`, `GameScene.ts`, `AttackMotionData.ts`, 향후 `CharacterVisualData.ts`
 - 테스트 방법: 외형 단계 계산 단위 테스트, 업그레이드·부활·새 런 Playwright 검수, 모바일 시각 검수
+
+## ABILITY-002
+
+- ID: ABILITY-002
+- 작업명: 블레이드 워든 고유 능력 — 격노의 검무
+- 우선순위: HIGH
+- 상태: REVIEW
+- 설명: 블레이드 워든의 4번째 유효 범위 공격이 범위 안의 모든 적에게 강화 피해를 주며, 특수 강화 레벨에 따라 피해 배율이 증가한다.
+- 완료 조건: 빈 공격은 발동 횟수에 포함되지 않고, 4번째 유효 공격의 고유 대상들이 한 번씩만 강화 피해를 받는다. 특수 강화가 실시간 반영되고 전용 검격 파동이 풀링 효과로 표시된다.
+- 관련 파일: `SpecialAbilityData.ts`, `SpecialAbilitySystem.ts`, `CharacterData.ts`, `UpgradeSystem.ts`, `EffectsManager.ts`
+- 테스트 방법: 발동 주기·중복 방지·빈 대상·업그레이드 반영 단위 테스트, 기존 전략 회귀 및 Playwright 전투 검수

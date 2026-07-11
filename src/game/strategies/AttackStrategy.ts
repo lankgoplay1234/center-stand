@@ -28,6 +28,7 @@ export interface CharacterMotionEffect {
 export type AttackEffect =
   | CharacterMotionEffect
   | { type: 'ARC_OVERCHARGE'; x: number; y: number; radius: number }
+  | { type: 'BLADE_FURY'; x: number; y: number; radius: number }
   | { type: 'AREA_MELEE'; x: number; y: number; radius: number }
   | { type: 'AREA_MAGIC'; x: number; y: number; radius: number }
   | { type: 'PIERCING'; from: AttackEffectPoint; to: AttackEffectPoint }

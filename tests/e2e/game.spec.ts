@@ -125,6 +125,49 @@ test('renders a distinct pooled attack motion for every character', async ({ pag
   }
 });
 
+test('triggers Blade Fury on the fourth valid melee attack without duplicate damage', async ({ page }) => {
+  await clickGamePoint(page, 530, 265);
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+  await expect.poll(() => page.evaluate(() => {
+    const game = window.__CENTER_STAND_GAME__;
+    const scene = game?.scene.getScene('GameScene') as unknown as
+      { enemies?: { activeCount: number } } | undefined;
+    return scene?.enemies?.activeCount ?? 0;
+  })).toBeGreaterThanOrEqual(3);
+
+  const result = await page.evaluate(() => {
+    const game = window.__CENTER_STAND_GAME__;
+    const scene = game?.scene.getScene('GameScene') as unknown as {
+      player: { x: number; y: number; attackDamage: number; knockbackForce: number };
+      enemies: {
+        activeEnemies: Array<{
+          health: number;
+          maxHealth: number;
+          setPosition: (x: number, y: number) => void;
+        }>;
+      };
+      combat: { update: (time: number) => void };
+    };
+    scene.player.knockbackForce = 0;
+    const targets = scene.enemies.activeEnemies.slice(0, 3);
+    for (let index = 0; index < targets.length; index += 1) {
+      const target = targets[index]!;
+      target.health = 1_000;
+      target.maxHealth = 1_000;
+      target.setPosition(scene.player.x + 45 + index * 20, scene.player.y);
+    }
+    for (let attack = 0; attack < 4; attack += 1) scene.combat.update(1_000_000 + attack * 1_000);
+    return {
+      attackDamage: scene.player.attackDamage,
+      remainingHealth: targets.map((target) => target.health),
+    };
+  });
+
+  const expectedDamage = result.attackDamage * (3 + 1.35);
+  for (const health of result.remainingHealth) expect(health).toBeCloseTo(1_000 - expectedDamage);
+});
+
 test('pushes a standard enemy away from the player when hit', async ({ page }) => {
   await clickGamePoint(page, 360, 900);
   await expect.poll(() => activeSceneKey(page)).toBe('GameScene');

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ARC_OVERCHARGE } from '../data/SpecialAbilityData';
+import { ARC_OVERCHARGE, BLADE_FURY } from '../data/SpecialAbilityData';
+import { AreaMeleeStrategy } from '../strategies/AreaMeleeStrategy';
 import { SingleTargetStrategy } from '../strategies/SingleTargetStrategy';
 import type { AttackContext, AttackSource } from '../strategies/AttackStrategy';
 import type { TargetCandidate } from '../systems/TargetingSystem';
@@ -24,6 +25,7 @@ const enemy: FakeTarget = { poolId: 1, x: 20, y: 0, isAlive: true, label: 'enemy
 
 function createContext(candidates: readonly FakeTarget[] = [enemy]): AttackContext<FakeTarget> & {
   fireProjectile: ReturnType<typeof vi.fn>;
+  applyInstantDamage: ReturnType<typeof vi.fn>;
   emitEffect: ReturnType<typeof vi.fn>;
 } {
   return {
@@ -80,5 +82,34 @@ describe('SpecialAbilitySystem', () => {
     system.execute(new SingleTargetStrategy<FakeTarget>(), attack);
     expect(attack.fireProjectile).toHaveBeenCalledWith(enemy, 10, 500);
     expect(attack.emitEffect).not.toHaveBeenCalled();
+  });
+
+  it('boosts every unique melee target only on the fourth successful Blade Fury attack', () => {
+    const system = new SpecialAbilitySystem<FakeTarget>(BLADE_FURY, () => 0, () => 1);
+    const strategy = new AreaMeleeStrategy<FakeTarget>();
+    const secondEnemy = { ...enemy, poolId: 2, x: 30, label: 'enemy-2' };
+
+    for (let attackIndex = 1; attackIndex <= 4; attackIndex += 1) {
+      const attack = createContext([enemy, secondEnemy]);
+      expect(system.execute(strategy, attack)).toBe(2);
+      expect(attack.applyInstantDamage).toHaveBeenCalledTimes(2);
+      const damages = attack.applyInstantDamage.mock.calls.map((call) => call[1]);
+      expect(damages).toEqual(attackIndex === 4 ? [13.5, 13.5] : [10, 10]);
+      expect(attack.emitEffect.mock.calls.some((call) => call[0]?.type === 'BLADE_FURY'))
+        .toBe(attackIndex === 4);
+    }
+  });
+
+  it('does not advance Blade Fury on an empty swing and uses live upgrade efficiency', () => {
+    const ability = { ...BLADE_FURY, triggerEveryAttacks: 2 };
+    const system = new SpecialAbilitySystem<FakeTarget>(ability, () => 10, () => 0.8);
+    const strategy = new AreaMeleeStrategy<FakeTarget>();
+    expect(system.execute(strategy, createContext([]))).toBe(0);
+    const first = createContext();
+    system.execute(strategy, first);
+    expect(first.applyInstantDamage).toHaveBeenCalledWith(enemy, 10);
+    const second = createContext();
+    system.execute(strategy, second);
+    expect(second.applyInstantDamage).toHaveBeenCalledWith(enemy, 14.46);
   });
 });

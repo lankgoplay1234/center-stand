@@ -5,7 +5,7 @@ import {
   calculateUpgradeEffect,
   canUpgrade,
 } from '../data/UpgradeData';
-import { calculateOverchargeDamageMultiplier } from '../data/SpecialAbilityData';
+import { calculateBladeFuryDamageMultiplier, calculateOverchargeDamageMultiplier } from '../data/SpecialAbilityData';
 import type { Player } from '../entities/Player';
 import type { UpgradeId, UpgradeState } from '../types/GameTypes';
 
@@ -36,6 +36,10 @@ export class UpgradeSystem {
     if (id === 'specialAbility' && ability?.type === 'ARC_OVERCHARGE') {
       const multiplier = calculateOverchargeDamageMultiplier(ability, state.level, efficiency);
       return `${ability.name} ${ability.triggerEveryAttacks}번째 공격 ×${multiplier.toFixed(2)}`;
+    }
+    if (id === 'specialAbility' && ability?.type === 'BLADE_FURY') {
+      const multiplier = calculateBladeFuryDamageMultiplier(ability, state.level, efficiency);
+      return `${ability.name} ${ability.triggerEveryAttacks}번째 검격 ×${multiplier.toFixed(2)}`;
     }
     return state.definition.effectLabel(state.level, efficiency);
   }
@@ -79,7 +83,8 @@ export class UpgradeSystem {
         this.player.health = Math.min(this.player.maxHealth, this.player.health + effect);
         break;
       case 'specialAbility':
-        if (this.player.character.specialAbility?.type === 'ARC_OVERCHARGE') {
+        if (this.player.character.specialAbility?.type === 'ARC_OVERCHARGE'
+          || this.player.character.specialAbility?.type === 'BLADE_FURY') {
           this.player.specialAbilityLevel = state.level;
         } else {
           this.player.attackRange += effect;

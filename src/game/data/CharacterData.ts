@@ -1,6 +1,6 @@
 import { UPGRADE_ORDER } from './UpgradeData';
 import type { CharacterData } from '../types/GameTypes';
-import { ARC_OVERCHARGE, rangeAreaBoost, validateSpecialAbilityData } from './SpecialAbilityData';
+import { ARC_OVERCHARGE, BLADE_FURY, rangeAreaBoost, validateSpecialAbilityData } from './SpecialAbilityData';
 import { ATTACK_MOTIONS, validateAttackMotionData } from './AttackMotionData';
 
 export const CHARACTERS: readonly CharacterData[] = [
@@ -44,7 +44,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     upgradeEfficiency: {
       attackDamage: 0.8, attackSpeed: 0.85, targetCount: 1, defense: 0.85, maxHealth: 0.85, specialAbility: 0.8,
     },
-    specialAbility: rangeAreaBoost('spinning-slash', '회전 검격', '특수 강화가 검격 사거리와 범위를 확장합니다.'),
+    specialAbility: BLADE_FURY,
   },
   {
     id: 'bastion-gunner',
@@ -151,6 +151,9 @@ export function validateCharacterData(character: CharacterData): string[] {
   errors.push(...validateSpecialAbilityData(character.specialAbility));
   if (character.specialAbility?.type === 'ARC_OVERCHARGE' && character.attackType !== 'SINGLE_TARGET') {
     errors.push('ARC_OVERCHARGE requires SINGLE_TARGET attackType');
+  }
+  if (character.specialAbility?.type === 'BLADE_FURY' && character.attackType !== 'AREA_MELEE') {
+    errors.push('BLADE_FURY requires AREA_MELEE attackType');
   }
   for (const id of UPGRADE_ORDER) {
     const efficiency = character.upgradeEfficiency[id];

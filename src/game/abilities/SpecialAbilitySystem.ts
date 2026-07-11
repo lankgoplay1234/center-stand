@@ -1,6 +1,6 @@
-import { calculateOverchargeDamageMultiplier } from '../data/SpecialAbilityData';
+import { calculateBladeFuryDamageMultiplier, calculateOverchargeDamageMultiplier } from '../data/SpecialAbilityData';
 import type { TargetCandidate } from '../systems/TargetingSystem';
-import type { ArcOverchargeAbilityData, SpecialAbilityData } from '../types/GameTypes';
+import type { ArcOverchargeAbilityData, BladeFuryAbilityData, SpecialAbilityData } from '../types/GameTypes';
 import type { AttackContext, AttackStrategy } from '../strategies/AttackStrategy';
 
 export class SpecialAbilitySystem<T extends TargetCandidate> {
@@ -13,8 +13,36 @@ export class SpecialAbilitySystem<T extends TargetCandidate> {
   ) {}
 
   execute(strategy: AttackStrategy<T>, context: AttackContext<T>): number {
-    if (this.ability?.type !== 'ARC_OVERCHARGE') return strategy.execute(context);
-    return this.executeArcOvercharge(this.ability, strategy, context);
+    if (this.ability?.type === 'ARC_OVERCHARGE') return this.executeArcOvercharge(this.ability, strategy, context);
+    if (this.ability?.type === 'BLADE_FURY') return this.executeBladeFury(this.ability, strategy, context);
+    return strategy.execute(context);
+  }
+
+  private executeBladeFury(
+    ability: BladeFuryAbilityData,
+    strategy: AttackStrategy<T>,
+    context: AttackContext<T>,
+  ): number {
+    const shouldTrigger = (this.successfulAttackCount + 1) % ability.triggerEveryAttacks === 0;
+    const multiplier = shouldTrigger
+      ? calculateBladeFuryDamageMultiplier(ability, this.getLevel(), this.getEfficiency())
+      : 1;
+    const attackContext = shouldTrigger ? {
+      ...context,
+      applyInstantDamage: (target: T, damage: number) => context.applyInstantDamage(target, damage * multiplier),
+    } : context;
+    const attacked = strategy.execute(attackContext);
+    if (attacked <= 0) return attacked;
+    this.successfulAttackCount += 1;
+    if (shouldTrigger) {
+      context.emitEffect({
+        type: 'BLADE_FURY',
+        x: context.attacker.x,
+        y: context.attacker.y,
+        radius: context.attacker.attackRange,
+      });
+    }
+    return attacked;
   }
 
   private executeArcOvercharge(

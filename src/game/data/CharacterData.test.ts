@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CHARACTERS, validateCharacterData } from './CharacterData';
-import { ARC_OVERCHARGE } from './SpecialAbilityData';
+import { ARC_OVERCHARGE, BLADE_FURY } from './SpecialAbilityData';
 import { ATTACK_MOTIONS } from './AttackMotionData';
 
 describe('character data', () => {
@@ -67,5 +67,13 @@ describe('character data', () => {
     };
     expect(validateCharacterData(invalid)).toContain('specialAbility.triggerEveryAttacks must be a positive integer');
     expect(validateCharacterData(invalid)).toContain('ARC_OVERCHARGE requires SINGLE_TARGET attackType');
+  });
+
+  it('assigns Blade Fury to the melee character and validates its attack contract', () => {
+    const blade = CHARACTERS.find((character) => character.id === 'blade-warden')!;
+    expect(blade.specialAbility).toEqual(BLADE_FURY);
+    expect(validateCharacterData({ ...blade, attackType: 'MULTI_TARGET' })).toContain(
+      'BLADE_FURY requires AREA_MELEE attackType',
+    );
   });
 });

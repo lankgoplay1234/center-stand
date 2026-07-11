@@ -42,7 +42,15 @@ export interface ArcOverchargeAbilityData extends SpecialAbilityBase {
   maxDamageMultiplier: number;
 }
 
-export type SpecialAbilityData = RangeAreaBoostAbilityData | ArcOverchargeAbilityData;
+export interface BladeFuryAbilityData extends SpecialAbilityBase {
+  type: 'BLADE_FURY';
+  triggerEveryAttacks: number;
+  baseDamageMultiplier: number;
+  damageMultiplierPerLevel: number;
+  maxDamageMultiplier: number;
+}
+
+export type SpecialAbilityData = RangeAreaBoostAbilityData | ArcOverchargeAbilityData | BladeFuryAbilityData;
 
 export interface CharacterData {
   id: string;
