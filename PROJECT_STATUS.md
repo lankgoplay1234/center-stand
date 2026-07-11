@@ -80,6 +80,7 @@
 
 ## 최근 테스트 결과
 
+- 2026-07-12 `PERF-001` 최종 검수: 300적·2,000회 재측정에서 bounded 7.49ms, spatial 조회 5.22ms, 재구축+조회 42.62ms와 결과 일치 확인, `DONE` 전환
 - 2026-07-12 `AUDIO-001` 검수: AudioManager·UpgradeSystem 8개와 desktop/mobile 성공·실패·음소거 2개 통과. 실제 기기 청취가 없어 `BLOCKED` 전환
 - 2026-07-12 `SHARE-001` 최종 검수: 결과 카드·Web Share·PNG 저장 3개 단위 테스트와 desktop/mobile 100단계 결과 이미지 저장 2개 통과, `DONE` 전환
 - 2026-07-12 `BALANCE-001` 최종 검수: 세 성장 유형·효율·400회·사망 모델 13개 단위 테스트와 desktop/mobile 6캐릭터·부활 성장 유지 4개 통과, `DONE` 전환

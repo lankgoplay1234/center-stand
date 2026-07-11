@@ -159,7 +159,7 @@
 - ID: PERF-001
 - 작업명: 대상 탐색 공간 분할 벤치마크
 - 우선순위: MEDIUM
-- 상태: REVIEW
+- 상태: DONE
 - 설명: 300개 적 기준 현재 bounded selection과 spatial hash를 비교한다.
 - 완료 조건: 측정 결과를 문서화하고, 이점이 확인된 경우 동일 인터페이스로 교체한다.
 - 관련 파일: `TargetingSystem.ts`, `EnemyManager.ts`
