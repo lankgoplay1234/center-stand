@@ -43,7 +43,7 @@ function emptyAllocation(): Record<UpgradeId, number> {
     attackSpeed: 0,
     defense: 0,
     maxHealth: 0,
-    specialAbility: 0,
+    attackRange: 0,
   };
 }
 

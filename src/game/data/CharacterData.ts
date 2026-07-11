@@ -12,7 +12,8 @@ export const CHARACTERS: readonly CharacterData[] = [
     defense: 2,
     attackDamage: 28,
     attackSpeed: 2,
-    attackRange: 360,
+    attackRange: 400,
+    maxAttackRange: 550,
     attackArcDegrees: null,
     attackAreaRadius: 24,
     baseTargetCount: 1,
@@ -22,9 +23,9 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.ARC_SHOT,
     growthProfile: 'STEADY',
     upgradeEfficiency: {
-      attackDamage: 1.4, attackSpeed: 1, defense: 0.85, maxHealth: 0.6, specialAbility: 1.3,
+      attackDamage: 1.4, attackSpeed: 1, defense: 0.85, maxHealth: 0.6, attackRange: 1.3,
     },
-    upgradeFocus: { primary: 'attackDamage', secondary: 'specialAbility', description: '공격력으로 한 발 처치선을 앞당기는 정밀 화력형' },
+    upgradeFocus: { primary: 'attackDamage', secondary: 'attackRange', description: '공격력과 긴 공격가능범위로 적을 먼저 끊는 정밀 화력형' },
     specialAbility: ARC_OVERCHARGE,
   },
   {
@@ -35,7 +36,8 @@ export const CHARACTERS: readonly CharacterData[] = [
     defense: 5,
     attackDamage: 32,
     attackSpeed: 1.2,
-    attackRange: 145,
+    attackRange: 160,
+    maxAttackRange: 240,
     attackArcDegrees: 45,
     attackAreaRadius: 145,
     baseTargetCount: 1,
@@ -45,7 +47,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.BLADE_SWEEP,
     growthProfile: 'EARLY',
     upgradeEfficiency: {
-      attackDamage: 0.75, attackSpeed: 0.75, defense: 0.9, maxHealth: 1.3, specialAbility: 0.8,
+      attackDamage: 0.75, attackSpeed: 0.75, defense: 0.9, maxHealth: 1.3, attackRange: 0.8,
     },
     upgradeFocus: { primary: 'maxHealth', secondary: 'defense', description: '최대 체력으로 근접 노출을 버티는 생존형' },
     specialAbility: BLADE_FURY,
@@ -58,7 +60,8 @@ export const CHARACTERS: readonly CharacterData[] = [
     defense: 10,
     attackDamage: 14,
     attackSpeed: 1.45,
-    attackRange: 115,
+    attackRange: 100,
+    maxAttackRange: 150,
     attackArcDegrees: 90,
     attackAreaRadius: 24,
     baseTargetCount: 3,
@@ -68,10 +71,10 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.BASTION_VOLLEY,
     growthProfile: 'EARLY',
     upgradeEfficiency: {
-      attackDamage: 0.75, attackSpeed: 0.75, defense: 1.3, maxHealth: 0.75, specialAbility: 0.55,
+      attackDamage: 0.75, attackSpeed: 0.75, defense: 1.3, maxHealth: 0.75, attackRange: 0.55,
     },
     upgradeFocus: { primary: 'defense', secondary: 'maxHealth', description: '방어력과 최대 체력으로 짧은 사거리의 전투를 버티는 탱커형' },
-    specialAbility: rangeAreaBoost('saturation-fire', '분산 포화', '특수 강화가 사격 사거리와 효과 범위를 확장합니다.'),
+    specialAbility: rangeAreaBoost('saturation-fire', '분산 포화', '짧은 90도 전방 포화로 여러 적을 동시에 저지합니다.'),
   },
   {
     id: 'rune-mage',
@@ -81,7 +84,8 @@ export const CHARACTERS: readonly CharacterData[] = [
     defense: 1,
     attackDamage: 20,
     attackSpeed: 1,
-    attackRange: 340,
+    attackRange: 310,
+    maxAttackRange: 430,
     attackArcDegrees: null,
     attackAreaRadius: 110,
     baseTargetCount: 1,
@@ -91,10 +95,10 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.RUNE_CAST,
     growthProfile: 'SCALING',
     upgradeEfficiency: {
-      attackDamage: 1.15, attackSpeed: 1.8, defense: 0.8, maxHealth: 0.75, specialAbility: 1.55,
+      attackDamage: 1.15, attackSpeed: 1.8, defense: 0.8, maxHealth: 0.75, attackRange: 1.55,
     },
-    upgradeFocus: { primary: 'attackSpeed', secondary: 'specialAbility', description: '공격 속도로 광역 마법의 반복 주기를 줄이는 주문형' },
-    specialAbility: rangeAreaBoost('rune-burst', '룬 폭발', '특수 강화가 주문 사거리와 폭발 범위를 확장합니다.'),
+    upgradeFocus: { primary: 'attackSpeed', secondary: 'attackRange', description: '공격 속도와 중장거리 시전 범위를 키우는 주문형' },
+    specialAbility: rangeAreaBoost('rune-burst', '룬 폭발', '지정한 위치에 고정 반경의 원형 마법 폭발을 일으킵니다.'),
   },
   {
     id: 'needle-striker',
@@ -104,7 +108,8 @@ export const CHARACTERS: readonly CharacterData[] = [
     defense: 2,
     attackDamage: 12,
     attackSpeed: 3.8,
-    attackRange: 390,
+    attackRange: 480,
+    maxAttackRange: 660,
     attackArcDegrees: null,
     attackAreaRadius: 22,
     baseTargetCount: 3,
@@ -114,10 +119,10 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.NEEDLE_BURST,
     growthProfile: 'STEADY',
     upgradeEfficiency: {
-      attackDamage: 1.4, attackSpeed: 0.8, defense: 0.8, maxHealth: 0.75, specialAbility: 1.1,
+      attackDamage: 1.4, attackSpeed: 0.8, defense: 0.8, maxHealth: 0.75, attackRange: 1.1,
     },
-    upgradeFocus: { primary: 'attackDamage', secondary: 'specialAbility', description: '높은 기본 연사에 공격력과 관통 폭을 더하는 관통 화력형' },
-    specialAbility: rangeAreaBoost('piercing-beam', '관통 광선', '특수 강화가 광선 사거리와 관통 폭을 확장합니다.'),
+    upgradeFocus: { primary: 'attackDamage', secondary: 'attackRange', description: '높은 기본 연사에 공격력과 최장 사거리를 더하는 관통 화력형' },
+    specialAbility: rangeAreaBoost('piercing-beam', '관통 광선', '긴 직선상의 적을 고정 폭 관통 광선으로 공격합니다.'),
   },
   {
     id: 'storm-conductor',
@@ -127,7 +132,8 @@ export const CHARACTERS: readonly CharacterData[] = [
     defense: 2,
     attackDamage: 17,
     attackSpeed: 1.4,
-    attackRange: 320,
+    attackRange: 340,
+    maxAttackRange: 470,
     attackArcDegrees: null,
     attackAreaRadius: 155,
     baseTargetCount: 3,
@@ -137,10 +143,10 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.STORM_SURGE,
     growthProfile: 'SCALING',
     upgradeEfficiency: {
-      attackDamage: 1.15, attackSpeed: 1.5, defense: 0.9, maxHealth: 0.9, specialAbility: 1.45,
+      attackDamage: 1.15, attackSpeed: 1.5, defense: 0.9, maxHealth: 0.9, attackRange: 1.45,
     },
-    upgradeFocus: { primary: 'attackSpeed', secondary: 'specialAbility', description: '시전 속도와 연쇄 거리를 키워 밀집 적을 지우는 확산형' },
-    specialAbility: rangeAreaBoost('chain-lightning', '연쇄 번개', '특수 강화가 시전 사거리와 연쇄 거리를 확장합니다.'),
+    upgradeFocus: { primary: 'attackSpeed', secondary: 'attackRange', description: '시전 속도와 넓은 공격가능범위로 밀집 적을 지우는 확산형' },
+    specialAbility: rangeAreaBoost('chain-lightning', '연쇄 번개', '공격가능범위 안에서 고정 연쇄 거리로 번개를 전파합니다.'),
   },
 ];
 
@@ -153,6 +159,9 @@ export function validateCharacterData(character: CharacterData): string[] {
   if (character.attackDamage <= 0) errors.push('attackDamage must be positive');
   if (character.attackSpeed <= 0) errors.push('attackSpeed must be positive');
   if (character.attackRange <= 0) errors.push('attackRange must be positive');
+  if (!Number.isFinite(character.maxAttackRange) || character.maxAttackRange <= character.attackRange) {
+    errors.push('maxAttackRange must be greater than attackRange');
+  }
   if (character.attackArcDegrees !== null
     && (!Number.isFinite(character.attackArcDegrees) || character.attackArcDegrees <= 0 || character.attackArcDegrees > 360)) {
     errors.push('attackArcDegrees must be null or between 0 and 360');

@@ -32,6 +32,7 @@ export class GameScene extends Phaser.Scene {
   private ui!: UIManager;
   private gameEnded = false;
   private arenaBackground!: Phaser.GameObjects.Image;
+  private attackRangeIndicator!: Phaser.GameObjects.Arc;
   private currentThemeKey = '';
   private criticalChance = PLAYER_CRITICAL_CHANCE;
   private isPaused = false;
@@ -58,6 +59,7 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#090d1a');
     this.createArena();
     this.player = new Player(this, 360, 595, getCharacterById(data.characterId ?? 'arc-ranger')).setDepth(10);
+    this.createAttackRangeIndicator();
     this.effects = new EffectsManager(this);
     this.audio = new AudioManager();
     this.stages = new StageManager(
@@ -124,7 +126,21 @@ export class GameScene extends Phaser.Scene {
     graphics.lineStyle(1, 0x29415a, 0.24);
     for (let x = 0; x <= 720; x += 60) graphics.lineBetween(x, 100, x, 1000);
     for (let y = 100; y <= 1000; y += 60) graphics.lineBetween(0, y, 720, y);
-    graphics.lineStyle(2, 0x4a839d, 0.12).strokeCircle(360, 595, 360);
+  }
+
+  private createAttackRangeIndicator(): void {
+    const { primaryColor, accentColor } = this.player.character.attackMotion;
+    this.attackRangeIndicator = this.add.circle(
+      this.player.x,
+      this.player.y,
+      this.player.attackRange,
+      primaryColor,
+      0.025,
+    ).setStrokeStyle(2, accentColor, 0.18).setDepth(1);
+  }
+
+  private updateAttackRangeIndicator(): void {
+    this.attackRangeIndicator.setPosition(this.player.x, this.player.y).setRadius(this.player.attackRange);
   }
 
   private handleEnemyHit(enemy: Enemy, damage: number): void {
@@ -233,6 +249,7 @@ export class GameScene extends Phaser.Scene {
     this.run.gold = result.gold;
     this.audio.playUpgradeSuccess();
     this.ui.pulseUpgrade(id);
+    if (id === 'attackRange') this.updateAttackRangeIndicator();
     this.cameras.main.flash(65, 30, 150, 170, false);
   }
 

@@ -46,7 +46,7 @@ export class CombatSystem {
     this.specialAbility = new SpecialAbilitySystem<Enemy>(
       player.character.specialAbility,
       () => player.specialAbilityLevel,
-      () => player.upgradeEfficiency.specialAbility,
+      () => player.upgradeEfficiency.attackRange,
     );
   }
 

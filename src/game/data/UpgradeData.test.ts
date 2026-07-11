@@ -23,7 +23,7 @@ describe('upgrade cost', () => {
 
   it('defines the five persistent upgrades with a level 99 cap in display order', () => {
     expect(UPGRADE_ORDER).toEqual([
-      'attackDamage', 'attackSpeed', 'defense', 'maxHealth', 'specialAbility',
+      'attackDamage', 'attackSpeed', 'defense', 'maxHealth', 'attackRange',
     ]);
     for (const id of UPGRADE_ORDER) {
       const definition = UPGRADE_DEFINITIONS[id];
@@ -45,5 +45,10 @@ describe('upgrade cost', () => {
   it('does not expose target count as a persistent upgrade', () => {
     expect(UPGRADE_ORDER).not.toContain('targetCount');
     expect(UPGRADE_DEFINITIONS).not.toHaveProperty('targetCount');
+  });
+
+  it('names the former special upgrade as attack range', () => {
+    expect(UPGRADE_DEFINITIONS.attackRange.name).toBe('공격가능범위');
+    expect(UPGRADE_DEFINITIONS).not.toHaveProperty('specialAbility');
   });
 });

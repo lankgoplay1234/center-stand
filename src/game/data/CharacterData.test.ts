@@ -34,12 +34,14 @@ describe('character data', () => {
     const character = {
       ...CHARACTERS[0]!,
       attackSpeed: 0,
+      maxAttackRange: CHARACTERS[0]!.attackRange,
       attackAreaRadius: 0,
       baseTargetCount: 0,
       knockbackForce: -1,
       upgradeEfficiency: { ...CHARACTERS[0]!.upgradeEfficiency, attackDamage: 0 },
     };
     expect(validateCharacterData(character)).toContain('attackSpeed must be positive');
+    expect(validateCharacterData(character)).toContain('maxAttackRange must be greater than attackRange');
     expect(validateCharacterData(character)).toContain('attackAreaRadius must be positive');
     expect(validateCharacterData(character)).toContain('baseTargetCount must be a positive integer');
     expect(validateCharacterData(character)).toContain('knockbackForce cannot be negative');

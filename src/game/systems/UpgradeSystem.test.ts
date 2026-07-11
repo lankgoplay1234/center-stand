@@ -9,7 +9,7 @@ function createPlayer(
   specialAbility: SpecialAbilityData | null = null,
 ): Player {
   return {
-    character: { specialAbility },
+    character: { specialAbility, attackRange: 200, maxAttackRange: 300 },
     attackDamage: 10,
     attackSpeed: 2,
     baseTargetCount: 1,
@@ -22,7 +22,7 @@ function createPlayer(
     specialAbilityLevel: 0,
     applyUpgradeVisual: vi.fn(),
     upgradeEfficiency: {
-      attackDamage: 1, attackSpeed: 1, defense: 1, maxHealth: 1, specialAbility: 1,
+      attackDamage: 1, attackSpeed: 1, defense: 1, maxHealth: 1, attackRange: 1,
       ...efficiencyOverrides,
     },
   } as unknown as Player;
@@ -33,7 +33,7 @@ describe('UpgradeSystem', () => {
     const player = createPlayer();
     const upgrades = new UpgradeSystem(player);
     const ids: readonly UpgradeId[] = [
-      'attackDamage', 'attackSpeed', 'defense', 'maxHealth', 'specialAbility',
+      'attackDamage', 'attackSpeed', 'defense', 'maxHealth', 'attackRange',
     ];
     let gold = 10_000;
     for (const id of ids) {
@@ -49,8 +49,8 @@ describe('UpgradeSystem', () => {
     expect(player.defense).toBeCloseTo(3.8);
     expect(player.maxHealth).toBe(116);
     expect(player.health).toBe(96);
-    expect(player.attackRange).toBe(208);
-    expect(player.attackAreaRadius).toBe(44);
+    expect(player.attackRange).toBeCloseTo(201.01, 2);
+    expect(player.attackAreaRadius).toBe(40);
     expect(upgrades.totalLevels).toBe(5);
     expect(player.applyUpgradeVisual).toHaveBeenLastCalledWith(5);
   });
@@ -79,23 +79,23 @@ describe('UpgradeSystem', () => {
     expect(scalingPlayer.attackDamage).toBeCloseTo(18.1);
   });
 
-  it('routes the Arc Ranger special upgrade into overcharge without changing range stats', () => {
-    const player = createPlayer({ specialAbility: 1.25 }, ARC_OVERCHARGE);
+  it('grows Arc Ranger range while preserving overcharge level progression', () => {
+    const player = createPlayer({ attackRange: 1.25 }, ARC_OVERCHARGE);
     const upgrades = new UpgradeSystem(player);
 
-    expect(upgrades.getEffectLabel('specialAbility')).toContain('아크 과충전');
-    expect(upgrades.purchase('specialAbility', 100)).toEqual({ success: true, gold: 61 });
+    expect(upgrades.getEffectLabel('attackRange')).toBe('반경 200 / 최대 300');
+    expect(upgrades.purchase('attackRange', 100)).toEqual({ success: true, gold: 61 });
     expect(player.specialAbilityLevel).toBe(1);
-    expect(player.attackRange).toBe(200);
+    expect(player.attackRange).toBeCloseTo(201.01, 2);
     expect(player.attackAreaRadius).toBe(40);
-    expect(upgrades.getEffectLabel('specialAbility')).toContain('×1.63');
+    expect(upgrades.getEffectLabel('attackRange')).toBe('반경 201 / 최대 300');
   });
 
   it('allows level 98 to 99 and rejects every purchase beyond the cap', () => {
     const player = createPlayer();
     const upgrades = new UpgradeSystem(player);
     const ids: readonly UpgradeId[] = [
-      'attackDamage', 'attackSpeed', 'defense', 'maxHealth', 'specialAbility',
+      'attackDamage', 'attackSpeed', 'defense', 'maxHealth', 'attackRange',
     ];
     let gold = 1_000_000;
     for (const id of ids) {
@@ -116,5 +116,6 @@ describe('UpgradeSystem', () => {
       expect(upgrades.getState(id).level).toBe(99);
     }
     expect(player.bonusTargetCount).toBe(0);
+    expect(player.attackRange).toBe(300);
   });
 });

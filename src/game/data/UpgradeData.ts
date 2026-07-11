@@ -9,7 +9,7 @@ export const UPGRADE_ORDER: readonly UpgradeId[] = [
   'attackSpeed',
   'defense',
   'maxHealth',
-  'specialAbility',
+  'attackRange',
 ];
 
 export const MAX_UPGRADE_LEVEL = 99;
@@ -51,16 +51,14 @@ export const UPGRADE_DEFINITIONS: Readonly<Record<UpgradeId, UpgradeDefinition>>
     maxLevel: MAX_UPGRADE_LEVEL,
     effectLabel: (level, efficiency = 1) => `+${formatValue(calculateUpgradeEffect(UPGRADE_DEFINITIONS.maxHealth, level, efficiency))} HP`,
   },
-  specialAbility: {
-    id: 'specialAbility',
-    name: '특수 강화',
+  attackRange: {
+    id: 'attackRange',
+    name: '공격가능범위',
     baseCost: 39,
     costGrowth: 1.04,
-    effectPerLevel: 8,
-    secondaryEffectPerLevel: 4,
+    effectPerLevel: 1,
     maxLevel: MAX_UPGRADE_LEVEL,
-    effectLabel: (level, efficiency = 1) =>
-      `사거리 +${formatValue(calculateUpgradeEffect(UPGRADE_DEFINITIONS.specialAbility, level, efficiency))} / 범위 +${formatValue(calculateSecondaryUpgradeEffect(UPGRADE_DEFINITIONS.specialAbility, level, efficiency))}`,
+    effectLabel: (level) => `공격 범위 강화 ${Math.max(0, Math.floor(level))}회`,
   },
 };
 

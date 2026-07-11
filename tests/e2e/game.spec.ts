@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { getStageDurationMs, STAGE_TRANSITION_SPAWN_DELAY_MS } from '../../src/game/data/StageData';
+import { calculateAttackRangeAtLevel } from '../../src/game/data/AttackRangeData';
 import { UPGRADE_DEFINITIONS, UPGRADE_ORDER, calculateUpgradeEffect } from '../../src/game/data/UpgradeData';
 
 const GAME_WIDTH = 720;
@@ -231,6 +232,67 @@ test('buys every-mob clear repeatedly with rewards and an increased next price',
     kills: before.kills + before.enemies,
     mobClear: { currentCost: 1_300, usageCount: 1 },
   });
+});
+
+test('renders the real attack range and grows the same indicator with the range upgrade', async ({ page }) => {
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+
+  const before = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      attackRangeIndicator: { radius: number };
+      player: { attackRange: number; character: { maxAttackRange: number } };
+      run: { gold: number };
+      ui: {
+        buttons: Map<string, { text: { text: string } }>;
+        update: (...args: unknown[]) => void;
+      };
+      upgrades: unknown;
+      mobClear: { state: unknown };
+      enemies: { activeCount: number };
+      projectiles: { activeCount: number };
+    };
+    scene.run.gold = 10_000;
+    scene.ui.update(
+      scene.player,
+      scene.run,
+      1,
+      scene.upgrades,
+      scene.mobClear.state,
+      scene.enemies.activeCount,
+      scene.projectiles.activeCount,
+    );
+    (window as unknown as { __ATTACK_RANGE_INDICATOR__?: unknown }).__ATTACK_RANGE_INDICATOR__ = scene.attackRangeIndicator;
+    return {
+      indicatorRadius: scene.attackRangeIndicator.radius,
+      playerRange: scene.player.attackRange,
+      maxRange: scene.player.character.maxAttackRange,
+      label: scene.ui.buttons.get('attackRange')?.text.text ?? '',
+    };
+  });
+  expect(before.indicatorRadius).toBe(before.playerRange);
+  expect(before.label).toContain('공격가능범위');
+  expect(before.label).toContain(`최대 ${before.maxRange}`);
+
+  await clickGamePoint(page, 588, 1182);
+  const after = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      attackRangeIndicator: { radius: number };
+      player: { attackRange: number };
+      upgrades: { getState: (id: string) => { level: number } };
+    };
+    return {
+      indicatorRadius: scene.attackRangeIndicator.radius,
+      playerRange: scene.player.attackRange,
+      level: scene.upgrades.getState('attackRange').level,
+      reused: scene.attackRangeIndicator
+        === (window as unknown as { __ATTACK_RANGE_INDICATOR__?: unknown }).__ATTACK_RANGE_INDICATOR__,
+    };
+  });
+  expect(after.level).toBe(1);
+  expect(after.reused).toBe(true);
+  expect(after.indicatorRadius).toBe(after.playerRange);
+  expect(after.playerRange).toBeGreaterThan(before.playerRange);
 });
 
 test('renders a distinct pooled attack motion for every character', async ({ page }) => {
@@ -663,11 +725,12 @@ test('preserves gold and upgrades across revival, then returns to character sele
           defense: number;
           maxHealth: number;
           attackRange: number;
+          character: { maxAttackRange: number };
           attackAreaRadius: number;
           specialAbilityLevel: number;
           upgradeEfficiency: {
             attackDamage: number; attackSpeed: number;
-            defense: number; maxHealth: number;
+            defense: number; maxHealth: number; attackRange: number;
           };
         };
         run: { gold: number };
@@ -680,6 +743,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
       defense: scene.player.defense,
       maxHealth: scene.player.maxHealth,
       attackRange: scene.player.attackRange,
+      maxAttackRange: scene.player.character.maxAttackRange,
       attackAreaRadius: scene.player.attackAreaRadius,
       specialAbilityLevel: scene.player.specialAbilityLevel,
       efficiency: scene.player.upgradeEfficiency,
@@ -729,7 +793,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
       + calculateUpgradeEffect(UPGRADE_DEFINITIONS.defense, 1, initialStats.efficiency.defense),
     maxHealth: initialStats.maxHealth
       + calculateUpgradeEffect(UPGRADE_DEFINITIONS.maxHealth, 1, initialStats.efficiency.maxHealth),
-    attackRange: initialStats.attackRange,
+    attackRange: calculateAttackRangeAtLevel(initialStats.attackRange, initialStats.maxAttackRange, 1),
     attackAreaRadius: initialStats.attackAreaRadius,
     specialAbilityLevel: initialStats.specialAbilityLevel + 1,
   });
@@ -767,12 +831,19 @@ test('preserves gold and upgrades across revival, then returns to character sele
     const scene = game?.scene.getScene('GameScene') as unknown as {
       awaitingRevive?: boolean;
       invulnerableUntil?: number;
-      player?: { attackDamage: number; health: number; maxHealth: number; specialAbilityLevel: number };
+      player?: {
+        attackDamage: number;
+        attackRange: number;
+        health: number;
+        maxHealth: number;
+        specialAbilityLevel: number;
+      };
       run?: { deaths: number; gold: number };
     } | undefined;
     if (!scene?.player || !scene.run) return null;
     return {
       attackDamage: scene.player.attackDamage,
+      attackRange: scene.player.attackRange,
       awaitingRevive: scene.awaitingRevive,
       deaths: scene.run.deaths,
       health: scene.player.health,
@@ -782,6 +853,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
     };
   })).toEqual({
     attackDamage: deathState.attackDamage,
+    attackRange: calculateAttackRangeAtLevel(initialStats.attackRange, initialStats.maxAttackRange, 1),
     awaitingRevive: false,
     deaths: 1,
     health: initialStats.maxHealth
@@ -819,7 +891,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
       stages: { currentStage: number };
       upgrades: { getState: (id: string) => { level: number } };
     };
-    const upgradeIds = ['attackDamage', 'attackSpeed', 'defense', 'maxHealth', 'specialAbility'];
+    const upgradeIds = ['attackDamage', 'attackSpeed', 'defense', 'maxHealth', 'attackRange'];
     return {
       attackDamage: scene.player.attackDamage,
       deaths: scene.run.deaths,

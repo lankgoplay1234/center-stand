@@ -67,6 +67,7 @@ export interface CharacterData {
   attackDamage: number;
   attackSpeed: number;
   attackRange: number;
+  maxAttackRange: number;
   attackArcDegrees: number | null;
   attackAreaRadius: number;
   baseTargetCount: number;
@@ -104,7 +105,7 @@ export type UpgradeId =
   | 'attackSpeed'
   | 'defense'
   | 'maxHealth'
-  | 'specialAbility';
+  | 'attackRange';
 
 export interface UpgradeDefinition {
   id: UpgradeId;
