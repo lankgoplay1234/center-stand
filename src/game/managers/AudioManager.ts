@@ -1,8 +1,11 @@
+import type { AttackMotionStyle } from '../types/GameTypes';
+
 export interface AudioBackend {
   resume(): Promise<void>;
   startBgm(): void;
   setMuted(muted: boolean): void;
   playUpgradeSuccess(): void;
+  playAttack(style: AttackMotionStyle): void;
   destroy(): void;
 }
 
@@ -11,6 +14,8 @@ export interface AudioManagerState {
   muted: boolean;
   bgmPlaying: boolean;
   upgradeEffectCount: number;
+  attackEffectCount: number;
+  lastAttackStyle: AttackMotionStyle | null;
 }
 
 class WebAudioBackend implements AudioBackend {
@@ -62,6 +67,40 @@ class WebAudioBackend implements AudioBackend {
     this.playTone(1318.51, now + 0.08, 0.2, 0.13, 'sine');
   }
 
+  playAttack(style: AttackMotionStyle): void {
+    if (!this.context || this.destroyed) return;
+    const now = this.context.currentTime;
+    switch (style) {
+      case 'ARC_SHOT':
+        this.playTone(620, now, 0.07, 0.09, 'square');
+        this.playTone(260, now + 0.035, 0.08, 0.06, 'triangle');
+        break;
+      case 'BLADE_SWEEP':
+        this.playTone(190, now, 0.14, 0.08, 'sawtooth');
+        this.playTone(520, now + 0.045, 0.12, 0.07, 'triangle');
+        break;
+      case 'BASTION_VOLLEY':
+        for (let index = 0; index < 3; index += 1) {
+          this.playTone(95 + index * 18, now + index * 0.035, 0.09, 0.1, 'square');
+        }
+        break;
+      case 'RUNE_CAST':
+        this.playTone(392, now, 0.2, 0.055, 'sine');
+        this.playTone(587.33, now + 0.04, 0.22, 0.05, 'sine');
+        this.playTone(880, now + 0.08, 0.18, 0.035, 'triangle');
+        break;
+      case 'NEEDLE_BURST':
+        this.playTone(1_280, now, 0.045, 0.06, 'square');
+        this.playTone(980, now + 0.025, 0.05, 0.055, 'square');
+        break;
+      case 'STORM_SURGE':
+        this.playTone(146.83, now, 0.2, 0.07, 'sawtooth');
+        this.playTone(1_174.66, now + 0.05, 0.12, 0.05, 'square');
+        this.playTone(783.99, now + 0.1, 0.12, 0.04, 'triangle');
+        break;
+    }
+  }
+
   destroy(): void {
     this.destroyed = true;
     if (this.loopTimer !== null) window.clearTimeout(this.loopTimer);
@@ -106,6 +145,8 @@ export class AudioManager {
   private muted = false;
   private bgmPlaying = false;
   private upgradeEffectCount = 0;
+  private attackEffectCount = 0;
+  private lastAttackStyle: AttackMotionStyle | null = null;
   private destroyed = false;
   private unlockPromise: Promise<void> | null = null;
 
@@ -117,6 +158,8 @@ export class AudioManager {
       muted: this.muted,
       bgmPlaying: this.bgmPlaying,
       upgradeEffectCount: this.upgradeEffectCount,
+      attackEffectCount: this.attackEffectCount,
+      lastAttackStyle: this.lastAttackStyle,
     };
   }
 
@@ -147,6 +190,14 @@ export class AudioManager {
     if (!this.unlocked || this.muted || this.destroyed) return false;
     this.backend.playUpgradeSuccess();
     this.upgradeEffectCount += 1;
+    return true;
+  }
+
+  playAttack(style: AttackMotionStyle): boolean {
+    if (!this.unlocked || this.muted || this.destroyed) return false;
+    this.backend.playAttack(style);
+    this.attackEffectCount += 1;
+    this.lastAttackStyle = style;
     return true;
   }
 

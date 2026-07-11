@@ -21,6 +21,7 @@ describe('CombatSystem character attack motions', () => {
         attackDamage: character.attackDamage,
         attackSpeed: character.attackSpeed,
         attackRange: character.attackRange,
+        attackArcDegrees: character.attackArcDegrees,
         attackAreaRadius: character.attackAreaRadius,
         totalTargetCount: character.baseTargetCount,
         projectileSpeed: character.projectileSpeed,
@@ -33,9 +34,11 @@ describe('CombatSystem character attack motions', () => {
       } as EnemyManager;
       const projectiles = { fire: vi.fn() } as unknown as ProjectileManager;
       const effects: AttackEffect[] = [];
+      const playAttackSound = vi.fn();
       const combat = new CombatSystem(player, enemies, projectiles, {
         applyInstantDamage: vi.fn(),
         emitEffect: (effect) => effects.push(effect),
+        playAttackSound,
       });
 
       combat.update(0);
@@ -47,6 +50,7 @@ describe('CombatSystem character attack motions', () => {
       }));
       expect(effects.filter((effect) => effect.type === 'CHARACTER_MOTION'), character.name).toHaveLength(1);
       expect(player.playAttackMotion, character.name).toHaveBeenCalledOnce();
+      expect(playAttackSound, character.name).toHaveBeenCalledWith(character.attackMotion.style);
     }
   });
 
@@ -59,6 +63,7 @@ describe('CombatSystem character attack motions', () => {
       attackDamage: character.attackDamage,
       attackSpeed: character.attackSpeed,
       attackRange: character.attackRange,
+      attackArcDegrees: character.attackArcDegrees,
       attackAreaRadius: character.attackAreaRadius,
       totalTargetCount: character.baseTargetCount,
       projectileSpeed: character.projectileSpeed,
@@ -67,16 +72,18 @@ describe('CombatSystem character attack motions', () => {
       playAttackMotion: vi.fn(),
     } as unknown as Player;
     const effects: AttackEffect[] = [];
+    const playAttackSound = vi.fn();
     const combat = new CombatSystem(
       player,
       { activeEnemies: [] } as unknown as EnemyManager,
       { fire: vi.fn() } as unknown as ProjectileManager,
-      { applyInstantDamage: vi.fn(), emitEffect: (effect) => effects.push(effect) },
+      { applyInstantDamage: vi.fn(), emitEffect: (effect) => effects.push(effect), playAttackSound },
     );
 
     combat.update(0);
 
     expect(effects).toEqual([]);
     expect(player.playAttackMotion).not.toHaveBeenCalled();
+    expect(playAttackSound).not.toHaveBeenCalled();
   });
 });

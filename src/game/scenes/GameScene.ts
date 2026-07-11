@@ -63,6 +63,7 @@ export class GameScene extends Phaser.Scene {
     this.combat = new CombatSystem(this.player, this.enemies, this.projectiles, {
       applyInstantDamage: (enemy, damage) => this.handleEnemyHit(enemy, damage),
       emitEffect: (effect) => this.effects.showAttackEffect(effect),
+      playAttackSound: (style) => { this.audio.playAttack(style); },
     });
     this.ui = new UIManager(
       this,
