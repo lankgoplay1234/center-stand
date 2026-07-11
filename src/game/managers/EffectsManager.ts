@@ -59,6 +59,11 @@ export class EffectsManager {
     }
   }
 
+  showStageClear(x: number, y: number): void {
+    this.showAreaWave(x, y, 280, 0x5be6e6, 0xd8fdff);
+    this.showAreaWave(x, y, 430, 0x8b72ff, 0xfff2a8);
+  }
+
   showAttackEffect(effect: AttackEffect): void {
     switch (effect.type) {
       case 'ARC_OVERCHARGE':

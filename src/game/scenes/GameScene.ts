@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { getCharacterById } from '../data/CharacterData';
+import { STAGE_TRANSITION_SPAWN_DELAY_MS } from '../data/StageData';
 import type { Enemy } from '../entities/Enemy';
 import { Player } from '../entities/Player';
 import { EffectsManager } from '../managers/EffectsManager';
@@ -44,7 +45,7 @@ export class GameScene extends Phaser.Scene {
     this.effects = new EffectsManager(this);
     this.audio = new AudioManager();
     this.stages = new StageManager(
-      (stage) => this.ui.showStageTransition(stage),
+      (stage) => this.beginNextStage(stage),
       () => this.completeRun(),
     );
     this.enemies = new EnemyManager(this, this.player, {
@@ -168,6 +169,13 @@ export class GameScene extends Phaser.Scene {
   private runStressTest(): void {
     const missing = Math.max(0, 100 - this.enemies.activeCount);
     this.enemies.spawnBurst(missing, this.stages.stats);
+  }
+
+  private beginNextStage(stage: number): void {
+    const clearedEnemies = this.enemies.clearForStageTransition(STAGE_TRANSITION_SPAWN_DELAY_MS);
+    this.projectiles.destroyAll();
+    if (clearedEnemies > 0) this.effects.showStageClear(this.player.x, this.player.y);
+    this.ui.showStageTransition(stage);
   }
 
   private completeRun(): void {

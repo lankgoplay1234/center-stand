@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { STAGE_DURATION_MS, STAGE_TRANSITION_SPAWN_DELAY_MS } from '../../src/game/data/StageData';
 
 const GAME_WIDTH = 720;
 const GAME_HEIGHT = 1280;
@@ -202,6 +203,61 @@ test('plays upgrade feedback only for successful unmuted purchases', async ({ pa
   });
   expect(mutedState.muted).toBe(true);
   expect(mutedState.upgradeEffectCount).toBe(1);
+});
+
+test('clears remaining enemies and projectiles at a stage boundary without rewards', async ({ page }) => {
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+
+  const transition = await page.evaluate(({ stageDuration, transitionDelay }) => {
+    const game = window.__CENTER_STAND_GAME__;
+    const scene = game?.scene.getScene('GameScene') as unknown as {
+      player: { x: number; y: number };
+      run: { gold: number; kills: number };
+      runStressTest: () => void;
+      enemies: {
+        activeCount: number;
+        activeEnemies: Array<object>;
+        update: (time: number, delta: number, stats: object) => void;
+      };
+      projectiles: {
+        activeCount: number;
+        fire: (x: number, y: number, target: object, damage: number, speed: number) => void;
+      };
+      stages: { currentStage: number; stats: { spawnInterval: number }; update: (delta: number) => void };
+    };
+    scene.run.gold = 321;
+    scene.run.kills = 9;
+    scene.runStressTest();
+    const target = scene.enemies.activeEnemies[0];
+    if (!target) throw new Error('Expected an enemy for stage transition test');
+    scene.projectiles.fire(scene.player.x, scene.player.y, target, 1, 1);
+    const before = { enemies: scene.enemies.activeCount, projectiles: scene.projectiles.activeCount };
+
+    scene.stages.update(stageDuration);
+    const afterClear = {
+      enemies: scene.enemies.activeCount,
+      projectiles: scene.projectiles.activeCount,
+      gold: scene.run.gold,
+      kills: scene.run.kills,
+      stage: scene.stages.currentStage,
+    };
+
+    scene.enemies.update(transitionDelay - 1, transitionDelay - 1, scene.stages.stats);
+    const beforeDelayEnds = scene.enemies.activeCount;
+    scene.enemies.update(
+      transitionDelay + scene.stages.stats.spawnInterval,
+      scene.stages.stats.spawnInterval + 1,
+      scene.stages.stats,
+    );
+    return { before, afterClear, beforeDelayEnds, afterRespawn: scene.enemies.activeCount };
+  }, { stageDuration: STAGE_DURATION_MS, transitionDelay: STAGE_TRANSITION_SPAWN_DELAY_MS });
+
+  expect(transition.before.enemies).toBeGreaterThanOrEqual(100);
+  expect(transition.before.projectiles).toBe(1);
+  expect(transition.afterClear).toEqual({ enemies: 0, projectiles: 0, gold: 321, kills: 9, stage: 2 });
+  expect(transition.beforeDelayEnds).toBe(0);
+  expect(transition.afterRespawn).toBeGreaterThan(0);
 });
 
 test('preserves gold and upgrades across revival, then returns to character select', async ({ page }) => {

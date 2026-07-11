@@ -1,6 +1,7 @@
 import type { StageStats } from '../types/GameTypes';
 
 export const STAGE_DURATION_MS = 30_000;
+export const STAGE_TRANSITION_SPAWN_DELAY_MS = 800;
 
 export function calculateStageStats(stage: number): StageStats {
   const safeStage = Math.max(1, Math.floor(stage));

@@ -65,6 +65,14 @@ export class EnemyManager {
 
   destroyAll(): void {
     this.pool.releaseAll();
+    this.spawnAccumulator = 0;
+  }
+
+  clearForStageTransition(delayMs: number): number {
+    const clearedCount = this.activeCount;
+    this.pool.releaseAll();
+    this.spawnAccumulator = -Math.max(0, delayMs);
+    return clearedCount;
   }
 
   private spawn(stageStats: StageStats, burstIndex = -1): void {
