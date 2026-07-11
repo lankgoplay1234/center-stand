@@ -42,6 +42,9 @@
 - 공격가능범위 성장과 가변 단계 시간을 접촉 노출에 반영한 24표본 평균 사망 45.88~49.04회·캐릭터 편차 3.17회
 - 골드, 체력, 처치, 시간, 스테이지 HUD
 - 사망 횟수 HUD와 골드·업그레이드·스테이지 유지 부활
+- 스테이지 전환 시 현재 최대 체력까지 완전 회복
+- 사망 화면에서 가능한 영구 강화 구매와 전투 소모 행동 차단
+- 캐릭터 재선택 전 현재 스테이지·골드·강화 기록 초기화 확인·취소 창
 - 부활 후 2초 안전 시간과 캐릭터 선택부터 새 런 시작
 - 적/투사체/데미지 텍스트/폭발 이펙트 풀링
 - 스테이지 20단계 구간마다 색상·크기·테두리가 강화되는 일반 몬스터 5단계 외형
@@ -122,6 +125,8 @@
 - 몬스터는 기존 고성능 도형 렌더링을 유지한다. 역할별 픽셀 몬스터와 프레임 애니메이션은 후속 디자인 작업이다.
 
 ## 최근 테스트 결과
+
+- 2026-07-12 `GAME-011`: 단계 전환 최대 체력 회복, 사망 중 강화 구매·즉시 HUD 갱신, 모든 몹 제거 차단과 캐릭터 재선택 기록 삭제 확인/취소 구현. typecheck·lint·Vitest 31개 파일/145개·build 성공, Playwright desktop/mobile 38개 성공·endurance 2개 의도적 분리
 
 - 2026-07-12 `GAME-010`: 현재/최대 체력 HUD 정수 표시, 모든 몹 제거 300G 시작·2배 가격·10회 제한과 완료 버튼 비활성화 구현. typecheck·lint·Vitest 31개 파일/145개·build 성공, Playwright desktop/mobile 36개 성공·endurance 2개 의도적 분리
 
@@ -213,7 +218,7 @@
 
 - PASS — Vite production build 생성 완료
 - PASS — Vitest 31개 파일·145개 테스트 통과
-- PASS — Playwright desktop/mobile 36개 통과, 10분 endurance 2개 의도적 분리
+- PASS — Playwright desktop/mobile 38개 통과, 10분 endurance 2개 의도적 분리
 - PASS — GitHub Actions 품질 검사와 GitHub Pages 배포 완료
 - 공개 저장소: https://github.com/lankgoplay1234/center-stand
 - 공개 게임: https://lankgoplay1234.github.io/center-stand/

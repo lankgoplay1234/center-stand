@@ -40,6 +40,7 @@ export class UIManager {
   private readonly buttons = new Map<UpgradeId, UpgradeButton>();
   private readonly mobClearButton: Omit<UpgradeButton, 'id'>;
   private deathOverlay: Phaser.GameObjects.Container | null = null;
+  private restartConfirmation: Phaser.GameObjects.Container | null = null;
   private pauseOverlay: Phaser.GameObjects.Container | null = null;
 
   constructor(
@@ -104,6 +105,7 @@ export class UIManager {
     activeProjectiles: number,
     stageKills = 0,
     stageTarget = 0,
+    mobClearEnabled = true,
   ): void {
     this.healthText.setText(`HP  ${Math.ceil(player.health)} / ${Math.ceil(player.maxHealth)}`);
     this.healthText.setColor(player.health / player.maxHealth < 0.3 ? '#ff6b83' : '#bff7ff');
@@ -131,7 +133,7 @@ export class UIManager {
       if (affordable) button.background.setInteractive({ useHandCursor: true });
       else button.background.disableInteractive();
     }
-    const canClear = !mobClear.isMaxed && activeEnemies > 0 && run.gold >= mobClear.currentCost;
+    const canClear = mobClearEnabled && !mobClear.isMaxed && activeEnemies > 0 && run.gold >= mobClear.currentCost;
     this.mobClearButton.text.setText(
       `${MOB_CLEAR_NAME}\n현재 ${activeEnemies}마리 · 사용 ${mobClear.usageCount}/${mobClear.maxUses}회\n${mobClear.isMaxed ? '사용 완료' : `비용 ${mobClear.currentCost} G`}`,
     );
@@ -184,7 +186,7 @@ export class UIManager {
 
   showDeathOptions(summary: DeathSummary, onRevive: () => void, onRestart: () => void): void {
     this.hideDeathOptions();
-    const blocker = this.scene.add.rectangle(360, 640, 720, 1280, 0x03050b, 0.82).setInteractive();
+    const blocker = this.scene.add.rectangle(360, 500, 720, 1000, 0x03050b, 0.82).setInteractive();
     const panel = this.scene.add.rectangle(360, 590, 590, 570, 0x111a2b, 0.98).setStrokeStyle(4, 0xff6688, 0.85);
     const title = this.scene.add.text(360, 390, '쓰러졌습니다', {
       fontFamily: 'Arial Black, sans-serif', fontSize: '48px', color: '#ff7892', stroke: '#3a1020', strokeThickness: 8,
@@ -195,7 +197,7 @@ export class UIManager {
     ).setOrigin(0.5);
     const recommendation = summary.recommendation;
     const recommendationText = this.scene.add.text(360, 565, recommendation
-      ? `추천 강화: ${recommendation.name} Lv.${recommendation.level + 1} · ${recommendation.cost} G\n${recommendation.affordable ? '부활 후 바로 구매 가능' : `${recommendation.cost - summary.gold} G 부족`} · ${recommendation.reason}`
+      ? `추천 강화: ${recommendation.name} Lv.${recommendation.level + 1} · ${recommendation.cost} G\n${recommendation.affordable ? '지금 바로 구매 가능' : `${recommendation.cost - summary.gold} G 부족`} · ${recommendation.reason}`
       : '', {
       fontFamily: 'Arial, sans-serif', fontSize: '16px', color: '#ffe58a', align: 'center',
       wordWrap: { width: 520 }, lineSpacing: 5,
@@ -210,8 +212,8 @@ export class UIManager {
     const restartText = this.scene.add.text(360, 760, '캐릭터 다시 선택', {
       fontFamily: 'Arial, sans-serif', fontSize: '23px', color: '#dce7f3', fontStyle: 'bold',
     }).setOrigin(0.5);
-    const hint = this.scene.add.text(360, 835, '부활 횟수에는 제한이 없습니다', {
-      fontFamily: 'Arial, sans-serif', fontSize: '17px', color: '#8190a7',
+    const hint = this.scene.add.text(360, 835, '사망 중에도 아래 강화 버튼을 사용할 수 있습니다\n부활 횟수에는 제한이 없습니다', {
+      fontFamily: 'Arial, sans-serif', fontSize: '17px', color: '#8190a7', align: 'center', lineSpacing: 5,
     }).setOrigin(0.5);
     this.deathOverlay = this.scene.add.container(0, 0, [
       blocker, panel, title, info, recommendationText, reviveBg, reviveText, restartBg, restartText, hint,
@@ -221,14 +223,52 @@ export class UIManager {
       onRevive();
     });
     restartBg.on('pointerup', () => {
-      restartBg.disableInteractive();
-      onRestart();
+      this.showRestartConfirmation(onRestart);
     });
   }
 
   hideDeathOptions(): void {
+    this.hideRestartConfirmation();
     this.deathOverlay?.destroy(true);
     this.deathOverlay = null;
+  }
+
+  private showRestartConfirmation(onConfirm: () => void): void {
+    this.hideRestartConfirmation();
+    const blocker = this.scene.add.rectangle(360, 640, 720, 1280, 0x02040a, 0.88).setInteractive();
+    const panel = this.scene.add.rectangle(360, 590, 590, 360, 0x151b2a, 0.99)
+      .setStrokeStyle(4, 0xffad66, 0.9);
+    const title = this.scene.add.text(360, 485, '정말 다시 시작하시겠습니까?', {
+      fontFamily: 'Arial Black, sans-serif', fontSize: '30px', color: '#fff0cf',
+      stroke: '#4a2114', strokeThickness: 6,
+    }).setOrigin(0.5);
+    const warning = this.scene.add.text(360, 555, '현재 스테이지, 골드와 업그레이드 기록이 모두 초기화됩니다.', {
+      fontFamily: 'Arial, sans-serif', fontSize: '19px', color: '#ffbd9b', align: 'center',
+      wordWrap: { width: 510 },
+    }).setOrigin(0.5);
+    const cancelBg = this.scene.add.rectangle(235, 670, 220, 72, 0x27344a)
+      .setStrokeStyle(2, 0x8092ad).setInteractive({ useHandCursor: true });
+    const cancelText = this.scene.add.text(235, 670, '취소', {
+      fontFamily: 'Arial, sans-serif', fontSize: '23px', color: '#e2edf7', fontStyle: 'bold',
+    }).setOrigin(0.5);
+    const confirmBg = this.scene.add.rectangle(485, 670, 220, 72, 0xa83c4f)
+      .setStrokeStyle(2, 0xff9aac).setInteractive({ useHandCursor: true });
+    const confirmText = this.scene.add.text(485, 670, '기록 삭제 후 재시작', {
+      fontFamily: 'Arial, sans-serif', fontSize: '19px', color: '#fff0f3', fontStyle: 'bold',
+    }).setOrigin(0.5);
+    this.restartConfirmation = this.scene.add.container(0, 0, [
+      blocker, panel, title, warning, cancelBg, cancelText, confirmBg, confirmText,
+    ]).setDepth(120);
+    cancelBg.on('pointerup', () => this.hideRestartConfirmation());
+    confirmBg.on('pointerup', () => {
+      confirmBg.disableInteractive();
+      onConfirm();
+    });
+  }
+
+  private hideRestartConfirmation(): void {
+    this.restartConfirmation?.destroy(true);
+    this.restartConfirmation = null;
   }
 
   showPauseOptions(onContinue: () => void, onHome: () => void): void {

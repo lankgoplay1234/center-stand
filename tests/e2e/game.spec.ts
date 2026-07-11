@@ -767,7 +767,7 @@ test('clears remaining enemies and projectiles at a stage boundary without rewar
   const transition = await page.evaluate(({ stageTarget, transitionDelay }) => {
     const game = window.__CENTER_STAND_GAME__;
     const scene = game?.scene.getScene('GameScene') as unknown as {
-      player: { x: number; y: number };
+      player: { x: number; y: number; health: number; maxHealth: number };
       run: { gold: number; kills: number };
       runStressTest: () => void;
       enemies: {
@@ -793,6 +793,7 @@ test('clears remaining enemies and projectiles at a stage boundary without rewar
     scene.projectiles.fire(scene.player.x, scene.player.y, target, 1, 1);
     const before = { enemies: scene.enemies.activeCount, projectiles: scene.projectiles.activeCount };
 
+    scene.player.health = 1;
     scene.stages.recordKills(stageTarget);
     const afterClear = {
       enemies: scene.enemies.activeCount,
@@ -800,6 +801,8 @@ test('clears remaining enemies and projectiles at a stage boundary without rewar
       gold: scene.run.gold,
       kills: scene.run.kills,
       stage: scene.stages.currentStage,
+      health: scene.player.health,
+      maxHealth: scene.player.maxHealth,
     };
 
     scene.enemies.update(transitionDelay - 1, transitionDelay - 1, scene.stages.stats);
@@ -814,9 +817,100 @@ test('clears remaining enemies and projectiles at a stage boundary without rewar
 
   expect(transition.before.enemies).toBeGreaterThanOrEqual(100);
   expect(transition.before.projectiles).toBe(1);
-  expect(transition.afterClear).toEqual({ enemies: 0, projectiles: 0, gold: 321, kills: 9, stage: 2 });
+  expect(transition.afterClear).toEqual({
+    enemies: 0, projectiles: 0, gold: 321, kills: 9, stage: 2,
+    health: transition.afterClear.maxHealth,
+    maxHealth: transition.afterClear.maxHealth,
+  });
   expect(transition.beforeDelayEnds).toBe(0);
   expect(transition.afterRespawn).toBeGreaterThan(0);
+});
+
+test('allows upgrades while dead and confirms before resetting the run', async ({ page }) => {
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+
+  const before = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      handlePlayerDeath: () => void;
+      player: { health: number; attackDamage: number };
+      run: { gold: number };
+      upgrades: { getState: (id: string) => { level: number; currentCost: number } };
+      ui: { mobClearButton: { background: { input?: { enabled: boolean } } } };
+    };
+    scene.run.gold = 10_000;
+    scene.player.health = 0;
+    scene.handlePlayerDeath();
+    const state = scene.upgrades.getState('attackDamage');
+    return {
+      attackDamage: scene.player.attackDamage,
+      cost: state.currentCost,
+      mobClearInteractive: scene.ui.mobClearButton.background.input?.enabled ?? false,
+    };
+  });
+  expect(before.mobClearInteractive).toBe(false);
+
+  await clickGamePoint(page, 132, 1065);
+  const upgraded = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      awaitingRevive: boolean;
+      player: { attackDamage: number };
+      run: { gold: number };
+      upgrades: { getState: (id: string) => { level: number } };
+      ui: { deathOverlay: unknown };
+    };
+    return {
+      attackDamage: scene.player.attackDamage,
+      awaitingRevive: scene.awaitingRevive,
+      deathOverlayVisible: scene.ui.deathOverlay !== null,
+      gold: scene.run.gold,
+      level: scene.upgrades.getState('attackDamage').level,
+    };
+  });
+  expect(upgraded).toEqual({
+    attackDamage: expect.any(Number),
+    awaitingRevive: true,
+    deathOverlayVisible: true,
+    gold: 10_000 - before.cost,
+    level: 1,
+  });
+  expect(upgraded.attackDamage).toBeGreaterThan(before.attackDamage);
+
+  await clickGamePoint(page, 360, 760);
+  const confirmation = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      awaitingRevive: boolean;
+      ui: { restartConfirmation: { list: Array<{ text?: string }> } | null };
+    };
+    return {
+      awaitingRevive: scene.awaitingRevive,
+      text: scene.ui.restartConfirmation?.list.flatMap((entry) => entry.text ? [entry.text] : []).join('\n') ?? '',
+    };
+  });
+  expect(await activeSceneKey(page)).toBe('GameScene');
+  expect(confirmation.awaitingRevive).toBe(true);
+  expect(confirmation.text).toContain('정말 다시 시작하시겠습니까?');
+  expect(confirmation.text).toContain('기록이 모두 초기화됩니다');
+
+  await clickGamePoint(page, 235, 670);
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      awaitingRevive: boolean;
+      run: { gold: number };
+      upgrades: { getState: (id: string) => { level: number } };
+      ui: { restartConfirmation: unknown };
+    };
+    return {
+      awaitingRevive: scene.awaitingRevive,
+      confirmationClosed: scene.ui.restartConfirmation === null,
+      gold: scene.run.gold,
+      level: scene.upgrades.getState('attackDamage').level,
+    };
+  })).toEqual({ awaitingRevive: true, confirmationClosed: true, gold: 10_000 - before.cost, level: 1 });
+
+  await clickGamePoint(page, 360, 760);
+  await clickGamePoint(page, 485, 670);
+  await expect.poll(() => activeSceneKey(page)).toBe('CharacterSelectScene');
 });
 
 test('preserves gold and upgrades across revival, then returns to character select', async ({ page }) => {
@@ -1001,6 +1095,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
     scene.handlePlayerDeath();
   });
   await clickGamePoint(page, 360, 760);
+  await clickGamePoint(page, 485, 670);
   await expect.poll(() => activeSceneKey(page)).toBe('CharacterSelectScene');
   await clickGamePoint(page, 360, 900);
   await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
@@ -1057,7 +1152,7 @@ test('recommends an efficient upgrade after five deaths in one stage and resets 
     expect(recommendation[index]!.join('\n')).not.toContain('추천 강화:');
   }
   expect(recommendation[4]!.join('\n')).toContain('추천 강화:');
-  expect(recommendation[4]!.join('\n')).toContain('부활 후 바로 구매 가능');
+  expect(recommendation[4]!.join('\n')).toContain('지금 바로 구매 가능');
 
   const nextStageDeath = await page.evaluate((stageTarget) => {
     const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {

@@ -113,6 +113,10 @@ export class GameScene extends Phaser.Scene {
     );
     this.combat.update(this.simulationTime);
     this.projectiles.update(scaledDelta);
+    this.refreshUI();
+  }
+
+  private refreshUI(mobClearEnabled = true): void {
     this.ui.update(
       this.player,
       this.run,
@@ -123,6 +127,7 @@ export class GameScene extends Phaser.Scene {
       this.projectiles.activeCount,
       this.stages.defeatedKills,
       this.stages.targetKills,
+      mobClearEnabled,
     );
   }
 
@@ -212,6 +217,7 @@ export class GameScene extends Phaser.Scene {
       () => this.revive(),
       () => this.restartFromCharacterSelect(),
     );
+    this.refreshUI(false);
   }
 
   private togglePause(): void {
@@ -278,6 +284,7 @@ export class GameScene extends Phaser.Scene {
     this.audio.playUpgradeSuccess();
     this.ui.pulseUpgrade(id);
     if (id === 'attackRange') this.updateAttackRangeIndicator();
+    this.refreshUI(!this.awaitingRevive);
     this.cameras.main.flash(65, 30, 150, 170, false);
   }
 
@@ -306,6 +313,7 @@ export class GameScene extends Phaser.Scene {
 
   private beginNextStage(stage: number): void {
     this.stageDeaths.enterStage(stage);
+    this.player.health = this.player.maxHealth;
     const clearedEnemies = this.enemies.clearForStageTransition(STAGE_TRANSITION_SPAWN_DELAY_MS);
     this.projectiles.destroyAll();
     if (clearedEnemies > 0) this.effects.showStageClear(this.player.x, this.player.y);
