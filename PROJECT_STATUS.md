@@ -28,6 +28,7 @@
 - localStorage 최고 생존 기록
 - 순수 계산 단위 테스트와 텔레그램 보고 인터페이스
 - Playwright 데스크톱·모바일 핵심 플레이 스모크 테스트
+- 공개 GitHub 저장소와 Actions 기반 품질 검사·GitHub Pages 자동 배포
 
 ## 현재 미구현 기능
 
@@ -37,7 +38,6 @@
 - 다종 적, 보스, 스킬, 장비, 캐릭터별 전투 사운드
 - 광고, 로그인, 서버 저장, 랭킹, 결제
 - 실제 텔레그램 전송과 자동 에이전트 실행
-- GitHub 저장소·Actions·Pages 자동 배포
 - 고급 그래픽, 정식 배포
 
 ## 알려진 문제
@@ -53,6 +53,7 @@
 - 일반 사망은 결과 화면으로 이동하지 않으며 기존 GameOverScene은 100스테이지 완주 결과 화면 전환용으로 보존되어 있다.
 - 현재 밸런스는 데이터·계산 테스트 기반의 1차 조정이며, 장시간 실제 플레이 지표에 따른 추가 튜닝이 필요하다.
 - 현재 스테이지는 각 30초로 고정되어 총 완주 시간이 길다.
+- 로컬 작업 브랜치와 웹에서 생성된 원격 `main`의 Git 이력이 서로 달라, 이후 일반 push 전 GitHub 인증과 이력 정리가 필요하다.
 
 ## 최근 테스트 결과
 
@@ -64,16 +65,20 @@
 - 2026-07-11 `npm run build`: 성공
 - 2026-07-11 브라우저 검수: 6개 카드 렌더링, AREA_MAGIC/PIERCING/CHAIN 전투 진입, 오류 로그 없음
 - 2026-07-11 `npm run test:e2e`: 성공, desktop/mobile 12 tests, BGM·음소거·업그레이드 피드백 포함
+- 2026-07-11 GitHub Actions 품질 검사: 성공, typecheck·lint·test·build 통과
+- 2026-07-11 GitHub Pages 배포: 성공, 공개 주소에서 캐릭터 선택 화면과 Canvas 렌더링 확인
 
 ## 다음 추천 작업
 
-1. GitHub 저장소 초기화와 Pages 자동 배포 (`DEPLOY-001`)
-2. 적 변형 및 보스 데이터 설계 (`GAME-004`)
-3. 텔레그램 작업 결과 보고 구현 (`OPS-001`)
-4. 익명 완주 랭킹 API·UI (`RANK-001`, `RANK-002`, 외부 서버 승인 필요)
-5. 실제 모바일 기기 장시간 성능 측정과 전략별 고유 특수 능력
+1. 적 변형 및 보스 데이터 설계 (`GAME-004`)
+2. 텔레그램 작업 결과 보고 구현 (`OPS-001`)
+3. 익명 완주 랭킹 API·UI (`RANK-001`, `RANK-002`, 외부 서버 승인 필요)
+4. 실제 모바일 기기 장시간 성능 측정과 전략별 고유 특수 능력
 
 ## 현재 빌드 상태
 
 - PASS — Vite production build 생성 완료
+- PASS — GitHub Actions 품질 검사와 GitHub Pages 배포 완료
+- 공개 저장소: https://github.com/lankgoplay1234/center-stand
+- 공개 게임: https://lankgoplay1234.github.io/center-stand/
 - 참고: Phaser가 포함된 단일 JavaScript 청크가 Vite의 500 kB 권장치를 초과하지만 실행 오류는 아니다.

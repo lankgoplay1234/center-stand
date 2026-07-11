@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.15.0 - 2026-07-11
+
+### Added
+
+- 공개 GitHub 저장소 `lankgoplay1234/center-stand`
+- pull request용 타입 검사·린트·단위 테스트·프로덕션 빌드 GitHub Actions
+- `main` 품질 검사 통과 후 GitHub Pages에 배포하는 자동화
+- 프로젝트 기능·실행·검사·브랜치 작업 흐름을 안내하는 README
+
+### Changed
+
+- 하위 경로 GitHub Pages에서도 정적 리소스를 불러오도록 Vite base를 상대 경로로 설정
+- `DEPLOY-001`을 검수 가능한 `REVIEW` 상태로 변경
+
+### Verified
+
+- 로컬 TypeScript 타입 검사, ESLint, Vitest 64개 테스트, Vite 프로덕션 빌드 통과
+- GitHub Actions quality 작업 성공 및 Pages deploy 작업 성공
+- 공개 게임 주소에서 로그인 없이 6개 캐릭터 선택 화면과 Phaser Canvas 렌더링 확인
+
 ## 0.14.0 - 2026-07-11
 
 ### Added

@@ -2,6 +2,9 @@
 
 로그인 없이 브라우저에서 바로 실행되는 Phaser 기반 2D 중앙 방어 게임입니다. 플레이어는 화면 중앙에 고정되고, 사방에서 몰려오는 적을 자동 공격하며 골드로 여섯 능력을 강화합니다.
 
+- [게임 바로 실행](https://lankgoplay1234.github.io/center-stand/)
+- [공개 GitHub 저장소](https://github.com/lankgoplay1234/center-stand)
+
 ## 주요 기능
 
 - 역할과 공격 방식이 다른 캐릭터 6종
