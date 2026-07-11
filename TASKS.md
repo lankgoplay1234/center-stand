@@ -214,7 +214,7 @@
 - ID: PERF-002
 - 작업명: 실제 모바일 장시간 전투 성능 측정
 - 우선순위: MEDIUM
-- 상태: REVIEW
+- 상태: BLOCKED
 - 설명: 100마리 이상 전투와 장시간 스테이지 진행에서 모바일 FPS, 활성 객체 수, 메모리 증가, 발열 체감을 측정하고 성능 기준을 문서화한다.
 - 완료 조건: 대표 모바일 환경의 10분 이상 측정 결과와 재현 절차가 기록되고, 병목이 발견되면 기능 제거 없이 후속 최적화 작업으로 분리된다.
 - 관련 파일: `docs/PERFORMANCE.md`, `GameScene.ts`, `EnemyManager.ts`, `EffectsManager.ts`, `tests/e2e/`

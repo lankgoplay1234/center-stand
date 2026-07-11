@@ -28,6 +28,7 @@
 - `AUDIO-001` BGM·업그레이드음·음소거 자동 검수; 실제 기기 청취는 미확보로 차단 기록
 - `PERF-001` 300적 bounded selection·spatial hash 결과 일치와 재구축 비용 완료 조건 최종 검수
 - `GAME-007` 특수 능력 데이터·발동 계약·업그레이드·기존 전략 공존 완료 조건 최종 검수
+- `PERF-002` 10분·120표본 에뮬레이션 기록과 전용 실행 분리 검수; 실제 기기 측정은 미확보로 차단 기록
 
 ### Verified
 
@@ -54,6 +55,7 @@
 - AudioManager·UpgradeSystem 8개 테스트와 desktop/mobile 오디오 이벤트 2개 통과
 - 2,000회 재측정에서 bounded 7.49ms, spatial 조회 5.22ms, 재구축+조회 42.62ms 확인
 - SpecialAbilitySystem·CharacterData·UpgradeSystem 17개 테스트와 desktop/mobile 전략 공존 4개 통과
+- Pixel 5 에뮬레이션 600초·120표본 기존 결과와 일반 회귀에서 endurance 2개 의도적 분리 확인
 
 ## 0.26.0 - 2026-07-12
 
