@@ -13,6 +13,7 @@
 - `COMBAT-002` 캐릭터별 넉백 방향·강도·제외·화면 경계 완료 조건 최종 검수
 - `RUN-001` 무한 부활·안전 시간·성장 유지·캐릭터 재선택 완료 조건 최종 검수
 - `STAGE-002` 1~100단계 경계·완료 단일 실행·사망 횟수 결과 완료 조건 최종 검수
+- `UPGRADE-002` 99레벨 상한·비용·후반 성장·상태 유지 완료 조건 최종 검수
 
 ### Verified
 
@@ -24,6 +25,7 @@
 - KnockbackSystem·CharacterData 10개 테스트와 desktop/mobile 100적 넉백 경로 통과
 - ReviveSystem 3개 테스트와 desktop/mobile 부활·새 런 초기화 2개 통과
 - StageManager·ReviveSystem 6개 테스트와 desktop/mobile 100단계 완주 결과 2개 통과
+- UpgradeData·UpgradeSystem·BalanceData 15개 테스트와 desktop/mobile MAX·부활 유지 4개 통과
 
 ## 0.26.0 - 2026-07-12
 
