@@ -24,6 +24,15 @@ export interface CompletionReadiness {
   isStableCompletionReady: boolean;
 }
 
+export interface StageCombatSnapshot {
+  stage: number;
+  maxHealth: number;
+  defense: number;
+  enemyDamage: number;
+  lateStageClearRatio: number;
+  survivableHits: number;
+}
+
 export const STABLE_COMPLETION_MIN_UPGRADES = 400;
 export const EXPECTED_RUN_KILL_RATIO = 0.58;
 export const MIN_LATE_STAGE_CLEAR_RATIO = 1;
@@ -104,7 +113,35 @@ export function simulateCompletionReadiness(
   character: CharacterData,
   allocation: UpgradeAllocation,
 ): CompletionReadiness {
-  const finalStage = calculateStageStats(100);
+  const combat = simulateStageCombat(character, allocation, 100);
+  const totalUpgradeLevels = calculateAllocationTotal(allocation);
+  const totalUpgradeCost = calculateAllocationCost(allocation);
+  const estimatedRunGold = estimateRunGold();
+  const meetsInvestmentTarget = totalUpgradeLevels >= STABLE_COMPLETION_MIN_UPGRADES;
+  const isAffordable = totalUpgradeCost <= estimatedRunGold;
+
+  return {
+    totalUpgradeLevels,
+    totalUpgradeCost,
+    estimatedRunGold,
+    lateStageClearRatio: combat.lateStageClearRatio,
+    survivableHits: combat.survivableHits,
+    meetsInvestmentTarget,
+    isAffordable,
+    isStableCompletionReady:
+      meetsInvestmentTarget
+      && isAffordable
+      && combat.lateStageClearRatio >= MIN_LATE_STAGE_CLEAR_RATIO
+      && combat.survivableHits >= MIN_SURVIVABLE_HITS,
+  };
+}
+
+export function simulateStageCombat(
+  character: CharacterData,
+  allocation: UpgradeAllocation,
+  stage: number,
+): StageCombatSnapshot {
+  const stageStats = calculateStageStats(stage);
   const damage = character.attackDamage + calculateUpgradeEffect(
     UPGRADE_DEFINITIONS.attackDamage,
     allocation.attackDamage,
@@ -125,35 +162,25 @@ export function simulateCompletionReadiness(
     allocation.maxHealth,
     character.upgradeEfficiency.maxHealth,
   );
-  const enemyHealth = BASIC_ENEMY.health * finalStage.enemyHealthMultiplier;
+  const enemyHealth = BASIC_ENEMY.health * stageStats.enemyHealthMultiplier;
   const baseHitsPerEnemy = Math.ceil(enemyHealth / damage);
   const hitsPerEnemy = Math.max(
     1,
     baseHitsPerEnemy / calculateAverageDamageMultiplier(character, allocation),
   );
   const killsPerSecond = attackSpeed * calculateTargetCapacity(character, allocation) / hitsPerEnemy;
-  const enemiesPerSecond = 1_000 / finalStage.spawnInterval;
-  const incomingDamage = Math.max(1, BASIC_ENEMY.attackDamage * finalStage.enemyDamageMultiplier - defense);
-  const totalUpgradeLevels = calculateAllocationTotal(allocation);
-  const totalUpgradeCost = calculateAllocationCost(allocation);
-  const estimatedRunGold = estimateRunGold();
+  const enemiesPerSecond = 1_000 / stageStats.spawnInterval;
+  const enemyDamage = BASIC_ENEMY.attackDamage * stageStats.enemyDamageMultiplier;
+  const incomingDamage = Math.max(1, enemyDamage - defense);
   const lateStageClearRatio = killsPerSecond / enemiesPerSecond;
   const survivableHits = maxHealth / incomingDamage;
-  const meetsInvestmentTarget = totalUpgradeLevels >= STABLE_COMPLETION_MIN_UPGRADES;
-  const isAffordable = totalUpgradeCost <= estimatedRunGold;
 
   return {
-    totalUpgradeLevels,
-    totalUpgradeCost,
-    estimatedRunGold,
+    stage: stageStats.stage,
+    maxHealth,
+    defense,
+    enemyDamage,
     lateStageClearRatio,
     survivableHits,
-    meetsInvestmentTarget,
-    isAffordable,
-    isStableCompletionReady:
-      meetsInvestmentTarget
-      && isAffordable
-      && lateStageClearRatio >= MIN_LATE_STAGE_CLEAR_RATIO
-      && survivableHits >= MIN_SURVIVABLE_HITS,
   };
 }

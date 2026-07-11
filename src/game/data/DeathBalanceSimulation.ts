@@ -1,0 +1,154 @@
+import { REVIVE_INVULNERABILITY_MS } from '../systems/ReviveSystem';
+import type { AttackType, CharacterData, UpgradeId } from '../types/GameTypes';
+import { BASIC_ENEMY } from './EnemyData';
+import {
+  EXPECTED_RUN_KILL_RATIO,
+  REPRESENTATIVE_COMPLETION_ALLOCATION,
+  type UpgradeAllocation,
+  simulateStageCombat,
+} from './RunBalanceSimulation';
+import { calculateStageStats, getStageDurationMs } from './StageData';
+import { UPGRADE_DEFINITIONS, UPGRADE_ORDER, calculateUpgradeCost } from './UpgradeData';
+
+export interface DeathSimulationSummary {
+  samples: readonly number[];
+  averageDeaths: number;
+  minDeaths: number;
+  maxDeaths: number;
+  finalUpgradeLevels: number;
+}
+
+export const TARGET_AVERAGE_DEATHS = 50;
+export const MIN_TARGET_DEATHS = 40;
+export const MAX_TARGET_DEATHS = 60;
+export const MAX_CHARACTER_DEATH_SPREAD = 12;
+export const DEFAULT_DEATH_SIMULATION_SAMPLES = 24;
+
+const CONTACTING_ENEMY_SHARE = 0.0041;
+const MIN_CLEAR_PRESSURE = 1;
+const MAX_CLEAR_PRESSURE = 2.5;
+
+const ROLE_EXPOSURE: Readonly<Record<AttackType, number>> = {
+  SINGLE_TARGET: 1.1,
+  MULTI_TARGET: 1.15,
+  AREA_MELEE: 0.85,
+  AREA_MAGIC: 1.5,
+  PIERCING: 1.4,
+  CHAIN: 1.55,
+};
+
+function emptyAllocation(): Record<UpgradeId, number> {
+  return {
+    attackDamage: 0,
+    attackSpeed: 0,
+    targetCount: 0,
+    defense: 0,
+    maxHealth: 0,
+    specialAbility: 0,
+  };
+}
+
+function copyAllocation(allocation: Record<UpgradeId, number>): UpgradeAllocation {
+  return { ...allocation };
+}
+
+function purchasePlannedUpgrades(allocation: Record<UpgradeId, number>, availableGold: number): number {
+  let gold = availableGold;
+  while (true) {
+    const candidates = UPGRADE_ORDER
+      .filter((id) => allocation[id] < REPRESENTATIVE_COMPLETION_ALLOCATION[id])
+      .filter((id) => calculateUpgradeCost(UPGRADE_DEFINITIONS[id], allocation[id]) <= gold)
+      .sort((left, right) => {
+        const leftProgress = allocation[left] / REPRESENTATIVE_COMPLETION_ALLOCATION[left];
+        const rightProgress = allocation[right] / REPRESENTATIVE_COMPLETION_ALLOCATION[right];
+        return leftProgress - rightProgress || UPGRADE_ORDER.indexOf(left) - UPGRADE_ORDER.indexOf(right);
+      });
+    const next = candidates[0];
+    if (!next) return gold;
+    gold -= calculateUpgradeCost(UPGRADE_DEFINITIONS[next], allocation[next]);
+    allocation[next] += 1;
+  }
+}
+
+export function buildRepresentativeStageAllocations(): readonly UpgradeAllocation[] {
+  const allocation = emptyAllocation();
+  const snapshots: UpgradeAllocation[] = [];
+  let gold = 0;
+  for (let stage = 1; stage <= 100; stage += 1) {
+    const stats = calculateStageStats(stage);
+    const spawnCount = getStageDurationMs(stage) / stats.spawnInterval;
+    gold += spawnCount * EXPECTED_RUN_KILL_RATIO * BASIC_ENEMY.goldReward;
+    gold = purchasePlannedUpgrades(allocation, gold);
+    snapshots.push(copyAllocation(allocation));
+  }
+  return snapshots;
+}
+
+function createRandom(seed: number): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state = (Math.imul(state, 1_664_525) + 1_013_904_223) >>> 0;
+    return state / 0x1_0000_0000;
+  };
+}
+
+function calculateExposureMultiplier(character: CharacterData): number {
+  const rangeExposure = Math.min(1.35, Math.max(0.75, 300 / character.attackRange));
+  const knockbackMitigation = 1 - Math.min(0.17, character.knockbackForce / 200);
+  return rangeExposure * knockbackMitigation * ROLE_EXPOSURE[character.attackType];
+}
+
+export function simulateRunDeaths(
+  character: CharacterData,
+  seed = 1,
+  stageAllocations = buildRepresentativeStageAllocations(),
+): number {
+  const random = createRandom(seed);
+  const exposureMultiplier = calculateExposureMultiplier(character);
+  let expectedDeaths = 0;
+
+  for (let stage = 1; stage <= 100; stage += 1) {
+    const stageStats = calculateStageStats(stage);
+    const combat = simulateStageCombat(character, stageAllocations[stage - 1]!, stage);
+    const clearPressure = Math.min(
+      MAX_CLEAR_PRESSURE,
+      Math.max(MIN_CLEAR_PRESSURE, 1 / Math.max(0.01, combat.lateStageClearRatio)),
+    );
+    const stageVariance = 0.9 + random() * 0.2;
+    const contactingEnemies = stageStats.maxActiveEnemies
+      * CONTACTING_ENEMY_SHARE
+      * clearPressure
+      * exposureMultiplier
+      * stageVariance;
+    const damagePerHit = Math.max(1, combat.enemyDamage - combat.defense);
+    const incomingDamagePerSecond = contactingEnemies * damagePerHit * 1_000 / BASIC_ENEMY.attackInterval;
+    if (incomingDamagePerSecond <= 0) continue;
+    const vulnerableLifetimeSeconds = combat.maxHealth / incomingDamagePerSecond;
+    const lifeCycleSeconds = vulnerableLifetimeSeconds + REVIVE_INVULNERABILITY_MS / 1_000;
+    expectedDeaths += getStageDurationMs(stage) / 1_000 / lifeCycleSeconds;
+  }
+
+  return Math.round(expectedDeaths);
+}
+
+export function simulateDeathSamples(
+  character: CharacterData,
+  sampleCount = DEFAULT_DEATH_SIMULATION_SAMPLES,
+): DeathSimulationSummary {
+  const safeSampleCount = Math.max(1, Math.floor(sampleCount));
+  const stageAllocations = buildRepresentativeStageAllocations();
+  const samples = Array.from(
+    { length: safeSampleCount },
+    (_, index) => simulateRunDeaths(character, index + 1, stageAllocations),
+  );
+  const averageDeaths = samples.reduce((sum, deaths) => sum + deaths, 0) / samples.length;
+  const finalAllocation = stageAllocations.at(-1)!;
+  const finalUpgradeLevels = UPGRADE_ORDER.reduce((sum, id) => sum + finalAllocation[id], 0);
+  return {
+    samples,
+    averageDeaths,
+    minDeaths: Math.min(...samples),
+    maxDeaths: Math.max(...samples),
+    finalUpgradeLevels,
+  };
+}
