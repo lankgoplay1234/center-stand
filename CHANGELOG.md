@@ -8,12 +8,14 @@
 - attackType 전략 선택, 단일·다중·근접 범위 대상 규칙, 중복 방지와 실시간 업그레이드 반영 확인
 - `GAME-005` 6개 캐릭터 선택과 AREA_MAGIC·PIERCING·CHAIN 전략 완료 조건 최종 검수
 - `GAME-003` Playwright 전투 스모크 테스트 완료 조건 최종 검수
+- `GAME-006` 전투 업그레이드 6종의 구매·능력치 반영·상태 유지 완료 조건 최종 검수
 
 ### Verified
 
 - AttackStrategy·TargetingSystem 관련 25개 테스트 통과
 - CharacterData·AttackStrategy 관련 27개 테스트와 desktop/mobile 캐릭터 선택·전투 진입 2개 통과
 - Playwright desktop/mobile 핵심 전투 22개 통과, 전용 10분 endurance 2개 의도적 건너뜀
+- UpgradeData·UpgradeSystem 10개 테스트와 desktop/mobile 업그레이드 흐름 8개 통과
 
 ## 0.26.0 - 2026-07-12
 

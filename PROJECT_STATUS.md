@@ -77,6 +77,7 @@
 
 ## 최근 테스트 결과
 
+- 2026-07-12 `GAME-006` 최종 검수: UpgradeData·UpgradeSystem 10개 단위 테스트와 desktop/mobile 구매·MAX·피드백·부활 유지 8개 통과, `DONE` 전환
 - 2026-07-12 `GAME-003` 최종 검수: Playwright desktop/mobile 핵심 전투 22개 통과, 10분 endurance 2개는 전용 명령으로 분리되어 의도적으로 건너뜀, `DONE` 전환
 - 2026-07-12 `GAME-005` 최종 검수: 6개 캐릭터와 AREA_MAGIC·PIERCING·CHAIN 전략 관련 27개 단위 테스트, desktop/mobile 캐릭터 선택·전투 진입 2개 통과, `DONE` 전환
 - 2026-07-12 `GAME-002` 최종 검수: 공격 전략 팩토리·SINGLE_TARGET·MULTI_TARGET·AREA_MELEE·대상 중복 방지·실시간 업그레이드 반영 25개 관련 테스트 통과, `DONE` 전환
