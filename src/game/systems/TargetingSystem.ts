@@ -69,6 +69,52 @@ export function selectAllUniqueTargetsInRange<T extends TargetCandidate>(
   return selected;
 }
 
+export function selectNearestUniqueTargetsInCone<T extends TargetCandidate>(
+  candidates: readonly T[],
+  originX: number,
+  originY: number,
+  range: number,
+  arcDegrees: number,
+  targetCount: number | null = null,
+): T[] {
+  const first = selectNearestUniqueTargets(candidates, originX, originY, range, 1)[0];
+  if (!first) return [];
+  const aimX = first.x - originX;
+  const aimY = first.y - originY;
+  const aimLength = Math.sqrt(aimX * aimX + aimY * aimY) || 1;
+  const unitAimX = aimX / aimLength;
+  const unitAimY = aimY / aimLength;
+  const halfRadians = Math.min(360, Math.max(0, arcDegrees)) * Math.PI / 360;
+  const minimumDot = Math.cos(halfRadians);
+  const rangeSquared = range * range;
+  const limit = targetCount === null ? Number.POSITIVE_INFINITY : Math.max(0, Math.floor(targetCount));
+  const selected: Array<{ target: T; distanceSquared: number }> = [];
+  const seen = new Set<number>();
+
+  for (const target of candidates) {
+    if (!target.isAlive || seen.has(target.poolId)) continue;
+    const dx = target.x - originX;
+    const dy = target.y - originY;
+    const distanceSquared = dx * dx + dy * dy;
+    if (distanceSquared > rangeSquared) continue;
+    const distance = Math.sqrt(distanceSquared);
+    const dot = distance === 0 ? 1 : (dx * unitAimX + dy * unitAimY) / distance;
+    if (dot + Number.EPSILON < minimumDot) continue;
+
+    let insertAt = selected.length;
+    while (insertAt > 0 && selected[insertAt - 1]!.distanceSquared > distanceSquared) insertAt -= 1;
+    if (insertAt < limit) {
+      selected.splice(insertAt, 0, { target, distanceSquared });
+      seen.add(target.poolId);
+      if (selected.length > limit) {
+        const removed = selected.pop();
+        if (removed) seen.delete(removed.target.poolId);
+      }
+    }
+  }
+  return selected.map((entry) => entry.target);
+}
+
 export interface PiercingSelection<T extends TargetCandidate> {
   targets: T[];
   end: { x: number; y: number };

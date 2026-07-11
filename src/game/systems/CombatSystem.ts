@@ -8,12 +8,14 @@ import type {
   AttackStrategy,
   CharacterMotionEffect,
 } from '../strategies/AttackStrategy';
+import type { AttackMotionStyle } from '../types/GameTypes';
 import { createAttackStrategy } from '../strategies/AttackStrategyFactory';
 import { SpecialAbilitySystem } from '../abilities/SpecialAbilitySystem';
 
 export interface CombatSystemCallbacks {
   applyInstantDamage: (enemy: Enemy, damage: number) => void;
   emitEffect: (effect: AttackEffect) => void;
+  playAttackSound?: (style: AttackMotionStyle) => void;
 }
 
 export function calculateAttackIntervalMs(attackSpeed: number): number {
@@ -67,6 +69,7 @@ export class CombatSystem {
     if (attacked <= 0) return;
     this.motionEffect.radius = this.player.attackAreaRadius;
     this.player.playAttackMotion(this.motionTargets[0]);
+    this.callbacks.playAttackSound?.(this.player.character.attackMotion.style);
     this.callbacks.emitEffect(this.motionEffect);
     this.nextAttackAt = time + calculateAttackIntervalMs(this.player.attackSpeed);
   }

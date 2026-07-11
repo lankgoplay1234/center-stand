@@ -15,6 +15,7 @@ import { CombatSystem } from '../systems/CombatSystem';
 import { PLAYER_CRITICAL_CHANCE, resolveCriticalHit } from '../systems/CriticalHitSystem';
 import { canPlayerTakeDamage, revivePlayer } from '../systems/ReviveSystem';
 import { UpgradeSystem } from '../systems/UpgradeSystem';
+import { scaleGameDelta, toggleGameSpeed, type GameSpeed } from '../systems/GameSpeedSystem';
 import type { RunStats, UpgradeId } from '../types/GameTypes';
 
 export class GameScene extends Phaser.Scene {
@@ -34,6 +35,8 @@ export class GameScene extends Phaser.Scene {
   private isPaused = false;
   private awaitingRevive = false;
   private invulnerableUntil = 0;
+  private gameSpeed: GameSpeed = 1;
+  private simulationTime = 0;
   private run: RunStats = { gold: 0, earnedGold: 0, kills: 0, deaths: 0, elapsedSeconds: 0 };
 
   constructor() {
@@ -45,6 +48,10 @@ export class GameScene extends Phaser.Scene {
     this.awaitingRevive = false;
     this.isPaused = false;
     this.invulnerableUntil = 0;
+    this.gameSpeed = 1;
+    this.simulationTime = 0;
+    this.time.timeScale = 1;
+    this.tweens.timeScale = 1;
     this.run = { gold: 0, earnedGold: 0, kills: 0, deaths: 0, elapsedSeconds: 0 };
     this.cameras.main.setBackgroundColor('#090d1a');
     this.createArena();
@@ -63,6 +70,7 @@ export class GameScene extends Phaser.Scene {
     this.combat = new CombatSystem(this.player, this.enemies, this.projectiles, {
       applyInstantDamage: (enemy, damage) => this.handleEnemyHit(enemy, damage),
       emitEffect: (effect) => this.effects.showAttackEffect(effect),
+      playAttackSound: (style) => { this.audio.playAttack(style); },
     });
     this.ui = new UIManager(
       this,
@@ -70,6 +78,7 @@ export class GameScene extends Phaser.Scene {
       () => this.runStressTest(),
       () => this.audio.toggleMuted(),
       () => this.pauseGame(),
+      () => this.toggleGameSpeed(),
     );
     this.ui.showStageTransition(1);
     void this.audio.unlock();
@@ -79,15 +88,16 @@ export class GameScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.audio.destroy());
   }
 
-  update(time: number, delta: number): void {
+  update(_time: number, delta: number): void {
     if (this.gameEnded || this.awaitingRevive || this.isPaused) return;
-    const safeDelta = Math.min(delta, 50);
-    this.run.elapsedSeconds += safeDelta / 1000;
-    this.stages.update(safeDelta);
+    const scaledDelta = scaleGameDelta(delta, this.gameSpeed);
+    this.simulationTime += scaledDelta;
+    this.run.elapsedSeconds += scaledDelta / 1000;
+    this.stages.update(scaledDelta);
     if (this.gameEnded) return;
-    this.enemies.update(time, safeDelta, this.stages.stats);
-    this.combat.update(time);
-    this.projectiles.update(safeDelta);
+    this.enemies.update(this.simulationTime, scaledDelta, this.stages.stats);
+    this.combat.update(this.simulationTime);
+    this.projectiles.update(scaledDelta);
     this.ui.update(this.player, this.run, this.stages.currentStage, this.upgrades, this.enemies.activeCount, this.projectiles.activeCount);
   }
 
@@ -128,7 +138,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handlePlayerHit(rawDamage: number, x: number, y: number): void {
-    if (!canPlayerTakeDamage(this.time.now, this.invulnerableUntil)) return;
+    if (!canPlayerTakeDamage(this.simulationTime, this.invulnerableUntil)) return;
     const applied = this.player.takeDamage(rawDamage);
     this.effects.showDamage(this.player.x, this.player.y - 42, applied, '#ff6b83');
     this.effects.showHit(x, y);
@@ -169,8 +179,16 @@ export class GameScene extends Phaser.Scene {
     this.ui.hidePauseOptions();
   }
 
+  private toggleGameSpeed(): GameSpeed {
+    if (this.gameEnded || this.awaitingRevive || this.isPaused) return this.gameSpeed;
+    this.gameSpeed = toggleGameSpeed(this.gameSpeed);
+    this.time.timeScale = this.gameSpeed;
+    this.tweens.timeScale = this.gameSpeed;
+    return this.gameSpeed;
+  }
+
   private revive(): void {
-    this.invulnerableUntil = revivePlayer(this.player, this.time.now);
+    this.invulnerableUntil = revivePlayer(this.player, this.simulationTime);
     this.awaitingRevive = false;
     this.ui.hideDeathOptions();
     this.tweens.killTweensOf(this.player);

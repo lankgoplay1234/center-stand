@@ -12,9 +12,11 @@ import { STABLE_COMPLETION_MIN_UPGRADES, calculateAllocationTotal } from './RunB
 
 describe('50-death run balance', () => {
   it('spends the expected run gold into the 400-upgrade completion plan', () => {
-    const allocations = buildRepresentativeStageAllocations();
-    expect(allocations).toHaveLength(100);
-    expect(calculateAllocationTotal(allocations.at(-1)!)).toBe(STABLE_COMPLETION_MIN_UPGRADES);
+    for (const character of CHARACTERS) {
+      const allocations = buildRepresentativeStageAllocations(character);
+      expect(allocations).toHaveLength(100);
+      expect(calculateAllocationTotal(allocations.at(-1)!), character.name).toBe(STABLE_COMPLETION_MIN_UPGRADES);
+    }
   });
 
   it('keeps every character average inside the 40 to 60 death target', () => {

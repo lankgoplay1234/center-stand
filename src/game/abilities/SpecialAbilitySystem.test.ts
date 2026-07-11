@@ -16,6 +16,7 @@ const attacker: AttackSource = {
   attackDamage: 10,
   attackSpeed: 2,
   attackRange: 100,
+  attackArcDegrees: null,
   attackAreaRadius: 20,
   totalTargetCount: 1,
   projectileSpeed: 500,
