@@ -30,7 +30,7 @@ export const UPGRADE_DEFINITIONS: Readonly<Record<UpgradeId, UpgradeDefinition>>
     name: '공격 속도',
     baseCost: 30,
     costGrowth: 1.04,
-    effectPerLevel: 0.08,
+    effectPerLevel: 0.09,
     maxLevel: MAX_UPGRADE_LEVEL,
     effectLabel: (level, efficiency = 1) => `+${calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackSpeed, level, efficiency).toFixed(2)} 공격/초`,
   },

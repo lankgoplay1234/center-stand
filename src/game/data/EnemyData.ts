@@ -6,6 +6,6 @@ export const BASIC_ENEMY: Readonly<EnemyData> = {
   attackDamage: 9,
   moveSpeed: 66,
   attackInterval: 850,
-  goldReward: 5,
+  goldReward: 6,
   contactRange: 44,
 };

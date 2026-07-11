@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { getStageDurationMs, STAGE_TRANSITION_SPAWN_DELAY_MS } from '../../src/game/data/StageData';
+import { UPGRADE_DEFINITIONS, calculateUpgradeEffect } from '../../src/game/data/UpgradeData';
 
 const GAME_WIDTH = 720;
 const GAME_HEIGHT = 1280;
@@ -329,11 +330,11 @@ test('preserves gold and upgrades across revival, then returns to character sele
       specialAbilityLevel: player.specialAbilityLevel,
     };
   })).toEqual({
-    attackDamage: initialStats.attackDamage + 6,
-    attackSpeed: initialStats.attackSpeed + 0.08,
-    bonusTargetCount: initialStats.bonusTargetCount + 1,
-    defense: initialStats.defense + 0.8,
-    maxHealth: initialStats.maxHealth + 16,
+    attackDamage: initialStats.attackDamage + calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackDamage, 1),
+    attackSpeed: initialStats.attackSpeed + calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackSpeed, 1),
+    bonusTargetCount: initialStats.bonusTargetCount + calculateUpgradeEffect(UPGRADE_DEFINITIONS.targetCount, 1),
+    defense: initialStats.defense + calculateUpgradeEffect(UPGRADE_DEFINITIONS.defense, 1),
+    maxHealth: initialStats.maxHealth + calculateUpgradeEffect(UPGRADE_DEFINITIONS.maxHealth, 1),
     attackRange: initialStats.attackRange,
     attackAreaRadius: initialStats.attackAreaRadius,
     specialAbilityLevel: initialStats.specialAbilityLevel + 1,

@@ -43,7 +43,7 @@ describe('UpgradeSystem', () => {
     }
 
     expect(player.attackDamage).toBe(16);
-    expect(player.attackSpeed).toBeCloseTo(2.08);
+    expect(player.attackSpeed).toBeCloseTo(2.09);
     expect(player.bonusTargetCount).toBe(1);
     expect(player.defense).toBeCloseTo(3.8);
     expect(player.maxHealth).toBe(116);
