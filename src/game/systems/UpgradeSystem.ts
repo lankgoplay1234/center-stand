@@ -45,6 +45,10 @@ export class UpgradeSystem {
     return !canUpgrade(state.definition, state.level);
   }
 
+  get totalLevels(): number {
+    return Object.values(this.states).reduce((sum, state) => sum + state.level, 0);
+  }
+
   purchase(id: UpgradeId, gold: number): { success: boolean; gold: number } {
     const state = this.states[id];
     if (gold < state.currentCost || !canUpgrade(state.definition, state.level)) return { success: false, gold };
@@ -83,6 +87,7 @@ export class UpgradeSystem {
         }
         break;
     }
+    this.player.applyUpgradeVisual(this.totalLevels);
     return { success: true, gold: nextGold };
   }
 

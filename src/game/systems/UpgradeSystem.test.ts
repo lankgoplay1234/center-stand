@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ARC_OVERCHARGE } from '../data/SpecialAbilityData';
 import type { Player } from '../entities/Player';
 import type { SpecialAbilityData, UpgradeId } from '../types/GameTypes';
@@ -20,6 +20,7 @@ function createPlayer(
     attackRange: 200,
     attackAreaRadius: 40,
     specialAbilityLevel: 0,
+    applyUpgradeVisual: vi.fn(),
     upgradeEfficiency: {
       attackDamage: 1, attackSpeed: 1, targetCount: 1, defense: 1, maxHealth: 1, specialAbility: 1,
       ...efficiencyOverrides,
@@ -50,6 +51,8 @@ describe('UpgradeSystem', () => {
     expect(player.health).toBe(96);
     expect(player.attackRange).toBe(208);
     expect(player.attackAreaRadius).toBe(44);
+    expect(upgrades.totalLevels).toBe(6);
+    expect(player.applyUpgradeVisual).toHaveBeenLastCalledWith(6);
   });
 
   it('does not change stats or level when gold is insufficient', () => {

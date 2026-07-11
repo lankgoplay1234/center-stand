@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { getCharacterVisualTier } from '../data/CharacterVisualData';
 import { calculateTotalTargetCount } from '../systems/TargetingSystem';
 import type { CharacterData, UpgradeId } from '../types/GameTypes';
 
@@ -16,10 +17,14 @@ export class Player extends Phaser.GameObjects.Container {
   projectileSpeed: number;
   knockbackForce: number;
   specialAbilityLevel = 0;
+  visualTier = 0;
+  totalUpgradeLevels = 0;
   readonly upgradeEfficiency: Readonly<Record<UpgradeId, number>>;
 
+  private readonly aura: Phaser.GameObjects.Arc;
   private readonly core: Phaser.GameObjects.Arc;
   private readonly sight: Phaser.GameObjects.Triangle;
+  private readonly ornaments: Phaser.GameObjects.Arc[] = [];
 
   constructor(scene: Phaser.Scene, x: number, y: number, character: CharacterData) {
     super(scene, x, y);
@@ -37,16 +42,51 @@ export class Player extends Phaser.GameObjects.Container {
     this.upgradeEfficiency = character.upgradeEfficiency;
 
     const { primaryColor, accentColor } = character.attackMotion;
-    const aura = scene.add.circle(0, 0, 43, primaryColor, 0.14).setStrokeStyle(2, accentColor, 0.45);
+    this.aura = scene.add.circle(0, 0, 43, primaryColor, 0.14).setStrokeStyle(2, accentColor, 0.45);
     this.core = scene.add.circle(0, 0, 25, primaryColor).setStrokeStyle(5, accentColor, 0.9);
     this.sight = scene.add.triangle(8, -2, 0, 0, 24, 7, 0, 14, accentColor, 0.9);
-    this.add([aura, this.core, this.sight]);
+    for (let i = 0; i < 6; i += 1) {
+      this.ornaments.push(scene.add.circle(0, 0, 3, primaryColor, 0.9)
+        .setStrokeStyle(2, accentColor, 0.9).setVisible(false));
+    }
+    this.add([this.aura, ...this.ornaments, this.core, this.sight]);
     scene.add.existing(this);
-    scene.tweens.add({ targets: aura, scale: 1.18, alpha: 0.2, duration: 720, yoyo: true, repeat: -1 });
+    this.applyUpgradeVisual(0);
+    scene.tweens.add({ targets: this.aura, scale: 1.18, alpha: 0.2, duration: 720, yoyo: true, repeat: -1 });
   }
 
   get totalTargetCount(): number {
     return calculateTotalTargetCount(this.baseTargetCount, this.bonusTargetCount);
+  }
+
+  get visualStats(): { tier: number; totalUpgradeLevels: number; ornamentCount: number; coreRadius: number; auraRadius: number } {
+    return {
+      tier: this.visualTier,
+      totalUpgradeLevels: this.totalUpgradeLevels,
+      ornamentCount: this.ornaments.filter((ornament) => ornament.visible).length,
+      coreRadius: this.core.radius,
+      auraRadius: this.aura.radius,
+    };
+  }
+
+  applyUpgradeVisual(totalUpgradeLevels: number): void {
+    const visual = getCharacterVisualTier(totalUpgradeLevels);
+    const { primaryColor, accentColor } = this.character.attackMotion;
+    const finalAccent = visual.ascendedAccent ? 0xfff0a3 : accentColor;
+    this.totalUpgradeLevels = Math.max(0, Math.floor(totalUpgradeLevels));
+    this.visualTier = visual.tier;
+    this.core.setRadius(visual.coreRadius).setFillStyle(primaryColor)
+      .setStrokeStyle(visual.coreStrokeWidth, finalAccent, 0.95);
+    this.aura.setRadius(visual.auraRadius).setFillStyle(primaryColor, 0.14)
+      .setStrokeStyle(visual.auraStrokeWidth, finalAccent, visual.ascendedAccent ? 0.85 : 0.5);
+    for (let index = 0; index < this.ornaments.length; index += 1) {
+      const ornament = this.ornaments[index]!;
+      const visible = index < visual.ornamentCount;
+      const angle = index / Math.max(1, visual.ornamentCount) * Math.PI * 2;
+      ornament.setVisible(visible).setRadius(visual.ornamentRadius)
+        .setPosition(Math.cos(angle) * visual.ornamentDistance, Math.sin(angle) * visual.ornamentDistance)
+        .setFillStyle(primaryColor, 0.92).setStrokeStyle(2, finalAccent, 0.95);
+    }
   }
 
   playAttackMotion(target?: { x: number; y: number }): void {

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { getStageDurationMs, STAGE_TRANSITION_SPAWN_DELAY_MS } from '../../src/game/data/StageData';
-import { UPGRADE_DEFINITIONS, calculateUpgradeEffect } from '../../src/game/data/UpgradeData';
+import { UPGRADE_DEFINITIONS, UPGRADE_ORDER, calculateUpgradeEffect } from '../../src/game/data/UpgradeData';
 
 const GAME_WIDTH = 720;
 const GAME_HEIGHT = 1280;
@@ -275,6 +275,70 @@ test('locks a level 99 upgrade without spending gold', async ({ page }) => {
     label: expect.stringContaining('MAX LEVEL'),
     enabled: false,
   });
+});
+
+test('evolves the player appearance through 400 upgrades and preserves it only within the run', async ({ page }, testInfo) => {
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+
+  const progression = await page.evaluate((upgradeOrder) => {
+    const game = window.__CENTER_STAND_GAME__;
+    const scene = game?.scene.getScene('GameScene') as unknown as {
+      player: {
+        health: number;
+        visualStats: {
+          tier: number;
+          totalUpgradeLevels: number;
+          ornamentCount: number;
+          coreRadius: number;
+          auraRadius: number;
+        };
+      };
+      upgrades: { purchase: (id: string, gold: number) => { success: boolean; gold: number } };
+      handlePlayerDeath: () => void;
+      revive: () => void;
+    };
+    const snapshots = [{ ...scene.player.visualStats }];
+    let gold = 1_000_000_000;
+    for (let total = 1; total <= 400; total += 1) {
+      const result = scene.upgrades.purchase(upgradeOrder[(total - 1) % upgradeOrder.length]!, gold);
+      if (!result.success) throw new Error(`Upgrade purchase failed at total level ${total}`);
+      gold = result.gold;
+      if (total % 80 === 0) snapshots.push({ ...scene.player.visualStats });
+    }
+    scene.player.health = 0;
+    scene.handlePlayerDeath();
+    scene.revive();
+    return { snapshots, afterRevive: { ...scene.player.visualStats } };
+  }, UPGRADE_ORDER);
+
+  expect(progression.snapshots.map((snapshot) => snapshot.tier)).toEqual([0, 1, 2, 3, 4, 5]);
+  expect(progression.snapshots.map((snapshot) => snapshot.ornamentCount)).toEqual([0, 2, 3, 4, 5, 6]);
+  expect(progression.snapshots.map((snapshot) => snapshot.totalUpgradeLevels)).toEqual([0, 80, 160, 240, 320, 400]);
+  expect(progression.snapshots.map((snapshot) => snapshot.coreRadius)).toEqual([25, 27, 29, 31, 33, 35]);
+  expect(progression.snapshots.map((snapshot) => snapshot.auraRadius)).toEqual([43, 47, 51, 56, 61, 67]);
+  expect(progression.afterRevive).toEqual(progression.snapshots.at(-1));
+  await testInfo.attach('tier-5-player-visual', {
+    body: await page.screenshot(),
+    contentType: 'image/png',
+  });
+
+  await page.evaluate(() => {
+    const game = window.__CENTER_STAND_GAME__;
+    const scene = game?.scene.getScene('GameScene') as unknown as { restartFromCharacterSelect: () => void };
+    scene.restartFromCharacterSelect();
+  });
+  await expect.poll(() => activeSceneKey(page)).toBe('CharacterSelectScene');
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+  const freshVisual = await page.evaluate(() => {
+    const game = window.__CENTER_STAND_GAME__;
+    const scene = game?.scene.getScene('GameScene') as unknown as {
+      player: { visualStats: { tier: number; totalUpgradeLevels: number; ornamentCount: number } };
+    };
+    return scene.player.visualStats;
+  });
+  expect(freshVisual).toEqual(expect.objectContaining({ tier: 0, totalUpgradeLevels: 0, ornamentCount: 0 }));
 });
 
 test('plays upgrade feedback only for successful unmuted purchases', async ({ page }) => {
