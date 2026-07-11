@@ -2,6 +2,14 @@
 
 ## 0.27.0 - 2026-07-12
 
+### Added
+
+- 제공자 중립 `LeaderboardRepository`, `CompletionVerifier`, `SubmissionRateLimiter` 계약
+- Web 표준 `GET/POST /leaderboard` API와 테스트용 메모리 저장소
+- 1~5자 닉네임·캐릭터·사망 횟수·완주 시간·runId·proof 입력 검증
+- 중복 기록 거부, IP별 속도 제한, 사망 횟수 우선 상위 10위 동점 정렬
+- 실제 배포 저장소와 완주 proof 검증 요구사항을 정리한 랭킹 보안·운영 문서
+
 ### Reviewed
 
 - `GAME-002` 캐릭터 공격 전략 분리 1단계 완료 조건 최종 검수
@@ -58,6 +66,7 @@
 - SpecialAbilitySystem·CharacterData·UpgradeSystem 17개 테스트와 desktop/mobile 전략 공존 4개 통과
 - Pixel 5 에뮬레이션 600초·120표본 기존 결과와 일반 회귀에서 endurance 2개 의도적 분리 확인
 - CombatSystem·CharacterData 8개 테스트와 desktop/mobile 여섯 모션 2개 통과
+- 랭킹 API 등록·검증 실패·중복·상위 10위·속도 제한 통합 테스트 5개 통과
 
 ## 0.26.0 - 2026-07-12
 

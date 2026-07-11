@@ -145,3 +145,26 @@ export interface RunStats {
   deaths: number;
   elapsedSeconds: number;
 }
+
+export interface LeaderboardSubmission {
+  nickname: string;
+  characterId: string;
+  deaths: number;
+  completionTimeSeconds: number;
+  runId: string;
+  verificationToken: string;
+}
+
+export interface LeaderboardRecord {
+  id: string;
+  nickname: string;
+  characterId: string;
+  deaths: number;
+  completionTimeSeconds: number;
+  runId: string;
+  completedAt: number;
+}
+
+export interface RankedLeaderboardEntry extends LeaderboardRecord {
+  rank: number;
+}
