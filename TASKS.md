@@ -192,7 +192,7 @@
 - ID: GAME-004
 - 작업명: 적 변형 및 보스 데이터 설계
 - 우선순위: LOW
-- 상태: BACKLOG
+- 상태: DONE
 - 설명: 기존 적 동작을 유지하며 타입별 데이터와 생성 정책을 설계한다.
 - 완료 조건: 최소 2개 변형 적이 데이터 기반으로 생성된다.
 - 관련 파일: `EnemyData.ts`, `EnemyManager.ts`, `StageData.ts`
