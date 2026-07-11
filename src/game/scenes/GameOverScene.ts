@@ -103,21 +103,16 @@ export class GameOverScene extends Phaser.Scene {
       fontFamily: 'Arial, sans-serif', fontSize: '14px', color: '#c5d7e7', align: 'left', lineSpacing: 4,
     }).setOrigin(0.5, 0);
 
-    const canUpload = this.leaderboard.isConfigured
-      && Boolean(this.result.leaderboardRunId && this.result.leaderboardVerificationToken);
-    input.disabled = !canUpload;
-    submit.disabled = !canUpload;
+    const hasProof = Boolean(this.result.leaderboardRunId && this.result.leaderboardVerificationToken);
+    input.disabled = false;
+    submit.disabled = false;
+    submit.addEventListener('click', () => void this.submitLeaderboard(input, submit));
     if (!this.leaderboard.isConfigured) {
-      this.leaderboardStatus.setText('랭킹 서버 준비 중 · 로컬 완주 기록은 안전하게 유지됩니다');
-      submit.style.opacity = '0.45';
-      return;
-    }
-    if (!canUpload) {
-      this.leaderboardStatus.setText('서버 발급 완주 인증 정보가 없어 업로드할 수 없습니다');
-      submit.style.opacity = '0.45';
+      this.leaderboardStatus.setText('닉네임을 입력하면 이 브라우저의 로컬 랭킹에 저장됩니다');
+    } else if (!hasProof) {
+      this.leaderboardStatus.setText('닉네임 입력 가능 · 업로드 시 완주 인증 상태를 확인합니다');
     } else {
       this.leaderboardStatus.setText('닉네임을 입력해 내 기록을 등록하세요');
-      submit.addEventListener('click', () => void this.submitLeaderboard(input, submit));
     }
     void this.refreshLeaderboard();
   }
@@ -137,6 +132,7 @@ export class GameOverScene extends Phaser.Scene {
     } catch (error) {
       const message = error instanceof LeaderboardServiceError ? error.message : '업로드에 실패했습니다';
       this.leaderboardStatus.setText(`${message} · 다시 시도할 수 있습니다`);
+    } finally {
       submit.disabled = false;
     }
   }

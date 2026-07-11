@@ -11,6 +11,7 @@ import { ProjectileManager } from '../managers/ProjectileManager';
 import { StageManager } from '../managers/StageManager';
 import { UIManager } from '../managers/UIManager';
 import { SaveManager } from '../services/SaveManager';
+import { createPrototypeLeaderboardProof } from '../services/LeaderboardRunProof';
 import { CombatSystem } from '../systems/CombatSystem';
 import { PLAYER_CRITICAL_CHANCE, resolveCriticalHit } from '../systems/CriticalHitSystem';
 import { canPlayerTakeDamage, revivePlayer } from '../systems/ReviveSystem';
@@ -343,6 +344,7 @@ export class GameScene extends Phaser.Scene {
     this.enemies.destroyAll();
     this.projectiles.destroyAll();
     const bestSeconds = SaveManager.saveBestSeconds(this.run.elapsedSeconds);
+    const leaderboardProof = createPrototypeLeaderboardProof();
     this.time.delayedCall(400, () => this.scene.start('GameOverScene', {
       characterId: this.player.character.id,
       characterName: this.player.character.name,
@@ -353,6 +355,8 @@ export class GameScene extends Phaser.Scene {
       kills: this.run.kills,
       earnedGold: this.run.earnedGold,
       bestSeconds,
+      leaderboardRunId: leaderboardProof.runId,
+      leaderboardVerificationToken: leaderboardProof.verificationToken,
     }));
   }
 }

@@ -23,6 +23,24 @@ npm install
 npm run dev
 ```
 
+## 랭킹 서버 실행
+
+서버 없이 실행하면 완주 기록은 현재 브라우저의 `localStorage` TOP 10에 저장됩니다.
+공유 랭킹 API를 로컬에서 실행하려면 두 터미널을 사용합니다.
+
+```bash
+npm run dev:leaderboard
+VITE_LEADERBOARD_API_URL=http://localhost:8787 npm run dev
+```
+
+API 상태 확인은 `http://localhost:8787/health`, 랭킹 조회는
+`http://localhost:8787/leaderboard`에서 할 수 있습니다. 기록은 기본적으로
+`.data/leaderboard.json`에 저장됩니다. 배포 환경에서는 `.env.example`의
+`LEADERBOARD_ALLOWED_ORIGIN`을 실제 게임 주소로 설정해야 합니다.
+
+현재 완주 토큰은 로그인 없는 프로토타입용 클라이언트 생성 토큰입니다.
+공개 경쟁 랭킹으로 운영하기 전에는 서버가 플레이 세션을 검증하는 서명 방식으로 교체해야 합니다.
+
 ## 검사
 
 ```bash

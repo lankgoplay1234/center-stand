@@ -1,11 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { CHARACTERS } from './CharacterData';
 import { MAX_UPGRADE_LEVEL } from './UpgradeData';
-import { calculateAttackRangeAtLevel } from './AttackRangeData';
+import { calculateAttackRangeAtLevel, calculateAttackRangeGrowthPerLevel } from './AttackRangeData';
+
+const PREVIOUS_BASE_RANGES: Readonly<Record<string, number>> = {
+  'arc-ranger': 400,
+  'blade-warden': 160,
+  'bastion-gunner': 100,
+  'rune-mage': 310,
+  'needle-striker': 480,
+  'storm-conductor': 340,
+};
 
 describe('attack range progression', () => {
   it('starts at base range and reaches the declared maximum at level 99', () => {
     for (const character of CHARACTERS) {
+      expect(character.attackRange, character.name).toBe(PREVIOUS_BASE_RANGES[character.id]! / 2);
       expect(calculateAttackRangeAtLevel(character.attackRange, character.maxAttackRange, 0)).toBe(character.attackRange);
       expect(calculateAttackRangeAtLevel(character.attackRange, character.maxAttackRange, MAX_UPGRADE_LEVEL))
         .toBe(character.maxAttackRange);
@@ -22,8 +32,22 @@ describe('attack range progression', () => {
       'bastion-gunner', 'blade-warden', 'rune-mage', 'storm-conductor', 'arc-ranger', 'needle-striker',
     ]);
     for (let index = 1; index < sortedByBase.length; index += 1) {
-      expect(sortedByBase[index]!.attackRange - sortedByBase[index - 1]!.attackRange).toBeGreaterThanOrEqual(30);
+      expect(sortedByBase[index]!.attackRange - sortedByBase[index - 1]!.attackRange).toBeGreaterThanOrEqual(15);
       expect(sortedByMax[index]!.maxAttackRange - sortedByMax[index - 1]!.maxAttackRange).toBeGreaterThanOrEqual(40);
+    }
+  });
+
+  it('keeps maximum ranges while increasing the base per-level growth span', () => {
+    for (const character of CHARACTERS) {
+      const previousBase = PREVIOUS_BASE_RANGES[character.id]!;
+      expect(calculateAttackRangeGrowthPerLevel(character.attackRange, character.maxAttackRange), character.name)
+        .toBeGreaterThan(calculateAttackRangeGrowthPerLevel(previousBase, character.maxAttackRange));
+      expect(calculateAttackRangeAtLevel(
+        character.attackRange,
+        character.maxAttackRange,
+        MAX_UPGRADE_LEVEL,
+        character.upgradeEfficiency.attackRange,
+      )).toBe(character.maxAttackRange);
     }
   });
 

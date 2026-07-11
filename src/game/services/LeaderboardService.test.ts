@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { GameResult, RankedLeaderboardEntry } from '../types/GameTypes';
-import { LeaderboardService, LeaderboardServiceError, validateLeaderboardNickname } from './LeaderboardService';
+import {
+  LOCAL_LEADERBOARD_STORAGE_KEY,
+  LeaderboardService,
+  LeaderboardServiceError,
+  type LeaderboardStorage,
+  validateLeaderboardNickname,
+} from './LeaderboardService';
 
 const result: GameResult = {
   characterId: 'arc-ranger', characterName: '아크 레인저', completed: true, deaths: 3,
@@ -35,8 +41,24 @@ describe('LeaderboardService', () => {
     await expect(service.list()).resolves.toHaveLength(10);
   });
 
-  it('keeps unavailable servers and missing proofs as recoverable errors', async () => {
-    await expect(new LeaderboardService('').list()).rejects.toMatchObject({ code: 'NOT_CONFIGURED' });
+  it('persists and ranks successful local records when no server is configured', async () => {
+    const values = new Map<string, string>();
+    const storage: LeaderboardStorage = {
+      getItem: (key) => values.get(key) ?? null,
+      setItem: (key, value) => { values.set(key, value); },
+    };
+    const local = new LeaderboardService('', vi.fn(), storage, () => 1_000);
+    await expect(local.submit(result, '용사')).resolves.toEqual(expect.objectContaining({
+      nickname: '용사', deaths: 3, rank: 1,
+    }));
+    expect(values.get(LOCAL_LEADERBOARD_STORAGE_KEY)).toContain('용사');
+    const reloaded = new LeaderboardService('', vi.fn(), storage, () => 2_000);
+    await expect(reloaded.list()).resolves.toEqual([
+      expect.objectContaining({ nickname: '용사', characterId: 'arc-ranger', rank: 1 }),
+    ]);
+  });
+
+  it('keeps missing remote proofs as recoverable errors', async () => {
     const service = new LeaderboardService('https://ranking.test', vi.fn());
     await expect(service.submit({ ...result, leaderboardVerificationToken: undefined }, '용사'))
       .rejects.toMatchObject({ code: 'MISSING_PROOF' });

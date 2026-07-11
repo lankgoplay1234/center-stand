@@ -462,7 +462,7 @@ test('triggers Blade Fury on the fourth valid melee attack without duplicate dam
   const result = await page.evaluate(() => {
     const game = window.__CENTER_STAND_GAME__;
     const scene = game?.scene.getScene('GameScene') as unknown as {
-      player: { x: number; y: number; attackDamage: number; knockbackForce: number };
+      player: { x: number; y: number; attackDamage: number; attackRange: number; knockbackForce: number };
       criticalChance: number;
       enemies: {
         activeEnemies: Array<{
@@ -480,7 +480,10 @@ test('triggers Blade Fury on the fourth valid melee attack without duplicate dam
       const target = targets[index]!;
       target.health = 1_000;
       target.maxHealth = 1_000;
-      target.setPosition(scene.player.x + 45 + index * 20, scene.player.y);
+      target.setPosition(
+        scene.player.x + scene.player.attackRange / (targets.length + 1) * (index + 1),
+        scene.player.y,
+      );
     }
     for (let attack = 0; attack < 4; attack += 1) scene.combat.update(1_000_000 + attack * 1_000);
     return {
@@ -1202,9 +1205,22 @@ test('completes stage 100 once and reports the selected character death count', 
   const nicknameInput = page.getByTestId('leaderboard-nickname');
   const leaderboardSubmit = page.getByTestId('leaderboard-submit');
   await expect(nicknameInput).toBeVisible();
-  await expect(nicknameInput).toBeDisabled();
+  await expect(nicknameInput).toBeEnabled();
   await expect(nicknameInput).toHaveAttribute('maxlength', '5');
-  await expect(leaderboardSubmit).toBeDisabled();
+  await expect(leaderboardSubmit).toBeEnabled();
+  await nicknameInput.fill('용사');
+  await leaderboardSubmit.click();
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameOverScene') as unknown as {
+      leaderboardStatus: { text: string };
+      leaderboardEntries: { text: string };
+    };
+    return { status: scene.leaderboardStatus.text, entries: scene.leaderboardEntries.text };
+  })).toEqual({
+    status: '내 기록이 등록되었습니다',
+    entries: expect.stringContaining('1. 용사 · 아크 레인저 · 3회'),
+  });
+  await expect(leaderboardSubmit).toBeEnabled();
 
   await page.evaluate(() => {
     Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
