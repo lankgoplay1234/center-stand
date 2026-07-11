@@ -49,6 +49,10 @@ npm run benchmark:targeting
 - 검사가 끝난 변경은 작업 브랜치에만 push하고 draft pull request로 검토를 요청합니다.
 - pull request에서는 타입 검사, 린트, 단위 테스트, 빌드를 자동 실행합니다.
 - `main`에 반영된 변경은 동일 검사를 다시 통과한 뒤 GitHub Pages에 배포됩니다.
+
+## 선택적 텔레그램 보고
+
+`.env.example`의 `TELEGRAM_BOT_TOKEN`과 `TELEGRAM_CHAT_ID`를 실행 환경에만 설정하면 `createTelegramReporter`로 작업·빌드·테스트 결과를 전송할 수 있습니다. 값이 없으면 네트워크 요청 없이 안전하게 건너뛰며 토큰은 코드나 오류 메시지에 기록하지 않습니다.
 - 강제 push와 `main` 직접 커밋은 하지 않습니다.
 - `.env`와 비밀키는 커밋하지 않습니다.
 
