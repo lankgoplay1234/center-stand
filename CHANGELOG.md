@@ -25,6 +25,7 @@
 - `ABILITY-002` 격노의 검무 발동 주기·빈 공격·중복 방지·특수 강화 완료 조건 최종 검수
 - `BALANCE-001` 세 성장 유형·캐릭터별 효율·구간 성장·부활 유지 완료 조건 최종 검수
 - `SHARE-001` 1080×1350 결과 이미지·Web Share·PNG 저장 완료 조건 최종 검수
+- `AUDIO-001` BGM·업그레이드음·음소거 자동 검수; 실제 기기 청취는 미확보로 차단 기록
 
 ### Verified
 
@@ -48,6 +49,7 @@
 - SpecialAbilitySystem·CharacterData·UpgradeSystem 17개 테스트와 desktop/mobile 격노의 검무 2개 통과
 - BalanceData·RunBalanceSimulation·DeathBalanceSimulation 13개 테스트와 desktop/mobile 성장 흐름 4개 통과
 - ResultShareService 3개 테스트와 desktop/mobile 완주 이미지 저장 2개 통과
+- AudioManager·UpgradeSystem 8개 테스트와 desktop/mobile 오디오 이벤트 2개 통과
 
 ## 0.26.0 - 2026-07-12
 
