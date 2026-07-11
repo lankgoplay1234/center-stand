@@ -15,6 +15,7 @@
 - `STAGE-002` 1~100단계 경계·완료 단일 실행·사망 횟수 결과 완료 조건 최종 검수
 - `UPGRADE-002` 99레벨 상한·비용·후반 성장·상태 유지 완료 조건 최종 검수
 - `DEPLOY-001` 비밀값 제외·Draft PR·Actions 품질·GitHub Pages 공개 접속 완료 조건 최종 검수
+- `STAGE-003` 단계 경계 잔존 적·투사체 무보상 정리와 생성 지연 완료 조건 최종 검수
 
 ### Verified
 
@@ -28,6 +29,7 @@
 - StageManager·ReviveSystem 6개 테스트와 desktop/mobile 100단계 완주 결과 2개 통과
 - UpgradeData·UpgradeSystem·BalanceData 15개 테스트와 desktop/mobile MAX·부활 유지 4개 통과
 - GitHub Actions 품질 검사와 Pages 배포 성공 이력, 공개 게임 HTTP 200 확인
+- StageManager 3개 테스트와 desktop/mobile 100적 단계 전환 정리 2개 통과
 
 ## 0.26.0 - 2026-07-12
 
