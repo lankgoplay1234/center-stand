@@ -136,6 +136,8 @@ export interface GameResult {
   kills: number;
   earnedGold: number;
   bestSeconds: number;
+  leaderboardRunId?: string;
+  leaderboardVerificationToken?: string;
 }
 
 export interface RunStats {
@@ -165,6 +167,12 @@ export interface LeaderboardRecord {
   completedAt: number;
 }
 
-export interface RankedLeaderboardEntry extends LeaderboardRecord {
+export interface RankedLeaderboardEntry {
+  id: string;
+  nickname: string;
+  characterId: string;
+  deaths: number;
+  completionTimeSeconds: number;
+  completedAt: number;
   rank: number;
 }

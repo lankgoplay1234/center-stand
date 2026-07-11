@@ -691,6 +691,12 @@ test('completes stage 100 once and reports the selected character death count', 
     deaths: 3,
     stage: 100,
   }));
+  const nicknameInput = page.getByTestId('leaderboard-nickname');
+  const leaderboardSubmit = page.getByTestId('leaderboard-submit');
+  await expect(nicknameInput).toBeVisible();
+  await expect(nicknameInput).toBeDisabled();
+  await expect(nicknameInput).toHaveAttribute('maxlength', '5');
+  await expect(leaderboardSubmit).toBeDisabled();
 
   await page.evaluate(() => {
     Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });

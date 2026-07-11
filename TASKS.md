@@ -71,7 +71,7 @@
 - ID: RANK-002
 - 작업명: 완주 랭킹 UI와 내 기록 업로드
 - 우선순위: MEDIUM
-- 상태: BACKLOG
+- 상태: BLOCKED
 - 설명: RANK-001과 STAGE-002 완료 후 완주 화면에서 5자 이내 닉네임을 입력해 내 성적을 업로드하고, 1~10위의 닉네임·캐릭터·사망 횟수를 표시한다. 서버 장애 시 게임과 로컬 결과 화면은 정상 동작해야 한다.
 - 완료 조건: 사망 횟수가 적은 순서로 10개만 표시되고 내 업로드 성공/실패/재시도 상태가 명확하며 모바일 입력 UI가 깨지지 않는다.
 - 관련 파일: `GameOverScene.ts`, `UIManager.ts`, `services/LeaderboardService.ts`, `GameTypes.ts`

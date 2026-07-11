@@ -47,7 +47,9 @@ describe('LeaderboardApi', () => {
     const response = await handler(post(submission()));
     expect(response.status).toBe(201);
     expect(await repository.list()).toEqual([expect.objectContaining({ nickname: '용사', deaths: 12 })]);
-    expect(await response.json()).not.toHaveProperty('entry.verificationToken');
+    const body = await response.json();
+    expect(body).not.toHaveProperty('entry.verificationToken');
+    expect(body).not.toHaveProperty('entry.runId');
   });
 
   it('rejects invalid nicknames, characters, metrics and unverified runs', async () => {

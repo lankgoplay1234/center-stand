@@ -77,7 +77,7 @@ export function createLeaderboardApi(dependencies: LeaderboardApiDependencies): 
       completedAt: now(),
     };
     await dependencies.repository.save(record);
-    return json({ entry: record }, 201);
+    return json({ entry: rankLeaderboard([record], 1)[0] }, 201);
   };
 }
 

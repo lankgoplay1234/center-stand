@@ -58,7 +58,15 @@ export function rankLeaderboard(records: readonly LeaderboardRecord[], limit = L
       || left.completedAt - right.completedAt
       || left.id.localeCompare(right.id))
     .slice(0, Math.min(LEADERBOARD_LIMIT, Math.max(0, Math.floor(limit))))
-    .map((record, index) => ({ ...record, rank: index + 1 }));
+    .map((record, index) => ({
+      id: record.id,
+      nickname: record.nickname,
+      characterId: record.characterId,
+      deaths: record.deaths,
+      completionTimeSeconds: record.completionTimeSeconds,
+      completedAt: record.completedAt,
+      rank: index + 1,
+    }));
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
