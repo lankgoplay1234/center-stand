@@ -1,5 +1,49 @@
 # Task Backlog
 
+## VISUAL-001
+
+- ID: VISUAL-001
+- 작업명: 픽셀 아트 캐릭터·스테이지 배경·전투 피드백 리뉴얼
+- 우선순위: HIGH
+- 상태: REVIEW
+- 설명: 6개 캐릭터를 무기와 실루엣이 구분되는 저해상도 픽셀 아트로 제작해 선택 화면과 인게임에서 동일하게 사용한다. 스테이지 20단계마다 가독성 중심의 배경을 교체하고, 일반 피해·치명타 숫자와 추가 전투 분위기 연출을 개선한다.
+- 완료 조건: 캐릭터 선택 카드와 인게임에 6개 픽셀 자산이 매핑되고 공격 시 역할별 움직임이 적용된다. 1~100단계에 5개 배경 테마가 적용되며 적과 UI 대비가 유지된다. 일반 피해와 치명타가 명확히 구분되고 100적 풀링 경로·모바일/데스크톱 회귀 검사가 통과한다.
+- 관련 파일: `assets/`, `BootScene.ts`, `CharacterSelectScene.ts`, `GameScene.ts`, `Player.ts`, `Enemy.ts`, `EffectsManager.ts`, `DamageTextPool.ts`, `CharacterData.ts`, 신규 시각 데이터
+- 테스트 방법: 시각 데이터 단위 테스트, asset 크기 검사, desktop/mobile Playwright 스크린샷 검수, `npm run typecheck`, `npm run lint`, `npm run test`, `npm run build`
+
+## VISUAL-002
+
+- ID: VISUAL-002
+- 작업명: 일반·대장 몬스터 픽셀 스프라이트 리뉴얼
+- 우선순위: MEDIUM
+- 상태: BACKLOG
+- 설명: 현재 고성능 도형 적을 역할과 스테이지가 구분되는 작은 픽셀 스프라이트로 교체하고, 대장은 크기·갑옷·발광으로 즉시 식별되게 한다. 기존 적 풀과 활성 상한은 유지한다.
+- 완료 조건: 일반/대장과 5개 성장 구간의 실루엣이 구분되고 배경 5종에서 대비 기준을 충족한다. 100~140적 렌더링 성능이 기존 허용 범위에서 유지된다.
+- 관련 파일: `Enemy.ts`, `EnemyData.ts`, `EnemyPool.ts`, `VisualAssetData.ts`, `public/assets/enemies/`
+- 테스트 방법: 시각 데이터 단위 테스트, desktop/mobile 100적 스크린샷, 전용 10분 성능 검사
+
+## VISUAL-003
+
+- ID: VISUAL-003
+- 작업명: 캐릭터 대기·공격 픽셀 프레임 애니메이션
+- 우선순위: MEDIUM
+- 상태: BACKLOG
+- 설명: 현재 단일 스프라이트 트윈에 캐릭터별 2프레임 대기와 2~4프레임 공격 시트를 더해 총·검·마법·번개 동작을 픽셀 애니메이션으로 강화한다.
+- 완료 조건: 선택 캐릭터와 동일한 디자인이 유지되고 여섯 공격 타이밍에 맞춰 프레임이 재생된다. 공격 판정과 객체 풀 성능은 변하지 않는다.
+- 관련 파일: `BootScene.ts`, `Player.ts`, `AttackMotionData.ts`, `VisualAssetData.ts`, `public/assets/characters/`
+- 테스트 방법: 프레임 매핑 단위 테스트, 캐릭터별 desktop/mobile 전투 캡처, 기존 공격 전략 회귀 검사
+
+## VISUAL-004
+
+- ID: VISUAL-004
+- 작업명: 위험·대장 등장·최대 강화 전투 알림
+- 우선순위: LOW
+- 상태: BACKLOG
+- 설명: 낮은 체력, 대장 등장, 업그레이드 99레벨 달성 순간을 짧은 화면 가장자리·아이콘·색상 연출로 명확히 전달한다. 반복 연출은 쿨다운을 두어 눈의 피로를 제한한다.
+- 완료 조건: 세 이벤트가 서로 다른 피드백을 제공하고 HUD 가독성을 가리지 않으며, 반복 이벤트가 무제한 객체를 생성하지 않는다.
+- 관련 파일: `UIManager.ts`, `EffectsManager.ts`, `EnemyManager.ts`, `UpgradeSystem.ts`
+- 테스트 방법: 이벤트별 단위 테스트, 모바일 가독성 검수, 100적 풀 상한 회귀 검사
+
 ## GAME-002
 
 - ID: GAME-002

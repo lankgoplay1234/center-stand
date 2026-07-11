@@ -20,8 +20,12 @@ export class EffectsManager {
     }
   }
 
-  showDamage(x: number, y: number, amount: number, color?: string): void {
-    this.damageTexts.show(x, y, amount, color);
+  showDamage(x: number, y: number, amount: number, color?: string, isCritical = false): void {
+    this.damageTexts.show(x, y, amount, color, isCritical);
+    if (isCritical) {
+      this.showAreaWave(x, y + 12, 54, 0xff8a32, 0xfff3a3);
+      this.showExplosion(x, y + 12);
+    }
   }
 
   get damageTextStats(): { active: number; poolSize: number; totalShown: number } {

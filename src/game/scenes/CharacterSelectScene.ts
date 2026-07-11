@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GROWTH_PROFILE_LABELS } from '../data/BalanceData';
 import { CHARACTERS } from '../data/CharacterData';
+import { getCharacterVisualAsset } from '../data/VisualAssetData';
 import type { AttackType, CharacterData } from '../types/GameTypes';
 
 const ATTACK_LABELS: Readonly<Record<AttackType, string>> = {
@@ -36,7 +37,9 @@ export class CharacterSelectScene extends Phaser.Scene {
     this.selectedCharacter = firstCharacter;
     this.cardBackgrounds.clear();
     this.cameras.main.setBackgroundColor('#090d1a');
-    this.add.circle(360, 310, 290, 0x12304b, 0.15);
+    this.add.image(360, 560, 'stage-theme-01').setDisplaySize(720, 1000).setAlpha(0.28);
+    this.add.rectangle(360, 640, 720, 1280, 0x070b16, 0.63);
+    this.add.circle(360, 310, 290, 0x12304b, 0.12);
     this.add.text(360, 66, 'CENTER STAND', {
       fontFamily: 'Arial Black, sans-serif', fontSize: '48px', color: '#e9fdff', stroke: '#163a5c', strokeThickness: 9,
     }).setOrigin(0.5);
@@ -83,8 +86,9 @@ export class CharacterSelectScene extends Phaser.Scene {
     const background = this.add.rectangle(0, 0, 306, 184, 0x10192b, 0.97)
       .setStrokeStyle(2, 0x33445e, 0.8)
       .setInteractive({ useHandCursor: true });
-    const portraitAura = this.add.circle(-108, -48, 32, color, 0.16).setStrokeStyle(2, color, 0.55);
-    const portrait = this.add.circle(-108, -48, 17, color).setStrokeStyle(3, 0xf0ffff, 0.9);
+    const portraitAura = this.add.circle(-108, -43, 45, color, 0.13).setStrokeStyle(2, color, 0.5);
+    const portrait = this.add.image(-108, -43, getCharacterVisualAsset(character.id).textureKey)
+      .setDisplaySize(92, 92);
     const name = this.add.text(-62, -72, character.name, {
       fontFamily: 'Arial Black, sans-serif', fontSize: '20px', color: '#ffffff',
     }).setOrigin(0, 0);

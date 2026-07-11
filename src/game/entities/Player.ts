@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { getCharacterVisualTier } from '../data/CharacterVisualData';
+import { getCharacterVisualAsset } from '../data/VisualAssetData';
 import { calculateTotalTargetCount } from '../systems/TargetingSystem';
 import type { CharacterData, UpgradeId } from '../types/GameTypes';
 
@@ -24,6 +25,7 @@ export class Player extends Phaser.GameObjects.Container {
   private readonly aura: Phaser.GameObjects.Arc;
   private readonly core: Phaser.GameObjects.Arc;
   private readonly sight: Phaser.GameObjects.Triangle;
+  readonly sprite: Phaser.GameObjects.Image;
   private readonly ornaments: Phaser.GameObjects.Arc[] = [];
 
   constructor(scene: Phaser.Scene, x: number, y: number, character: CharacterData) {
@@ -45,11 +47,13 @@ export class Player extends Phaser.GameObjects.Container {
     this.aura = scene.add.circle(0, 0, 43, primaryColor, 0.14).setStrokeStyle(2, accentColor, 0.45);
     this.core = scene.add.circle(0, 0, 25, primaryColor).setStrokeStyle(5, accentColor, 0.9);
     this.sight = scene.add.triangle(8, -2, 0, 0, 24, 7, 0, 14, accentColor, 0.9);
+    this.sprite = scene.add.image(0, -8, getCharacterVisualAsset(character.id).textureKey).setScale(0.76);
     for (let i = 0; i < 6; i += 1) {
       this.ornaments.push(scene.add.circle(0, 0, 3, primaryColor, 0.9)
         .setStrokeStyle(2, accentColor, 0.9).setVisible(false));
     }
-    this.add([this.aura, ...this.ornaments, this.core, this.sight]);
+    this.core.setAlpha(0.34);
+    this.add([this.aura, ...this.ornaments, this.core, this.sprite, this.sight]);
     scene.add.existing(this);
     this.applyUpgradeVisual(0);
     scene.tweens.add({ targets: this.aura, scale: 1.18, alpha: 0.2, duration: 720, yoyo: true, repeat: -1 });
@@ -87,15 +91,35 @@ export class Player extends Phaser.GameObjects.Container {
         .setPosition(Math.cos(angle) * visual.ornamentDistance, Math.sin(angle) * visual.ornamentDistance)
         .setFillStyle(primaryColor, 0.92).setStrokeStyle(2, finalAccent, 0.95);
     }
+    this.sprite.setScale(0.76 + visual.tier * 0.025);
   }
 
   playAttackMotion(target?: { x: number; y: number }): void {
-    if (target) this.setRotation(Math.atan2(target.y - this.y, target.x - this.x));
+    if (target) {
+      this.sight.setRotation(Math.atan2(target.y - this.y, target.x - this.x));
+      this.sprite.setFlipX(target.x < this.x);
+    }
     const { durationMs, pulseScale } = this.character.attackMotion;
     this.scene.tweens.killTweensOf(this.core);
     this.scene.tweens.killTweensOf(this.sight);
+    this.scene.tweens.killTweensOf(this.sprite);
     this.core.setScale(1).setAlpha(1);
     this.sight.setScale(1).setAlpha(1);
+    this.sprite.setPosition(0, -8).setAngle(0).setAlpha(1);
+    const motion = this.character.attackMotion.style;
+    const spriteTargets = motion === 'BLADE_SWEEP'
+      ? { x: 15, angle: 12, scaleX: this.sprite.scaleX * 1.08, scaleY: this.sprite.scaleY * 0.94 }
+      : motion === 'RUNE_CAST' || motion === 'STORM_SURGE'
+        ? { y: -18, angle: motion === 'RUNE_CAST' ? -7 : 7, scaleX: this.sprite.scaleX * 1.08, scaleY: this.sprite.scaleY * 1.08 }
+        : { x: -9, angle: motion === 'NEEDLE_BURST' ? -4 : 3, scaleX: this.sprite.scaleX * 0.96, scaleY: this.sprite.scaleY * 1.04 };
+    this.scene.tweens.add({
+      targets: this.sprite,
+      ...spriteTargets,
+      duration: durationMs / 2,
+      yoyo: true,
+      ease: 'Back.easeOut',
+      onComplete: () => this.sprite.setPosition(0, -8).setAngle(0).setScale(0.76 + this.visualTier * 0.025),
+    });
     this.scene.tweens.add({
       targets: [this.core, this.sight],
       scaleX: pulseScale,

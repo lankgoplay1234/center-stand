@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { getCharacterById } from '../data/CharacterData';
 import { STAGE_TRANSITION_SPAWN_DELAY_MS } from '../data/StageData';
+import { getStageTheme } from '../data/VisualAssetData';
 import type { Enemy } from '../entities/Enemy';
 import { Player } from '../entities/Player';
 import { EffectsManager } from '../managers/EffectsManager';
@@ -11,6 +12,7 @@ import { StageManager } from '../managers/StageManager';
 import { UIManager } from '../managers/UIManager';
 import { SaveManager } from '../services/SaveManager';
 import { CombatSystem } from '../systems/CombatSystem';
+import { PLAYER_CRITICAL_CHANCE, resolveCriticalHit } from '../systems/CriticalHitSystem';
 import { canPlayerTakeDamage, revivePlayer } from '../systems/ReviveSystem';
 import { UpgradeSystem } from '../systems/UpgradeSystem';
 import type { RunStats, UpgradeId } from '../types/GameTypes';
@@ -26,6 +28,9 @@ export class GameScene extends Phaser.Scene {
   private combat!: CombatSystem;
   private ui!: UIManager;
   private gameEnded = false;
+  private arenaBackground!: Phaser.GameObjects.Image;
+  private currentThemeKey = '';
+  private criticalChance = PLAYER_CRITICAL_CHANCE;
   private awaitingRevive = false;
   private invulnerableUntil = 0;
   private run: RunStats = { gold: 0, earnedGold: 0, kills: 0, deaths: 0, elapsedSeconds: 0 };
@@ -83,8 +88,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createArena(): void {
-    const graphics = this.add.graphics().setDepth(0);
-    graphics.fillStyle(0x0d1425, 1).fillRect(0, 0, 720, 1000);
+    const initialTheme = getStageTheme(1);
+    this.currentThemeKey = initialTheme.textureKey;
+    this.arenaBackground = this.add.image(360, 500, initialTheme.textureKey)
+      .setDisplaySize(720, 1000).setDepth(-3);
+    this.add.rectangle(360, 500, 720, 1000, 0x050914, 0.3).setDepth(-2);
+    const graphics = this.add.graphics().setDepth(-1);
+    graphics.fillStyle(0x07101b, 0.12).fillRect(0, 0, 720, 1000);
     graphics.lineStyle(1, 0x29415a, 0.24);
     for (let x = 0; x <= 720; x += 60) graphics.lineBetween(x, 100, x, 1000);
     for (let y = 100; y <= 1000; y += 60) graphics.lineBetween(0, y, 720, y);
@@ -95,9 +105,10 @@ export class GameScene extends Phaser.Scene {
     if (!enemy.isAlive) return;
     const x = enemy.x;
     const y = enemy.y;
-    const result = enemy.takeDamage(damage);
+    const critical = resolveCriticalHit(damage, Math.random(), this.criticalChance);
+    const result = enemy.takeDamage(critical.damage);
     if (result.appliedDamage <= 0) return;
-    this.effects.showDamage(x, y - 20, result.appliedDamage);
+    this.effects.showDamage(x, y - 20, result.appliedDamage, undefined, critical.isCritical);
     this.effects.showHit(x, y);
     if (!result.died) {
       enemy.applyKnockback(this.player.x, this.player.y, this.player.knockbackForce);
@@ -175,7 +186,24 @@ export class GameScene extends Phaser.Scene {
     const clearedEnemies = this.enemies.clearForStageTransition(STAGE_TRANSITION_SPAWN_DELAY_MS);
     this.projectiles.destroyAll();
     if (clearedEnemies > 0) this.effects.showStageClear(this.player.x, this.player.y);
+    this.updateStageTheme(stage);
     this.ui.showStageTransition(stage);
+  }
+
+  private updateStageTheme(stage: number): void {
+    const theme = getStageTheme(stage);
+    if (theme.textureKey === this.currentThemeKey) return;
+    const previous = this.arenaBackground;
+    const next = this.add.image(360, 500, theme.textureKey).setDisplaySize(720, 1000)
+      .setDepth(-3).setAlpha(0);
+    this.arenaBackground = next;
+    this.currentThemeKey = theme.textureKey;
+    this.tweens.add({ targets: next, alpha: 1, duration: 650, ease: 'Sine.easeOut' });
+    this.tweens.add({
+      targets: previous, alpha: 0, duration: 650, ease: 'Sine.easeOut',
+      onComplete: () => previous.destroy(),
+    });
+    this.cameras.main.flash(120, (theme.accentColor >> 16) & 0xff, (theme.accentColor >> 8) & 0xff, theme.accentColor & 0xff, false);
   }
 
   private completeRun(): void {

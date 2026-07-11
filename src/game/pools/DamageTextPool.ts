@@ -14,18 +14,25 @@ export class DamageTextPool {
     for (let i = 0; i < safeInitialSize; i += 1) this.items.push(this.createItem());
   }
 
-  show(x: number, y: number, amount: number, color = '#ffffff'): void {
+  show(x: number, y: number, amount: number, color = '#fff1b8', isCritical = false): void {
     const item = this.acquire();
     this.scene.tweens.killTweensOf(item);
     this.shownCount += 1;
-    item.setText(`${Math.round(amount)}`).setColor(color).setPosition(x, y).setAlpha(1).setScale(1).setActive(true).setVisible(true);
+    const horizontalKick = isCritical ? (Math.random() < 0.5 ? -18 : 18) : (Math.random() - 0.5) * 10;
+    item.setText(isCritical ? `CRIT! ${Math.round(amount)}` : `${Math.round(amount)}`)
+      .setFontSize(isCritical ? 30 : 22)
+      .setStroke(isCritical ? '#7d1700' : '#38101c', isCritical ? 7 : 4)
+      .setColor(isCritical ? '#ffe45e' : color)
+      .setPosition(x, y).setAngle(isCritical ? (Math.random() - 0.5) * 12 : 0)
+      .setAlpha(1).setScale(isCritical ? 0.45 : 0.62).setActive(true).setVisible(true);
     this.scene.tweens.add({
       targets: item,
-      y: y - 50,
+      x: x + horizontalKick,
+      y: y - (isCritical ? 78 : 54),
       alpha: 0,
-      scale: 1.18,
-      duration: 480,
-      ease: 'Cubic.easeOut',
+      scale: isCritical ? 1.55 : 1.2,
+      duration: isCritical ? 680 : 500,
+      ease: isCritical ? 'Back.easeOut' : 'Cubic.easeOut',
       onComplete: () => item.setActive(false).setVisible(false),
     });
   }

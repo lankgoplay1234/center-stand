@@ -140,6 +140,7 @@ test('triggers Blade Fury on the fourth valid melee attack without duplicate dam
     const game = window.__CENTER_STAND_GAME__;
     const scene = game?.scene.getScene('GameScene') as unknown as {
       player: { x: number; y: number; attackDamage: number; knockbackForce: number };
+      criticalChance: number;
       enemies: {
         activeEnemies: Array<{
           health: number;
@@ -149,6 +150,7 @@ test('triggers Blade Fury on the fourth valid melee attack without duplicate dam
       };
       combat: { update: (time: number) => void };
     };
+    scene.criticalChance = 0;
     scene.player.knockbackForce = 0;
     const targets = scene.enemies.activeEnemies.slice(0, 3);
     for (let index = 0; index < targets.length; index += 1) {
