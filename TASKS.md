@@ -27,7 +27,7 @@
 - ID: GAME-003
 - 작업명: Playwright 전투 스모크 테스트
 - 우선순위: HIGH
-- 상태: REVIEW
+- 상태: DONE
 - 설명: 시작, 전투 진입, 업그레이드, 게임오버 재시작의 브라우저 테스트를 추가한다.
 - 완료 조건: 모바일/데스크톱 뷰포트에서 핵심 흐름 테스트가 통과한다.
 - 관련 파일: `package.json`, `playwright.config.ts`, `tests/e2e/`
