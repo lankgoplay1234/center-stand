@@ -1,0 +1,191 @@
+import Phaser from 'phaser';
+import { getCharacterById } from '../data/CharacterData';
+import type { Enemy } from '../entities/Enemy';
+import { Player } from '../entities/Player';
+import { EffectsManager } from '../managers/EffectsManager';
+import { AudioManager } from '../managers/AudioManager';
+import { EnemyManager } from '../managers/EnemyManager';
+import { ProjectileManager } from '../managers/ProjectileManager';
+import { StageManager } from '../managers/StageManager';
+import { UIManager } from '../managers/UIManager';
+import { SaveManager } from '../services/SaveManager';
+import { CombatSystem } from '../systems/CombatSystem';
+import { canPlayerTakeDamage, revivePlayer } from '../systems/ReviveSystem';
+import { UpgradeSystem } from '../systems/UpgradeSystem';
+import type { RunStats, UpgradeId } from '../types/GameTypes';
+
+export class GameScene extends Phaser.Scene {
+  private player!: Player;
+  private enemies!: EnemyManager;
+  private projectiles!: ProjectileManager;
+  private stages!: StageManager;
+  private effects!: EffectsManager;
+  private audio!: AudioManager;
+  private upgrades!: UpgradeSystem;
+  private combat!: CombatSystem;
+  private ui!: UIManager;
+  private gameEnded = false;
+  private awaitingRevive = false;
+  private invulnerableUntil = 0;
+  private run: RunStats = { gold: 0, earnedGold: 0, kills: 0, deaths: 0, elapsedSeconds: 0 };
+
+  constructor() {
+    super('GameScene');
+  }
+
+  create(data: { characterId?: string }): void {
+    this.gameEnded = false;
+    this.awaitingRevive = false;
+    this.invulnerableUntil = 0;
+    this.run = { gold: 0, earnedGold: 0, kills: 0, deaths: 0, elapsedSeconds: 0 };
+    this.cameras.main.setBackgroundColor('#090d1a');
+    this.createArena();
+    this.player = new Player(this, 360, 595, getCharacterById(data.characterId ?? 'arc-ranger')).setDepth(10);
+    this.effects = new EffectsManager(this);
+    this.audio = new AudioManager();
+    this.stages = new StageManager(
+      (stage) => this.ui.showStageTransition(stage),
+      () => this.completeRun(),
+    );
+    this.enemies = new EnemyManager(this, this.player, {
+      onPlayerHit: (damage, x, y) => this.handlePlayerHit(damage, x, y),
+    });
+    this.projectiles = new ProjectileManager(this, (enemy, damage) => this.handleEnemyHit(enemy, damage));
+    this.upgrades = new UpgradeSystem(this.player);
+    this.combat = new CombatSystem(this.player, this.enemies, this.projectiles, {
+      applyInstantDamage: (enemy, damage) => this.handleEnemyHit(enemy, damage),
+      emitEffect: (effect) => this.effects.showAttackEffect(effect),
+    });
+    this.ui = new UIManager(
+      this,
+      (id) => this.purchaseUpgrade(id),
+      () => this.runStressTest(),
+      () => this.audio.toggleMuted(),
+    );
+    this.ui.showStageTransition(1);
+    void this.audio.unlock();
+    this.input.once('pointerdown', () => void this.audio.unlock());
+    this.input.keyboard?.once('keydown', () => void this.audio.unlock());
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.audio.destroy());
+  }
+
+  update(time: number, delta: number): void {
+    if (this.gameEnded || this.awaitingRevive) return;
+    const safeDelta = Math.min(delta, 50);
+    this.run.elapsedSeconds += safeDelta / 1000;
+    this.stages.update(safeDelta);
+    if (this.gameEnded) return;
+    this.enemies.update(time, safeDelta, this.stages.stats);
+    this.combat.update(time);
+    this.projectiles.update(safeDelta);
+    this.ui.update(this.player, this.run, this.stages.currentStage, this.upgrades, this.enemies.activeCount, this.projectiles.activeCount);
+  }
+
+  private createArena(): void {
+    const graphics = this.add.graphics().setDepth(0);
+    graphics.fillStyle(0x0d1425, 1).fillRect(0, 0, 720, 1000);
+    graphics.lineStyle(1, 0x29415a, 0.24);
+    for (let x = 0; x <= 720; x += 60) graphics.lineBetween(x, 100, x, 1000);
+    for (let y = 100; y <= 1000; y += 60) graphics.lineBetween(0, y, 720, y);
+    graphics.lineStyle(2, 0x4a839d, 0.12).strokeCircle(360, 595, 360);
+  }
+
+  private handleEnemyHit(enemy: Enemy, damage: number): void {
+    if (!enemy.isAlive) return;
+    const x = enemy.x;
+    const y = enemy.y;
+    const result = enemy.takeDamage(damage);
+    if (result.appliedDamage <= 0) return;
+    this.effects.showDamage(x, y - 20, result.appliedDamage);
+    this.effects.showHit(x, y);
+    if (!result.died) {
+      enemy.applyKnockback(this.player.x, this.player.y, this.player.knockbackForce);
+      return;
+    }
+
+    this.run.gold += enemy.goldReward;
+    this.run.earnedGold += enemy.goldReward;
+    this.run.kills += 1;
+    this.effects.showExplosion(x, y);
+    this.enemies.release(enemy);
+    this.cameras.main.shake(55, 0.0014);
+  }
+
+  private handlePlayerHit(rawDamage: number, x: number, y: number): void {
+    if (!canPlayerTakeDamage(this.time.now, this.invulnerableUntil)) return;
+    const applied = this.player.takeDamage(rawDamage);
+    this.effects.showDamage(this.player.x, this.player.y - 42, applied, '#ff6b83');
+    this.effects.showHit(x, y);
+    this.cameras.main.shake(75, 0.0035);
+    if (this.player.health <= 0) this.handlePlayerDeath();
+  }
+
+  private handlePlayerDeath(): void {
+    if (this.awaitingRevive || this.gameEnded) return;
+    this.awaitingRevive = true;
+    this.run.deaths += 1;
+    this.player.setAlpha(0.45);
+    this.ui.showDeathOptions(
+      { deaths: this.run.deaths, gold: this.run.gold, stage: this.stages.currentStage },
+      () => this.revive(),
+      () => this.restartFromCharacterSelect(),
+    );
+  }
+
+  private revive(): void {
+    this.invulnerableUntil = revivePlayer(this.player, this.time.now);
+    this.awaitingRevive = false;
+    this.ui.hideDeathOptions();
+    this.tweens.killTweensOf(this.player);
+    this.player.setAlpha(1);
+    this.tweens.add({
+      targets: this.player,
+      alpha: 0.35,
+      duration: 120,
+      yoyo: true,
+      repeat: 7,
+      onComplete: () => this.player.setAlpha(1),
+    });
+  }
+
+  private restartFromCharacterSelect(): void {
+    this.awaitingRevive = false;
+    this.ui.hideDeathOptions();
+    this.enemies.destroyAll();
+    this.projectiles.destroyAll();
+    this.scene.start('CharacterSelectScene');
+  }
+
+  private purchaseUpgrade(id: UpgradeId): void {
+    const result = this.upgrades.purchase(id, this.run.gold);
+    if (!result.success) return;
+    this.run.gold = result.gold;
+    this.audio.playUpgradeSuccess();
+    this.ui.pulseUpgrade(id);
+    this.cameras.main.flash(65, 30, 150, 170, false);
+  }
+
+  private runStressTest(): void {
+    const missing = Math.max(0, 100 - this.enemies.activeCount);
+    this.enemies.spawnBurst(missing, this.stages.stats);
+  }
+
+  private completeRun(): void {
+    if (this.gameEnded) return;
+    this.gameEnded = true;
+    this.enemies.destroyAll();
+    this.projectiles.destroyAll();
+    const bestSeconds = SaveManager.saveBestSeconds(this.run.elapsedSeconds);
+    this.time.delayedCall(400, () => this.scene.start('GameOverScene', {
+      characterId: this.player.character.id,
+      characterName: this.player.character.name,
+      completed: true,
+      deaths: this.run.deaths,
+      survivalSeconds: this.run.elapsedSeconds,
+      stage: this.stages.currentStage,
+      kills: this.run.kills,
+      earnedGold: this.run.earnedGold,
+      bestSeconds,
+    }));
+  }
+}
