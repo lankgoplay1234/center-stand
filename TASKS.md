@@ -49,7 +49,7 @@
 - ID: FX-001
 - 작업명: 모든 공격 전략 피해 숫자 표시 검수·보강
 - 우선순위: HIGH
-- 상태: REVIEW
+- 상태: DONE
 - 설명: 이미 구현된 DamageTextPool을 기준으로 여섯 공격 전략이 적을 타격할 때마다 피해 위치에 작은 피해 숫자가 빠짐없이 표시되는지 검수하고, 대량 전투에서도 겹침과 가독성을 보강한다.
 - 완료 조건: SINGLE_TARGET, MULTI_TARGET, AREA_MELEE, AREA_MAGIC, PIERCING, CHAIN 모두 적 위치에 실제 적용 피해량을 표시하며 100 적 상태에서 풀링과 FPS가 유지된다.
 - 관련 파일: `GameScene.ts`, `EffectsManager.ts`, `DamageTextPool.ts`, `strategies/`

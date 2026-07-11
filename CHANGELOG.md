@@ -9,6 +9,7 @@
 - `GAME-005` 6개 캐릭터 선택과 AREA_MAGIC·PIERCING·CHAIN 전략 완료 조건 최종 검수
 - `GAME-003` Playwright 전투 스모크 테스트 완료 조건 최종 검수
 - `GAME-006` 전투 업그레이드 6종의 구매·능력치 반영·상태 유지 완료 조건 최종 검수
+- `FX-001` 여섯 공격 전략의 실제 피해 숫자와 100적 풀링 상한 완료 조건 최종 검수
 
 ### Verified
 
@@ -16,6 +17,7 @@
 - CharacterData·AttackStrategy 관련 27개 테스트와 desktop/mobile 캐릭터 선택·전투 진입 2개 통과
 - Playwright desktop/mobile 핵심 전투 22개 통과, 전용 10분 endurance 2개 의도적 건너뜀
 - UpgradeData·UpgradeSystem 10개 테스트와 desktop/mobile 업그레이드 흐름 8개 통과
+- 여섯 전략 피해 전달·실제 피해량 24개 테스트와 desktop/mobile 100적 피해 숫자 풀 검사 통과
 
 ## 0.26.0 - 2026-07-12
 
