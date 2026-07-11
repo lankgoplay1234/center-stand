@@ -291,17 +291,37 @@ export class EffectsManager {
   ): void {
     const angle = Math.atan2(effect.targetY - effect.y, effect.targetX - effect.x);
     const halfArc = effect.arcDegrees * Math.PI / 360;
-    const cone = this.acquireLine().setPosition(effect.x, effect.y);
-    cone.fillStyle(fillColor, 0.2).lineStyle(5, strokeColor, 0.95);
-    cone.beginPath().moveTo(0, 0).arc(0, 0, effect.radius, angle - halfArc, angle + halfArc)
-      .closePath().fillPath().strokePath();
+    const sweep = this.acquireLine().setPosition(effect.x, effect.y);
+    const isBlade = effect.type === 'AREA_MELEE';
+    const bandScales = isBlade ? [0.36, 0.58, 0.82] : [0.3, 0.5, 0.72];
+    for (let index = 0; index < bandScales.length; index += 1) {
+      const radius = effect.radius * bandScales[index]!;
+      const inset = halfArc * (isBlade ? index * 0.1 : 0.18);
+      sweep.lineStyle(10 - index * 3, index === bandScales.length - 1 ? strokeColor : fillColor, 0.42 + index * 0.2);
+      sweep.beginPath().arc(0, 0, radius, angle - halfArc + inset, angle + halfArc - inset).strokePath();
+    }
+    if (!isBlade) {
+      for (let index = -2; index <= 2; index += 1) {
+        const streakAngle = angle + halfArc * index / 2.7;
+        const innerRadius = effect.radius * (0.2 + Math.abs(index) * 0.03);
+        const outerRadius = effect.radius * (0.66 + (2 - Math.abs(index)) * 0.08);
+        sweep.lineStyle(index === 0 ? 5 : 3, index === 0 ? strokeColor : fillColor, index === 0 ? 0.92 : 0.62)
+          .lineBetween(
+            Math.cos(streakAngle) * innerRadius,
+            Math.sin(streakAngle) * innerRadius,
+            Math.cos(streakAngle) * outerRadius,
+            Math.sin(streakAngle) * outerRadius,
+          );
+      }
+    }
     this.scene.tweens.add({
-      targets: cone,
-      scale: 1.08,
+      targets: sweep,
+      scale: isBlade ? 1.14 : 1.08,
+      rotation: isBlade ? 0.08 : 0.03,
       alpha: 0,
-      duration: effect.type === 'AREA_MELEE' ? 180 : 140,
+      duration: isBlade ? 180 : 140,
       ease: 'Quad.easeOut',
-      onComplete: () => cone.clear().setVisible(false).setActive(false),
+      onComplete: () => sweep.clear().setVisible(false).setActive(false),
     });
   }
 

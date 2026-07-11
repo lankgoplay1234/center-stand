@@ -84,13 +84,13 @@ describe('UpgradeSystem', () => {
     const player = createPlayer({ attackRange: 1.25 }, ARC_OVERCHARGE);
     const upgrades = new UpgradeSystem(player);
 
-    expect(upgrades.getEffectLabel('attackRange')).toBe('반경 200 / 최대 300');
+    expect(upgrades.getEffectLabel('attackRange')).toBe('범위 200/300 · 치명타 8.0%');
     expect(upgrades.purchase('attackRange', 100)).toEqual({ success: true, gold: 61 });
     expect(player.specialAbilityLevel).toBe(1);
     const expectedRange = calculateAttackRangeAtLevel(200, 300, 1, 1.25);
     expect(player.attackRange).toBeCloseTo(expectedRange, 5);
     expect(player.attackAreaRadius).toBe(40);
-    expect(upgrades.getEffectLabel('attackRange')).toBe(`반경 ${Math.round(expectedRange)} / 최대 300`);
+    expect(upgrades.getEffectLabel('attackRange')).toBe(`범위 ${Math.round(expectedRange)}/300 · 치명타 8.2%`);
   });
 
   it('allows level 98 to 99 and rejects every purchase beyond the cap', () => {

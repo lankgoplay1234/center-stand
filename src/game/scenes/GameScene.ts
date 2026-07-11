@@ -21,6 +21,7 @@ import { scaleGameDelta, toggleGameSpeed, type GameSpeed } from '../systems/Game
 import { recommendUpgrade } from '../systems/UpgradeRecommendationSystem';
 import { StageDeathTracker } from '../systems/StageDeathTracker';
 import type { RunStats, UpgradeId } from '../types/GameTypes';
+import { calculatePlayerCriticalChance } from '../data/CriticalHitData';
 
 export class GameScene extends Phaser.Scene {
   private player!: Player;
@@ -57,6 +58,7 @@ export class GameScene extends Phaser.Scene {
     this.invulnerableUntil = 0;
     this.gameSpeed = 1;
     this.simulationTime = 0;
+    this.criticalChance = calculatePlayerCriticalChance(0);
     this.stageDeaths.enterStage(1);
     this.time.timeScale = 1;
     this.tweens.timeScale = 1;
@@ -284,7 +286,10 @@ export class GameScene extends Phaser.Scene {
     this.run.gold = result.gold;
     this.audio.playUpgradeSuccess();
     this.ui.pulseUpgrade(id);
-    if (id === 'attackRange') this.updateAttackRangeIndicator();
+    if (id === 'attackRange') {
+      this.updateAttackRangeIndicator();
+      this.criticalChance = calculatePlayerCriticalChance(this.upgrades.getState(id).level);
+    }
     this.refreshUI(!this.awaitingRevive);
     this.cameras.main.flash(65, 30, 150, 170, false);
   }

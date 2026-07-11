@@ -12,6 +12,7 @@ import {
 import { calculateStageStats } from './StageData';
 import { UPGRADE_DEFINITIONS, UPGRADE_ORDER, calculateUpgradeCost } from './UpgradeData';
 import { calculateAttackRangeAtLevel } from './AttackRangeData';
+import { calculateEffectiveKnockbackForce } from '../systems/KnockbackSystem';
 
 export interface DeathSimulationSummary {
   samples: readonly number[];
@@ -105,7 +106,7 @@ function calculateExposureMultiplier(character: CharacterData, allocation: Upgra
     character.upgradeEfficiency.attackRange,
   );
   const rangeExposure = Math.min(1.35, Math.max(0.75, 300 / attackRange));
-  const knockbackMitigation = 1 - Math.min(0.17, character.knockbackForce / 200);
+  const knockbackMitigation = 1 - Math.min(0.17, calculateEffectiveKnockbackForce(character.knockbackForce) / 200);
   return rangeExposure * knockbackMitigation * ROLE_EXPOSURE[character.attackType];
 }
 

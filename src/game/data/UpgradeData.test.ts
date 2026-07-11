@@ -56,6 +56,7 @@ describe('upgrade cost', () => {
 
   it('names the former special upgrade as attack range', () => {
     expect(UPGRADE_DEFINITIONS.attackRange.name).toBe('공격가능범위');
+    expect(UPGRADE_DEFINITIONS.attackRange.effectLabel(1)).toContain('치명타 +0.2%');
     expect(UPGRADE_DEFINITIONS).not.toHaveProperty('specialAbility');
   });
 });

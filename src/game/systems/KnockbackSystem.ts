@@ -10,6 +10,12 @@ export interface KnockbackBounds {
   maxY: number;
 }
 
+export const KNOCKBACK_DISTANCE_MULTIPLIER = 3;
+
+export function calculateEffectiveKnockbackForce(force: number): number {
+  return Math.max(0, force) * KNOCKBACK_DISTANCE_MULTIPLIER;
+}
+
 export function calculateKnockbackPosition(
   target: KnockbackPoint,
   origin: KnockbackPoint,

@@ -8,6 +8,7 @@ import { calculateAttackRangeAtLevel } from '../data/AttackRangeData';
 import type { Player } from '../entities/Player';
 import type { UpgradeId, UpgradeState } from '../types/GameTypes';
 import type { UpgradeAllocation } from '../data/RunBalanceSimulation';
+import { calculatePlayerCriticalChance, formatCriticalChance } from '../data/CriticalHitData';
 
 export class UpgradeSystem {
   private readonly states: Record<UpgradeId, UpgradeState> = {
@@ -32,7 +33,7 @@ export class UpgradeSystem {
     const state = this.states[id];
     const efficiency = this.getEfficiency(id);
     if (id === 'attackRange') {
-      return `반경 ${Math.round(this.player.attackRange)} / 최대 ${Math.round(this.player.character.maxAttackRange)}`;
+      return `범위 ${Math.round(this.player.attackRange)}/${Math.round(this.player.character.maxAttackRange)} · 치명타 ${formatCriticalChance(calculatePlayerCriticalChance(state.level))}`;
     }
     return state.definition.effectLabel(state.level, efficiency);
   }

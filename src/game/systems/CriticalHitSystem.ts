@@ -1,5 +1,7 @@
-export const PLAYER_CRITICAL_CHANCE = 0.08;
-export const PLAYER_CRITICAL_MULTIPLIER = 1.75;
+import { BASE_CRITICAL_CHANCE, CRITICAL_DAMAGE_MULTIPLIER } from '../data/CriticalHitData';
+
+export const PLAYER_CRITICAL_CHANCE = BASE_CRITICAL_CHANCE;
+export const PLAYER_CRITICAL_MULTIPLIER = CRITICAL_DAMAGE_MULTIPLIER;
 
 export interface CriticalHitResult {
   damage: number;

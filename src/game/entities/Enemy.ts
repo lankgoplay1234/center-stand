@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { calculateAppliedDamage, type DamageResult } from '../systems/DamageSystem';
-import { calculateKnockbackPosition } from '../systems/KnockbackSystem';
+import { calculateEffectiveKnockbackForce, calculateKnockbackPosition } from '../systems/KnockbackSystem';
 import { getEnemyVisualProfile } from '../data/EnemyData';
 import type { EnemyData } from '../types/GameTypes';
 
@@ -82,7 +82,7 @@ export class Enemy extends Phaser.GameObjects.Arc {
     const next = calculateKnockbackPosition(
       this,
       { x: originX, y: originY },
-      force,
+      calculateEffectiveKnockbackForce(force),
       {
         minX: -margin,
         maxX: this.scene.scale.width + margin,

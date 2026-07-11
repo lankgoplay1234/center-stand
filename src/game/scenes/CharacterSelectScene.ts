@@ -4,6 +4,7 @@ import { CHARACTERS } from '../data/CharacterData';
 import { UPGRADE_DEFINITIONS } from '../data/UpgradeData';
 import { getCharacterVisualAsset } from '../data/VisualAssetData';
 import type { AttackType, CharacterData } from '../types/GameTypes';
+import { BASE_CRITICAL_CHANCE, formatCriticalChance } from '../data/CriticalHitData';
 
 const ATTACK_LABELS: Readonly<Record<AttackType, string>> = {
   SINGLE_TARGET: '원거리 · 정밀 사격',
@@ -103,9 +104,9 @@ export class CharacterSelectScene extends Phaser.Scene {
       `추천: ${UPGRADE_DEFINITIONS[character.upgradeFocus.primary].name} → ${UPGRADE_DEFINITIONS[character.upgradeFocus.secondary].name}`,
       { fontFamily: 'Arial, sans-serif', fontSize: '12px', color: '#fff0a3', fontStyle: 'bold' },
     ).setOrigin(0, 0);
-    const stats = this.add.text(-132, 66,
-      `HP ${character.maxHealth}  ATK ${character.attackDamage}  SPD ${character.attackSpeed}  RNG ${character.attackRange}`,
-      { fontFamily: 'Arial, sans-serif', fontSize: '12px', color: '#d6e5f2' },
+    const stats = this.add.text(-132, 57,
+      `HP ${character.maxHealth}  ATK ${character.attackDamage}  SPD ${character.attackSpeed}\nRNG ${character.attackRange}  CRIT ${formatCriticalChance(BASE_CRITICAL_CHANCE)}`,
+      { fontFamily: 'Arial, sans-serif', fontSize: '12px', color: '#d6e5f2', lineSpacing: 2 },
     ).setOrigin(0, 0);
     const card = this.add.container(x, y, [background, portraitAura, portrait, name, role, description, focus, stats]);
     this.cardBackgrounds.set(character.id, background);

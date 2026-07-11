@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { calculateKnockbackPosition } from './KnockbackSystem';
+import {
+  KNOCKBACK_DISTANCE_MULTIPLIER,
+  calculateEffectiveKnockbackForce,
+  calculateKnockbackPosition,
+} from './KnockbackSystem';
 
 describe('calculateKnockbackPosition', () => {
+  it('triples configured character knockback while preserving zero exclusions', () => {
+    expect(KNOCKBACK_DISTANCE_MULTIPLIER).toBe(3);
+    expect(calculateEffectiveKnockbackForce(12)).toBe(36);
+    expect(calculateEffectiveKnockbackForce(0)).toBe(0);
+  });
   it('pushes a target directly away from the attacker', () => {
     expect(calculateKnockbackPosition({ x: 30, y: 40 }, { x: 0, y: 0 }, 10)).toEqual({ x: 36, y: 48 });
   });

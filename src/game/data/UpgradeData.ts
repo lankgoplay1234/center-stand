@@ -1,4 +1,5 @@
 import type { UpgradeDefinition, UpgradeId } from '../types/GameTypes';
+import { CRITICAL_CHANCE_PER_ATTACK_RANGE_LEVEL } from './CriticalHitData';
 
 function formatValue(value: number): string {
   return Number(value.toFixed(2)).toString();
@@ -58,7 +59,10 @@ export const UPGRADE_DEFINITIONS: Readonly<Record<UpgradeId, UpgradeDefinition>>
     costGrowth: 1.04,
     effectPerLevel: 1,
     maxLevel: MAX_UPGRADE_LEVEL,
-    effectLabel: (level) => `공격 범위 강화 ${Math.max(0, Math.floor(level))}회`,
+    effectLabel: (level) => {
+      const safeLevel = Math.max(0, Math.floor(level));
+      return `범위 강화 ${safeLevel}회 · 치명타 +${(safeLevel * CRITICAL_CHANCE_PER_ATTACK_RANGE_LEVEL * 100).toFixed(1)}%`;
+    },
   },
 };
 

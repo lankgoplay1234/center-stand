@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { getStageKillTarget, STAGE_TRANSITION_SPAWN_DELAY_MS } from '../../src/game/data/StageData';
 import { calculateAttackRangeAtLevel } from '../../src/game/data/AttackRangeData';
 import { UPGRADE_DEFINITIONS, UPGRADE_ORDER, calculateUpgradeEffect } from '../../src/game/data/UpgradeData';
+import { KNOCKBACK_DISTANCE_MULTIPLIER } from '../../src/game/systems/KnockbackSystem';
 
 const GAME_WIDTH = 720;
 const GAME_HEIGHT = 1280;
@@ -58,6 +59,18 @@ test.beforeEach(async ({ page }) => {
 test('selects all six characters and enters combat', async ({ page }) => {
   const runtimeErrors: string[] = [];
   page.on('pageerror', (error) => runtimeErrors.push(error.message));
+
+  const criticalLabels = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('CharacterSelectScene') as unknown as
+      { children: { list: Array<{ text?: unknown; list?: Array<{ text?: unknown }> }> } } | undefined;
+    return scene?.children.list
+      .flatMap((child) => child.list ?? [child])
+      .map((child) => child.text)
+      .filter((text): text is string => typeof text === 'string')
+      .filter((text) => text.includes('CRIT')) ?? [];
+  });
+  expect(criticalLabels).toHaveLength(6);
+  expect(criticalLabels.every((label) => label.includes('CRIT 8.0%'))).toBe(true);
 
   for (const card of CHARACTER_CARDS) {
     await clickGamePoint(page, card.x, card.y);
@@ -339,7 +352,8 @@ test('renders the real attack range and grows the same indicator with the range 
   });
   expect(before.indicatorRadius).toBe(before.playerRange);
   expect(before.label).toContain('공격가능범위');
-  expect(before.label).toContain(`최대 ${before.maxRange}`);
+  expect(before.label).toContain(`/${before.maxRange}`);
+  expect(before.label).toContain('치명타 8.0%');
 
   await clickGamePoint(page, 588, 1182);
   const after = await page.evaluate(() => {
@@ -347,11 +361,15 @@ test('renders the real attack range and grows the same indicator with the range 
       attackRangeIndicator: { radius: number };
       player: { attackRange: number };
       upgrades: { getState: (id: string) => { level: number } };
+      criticalChance: number;
+      ui: { buttons: Map<string, { text: { text: string } }> };
     };
     return {
       indicatorRadius: scene.attackRangeIndicator.radius,
       playerRange: scene.player.attackRange,
       level: scene.upgrades.getState('attackRange').level,
+      criticalChance: scene.criticalChance,
+      label: scene.ui.buttons.get('attackRange')?.text.text ?? '',
       reused: scene.attackRangeIndicator
         === (window as unknown as { __ATTACK_RANGE_INDICATOR__?: unknown }).__ATTACK_RANGE_INDICATOR__,
     };
@@ -360,6 +378,8 @@ test('renders the real attack range and grows the same indicator with the range 
   expect(after.reused).toBe(true);
   expect(after.indicatorRadius).toBe(after.playerRange);
   expect(after.playerRange).toBeGreaterThan(before.playerRange);
+  expect(after.criticalChance).toBeCloseTo(0.082);
+  expect(after.label).toContain('치명타 8.2%');
 });
 
 test('renders a distinct pooled attack motion for every character', async ({ page }) => {
@@ -520,7 +540,7 @@ test('pushes a standard enemy away from the player when hit', async ({ page }) =
     scene.handleEnemyHit(enemy, 1);
     return { movedBy: enemy.x - beforeX, force: scene.player.knockbackForce };
   });
-  expect(movement.movedBy).toBeCloseTo(movement.force);
+  expect(movement.movedBy).toBeCloseTo(movement.force * KNOCKBACK_DISTANCE_MULTIPLIER);
 
   const damageTextStats = await page.evaluate(() => {
     const game = window.__CENTER_STAND_GAME__;
