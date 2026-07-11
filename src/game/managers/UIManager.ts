@@ -87,8 +87,11 @@ export class UIManager {
       const state = upgrades.getState(id);
       const available = canUpgrade(state.definition, state.level);
       const affordable = available && run.gold >= state.currentCost;
+      const focusPrefix = id === player.character.upgradeFocus.primary
+        ? '★ '
+        : id === player.character.upgradeFocus.secondary ? '◇ ' : '';
       button.text.setText(
-        `${state.definition.name}  Lv.${state.level}\n${upgrades.getEffectLabel(id)}\n${available ? `비용 ${state.currentCost} G` : 'MAX LEVEL'}`,
+        `${focusPrefix}${state.definition.name}  Lv.${state.level}\n${upgrades.getEffectLabel(id)}\n${available ? `비용 ${state.currentCost} G` : 'MAX LEVEL'}`,
       );
       button.background.setFillStyle(affordable ? 0x173d4b : 0x1a2030, 1)
         .setStrokeStyle(2, affordable ? 0x5be6e6 : 0x3a4358, affordable ? 0.95 : 0.65);

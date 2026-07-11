@@ -56,6 +56,23 @@ describe('character data', () => {
     expect(byId.get('storm-conductor')?.knockbackForce).toBe(0);
   });
 
+  it('gives every role an explicit primary and secondary upgrade focus', () => {
+    expect(Object.fromEntries(CHARACTERS.map((character) => [character.id, character.upgradeFocus.primary]))).toEqual({
+      'arc-ranger': 'attackDamage',
+      'blade-warden': 'maxHealth',
+      'bastion-gunner': 'defense',
+      'rune-mage': 'attackSpeed',
+      'needle-striker': 'attackDamage',
+      'storm-conductor': 'targetCount',
+    });
+    for (const character of CHARACTERS) {
+      expect(character.upgradeFocus.primary).not.toBe(character.upgradeFocus.secondary);
+      expect(character.upgradeEfficiency[character.upgradeFocus.primary]).toBe(
+        Math.max(...Object.values(character.upgradeEfficiency)),
+      );
+    }
+  });
+
   it('assigns the first unique ability to the Arc Ranger and validates its attack contract', () => {
     const arcRanger = CHARACTERS.find((character) => character.id === 'arc-ranger')!;
     expect(arcRanger.specialAbility).toEqual(ARC_OVERCHARGE);

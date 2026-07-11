@@ -8,10 +8,10 @@ export const CHARACTERS: readonly CharacterData[] = [
     id: 'arc-ranger',
     name: '아크 레인저',
     description: '가장 가까운 적에게 에너지 탄환을 자동 발사합니다.',
-    maxHealth: 180,
+    maxHealth: 175,
     defense: 2,
-    attackDamage: 24,
-    attackSpeed: 2.2,
+    attackDamage: 28,
+    attackSpeed: 2,
     attackRange: 360,
     attackAreaRadius: 24,
     baseTargetCount: 1,
@@ -21,18 +21,19 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.ARC_SHOT,
     growthProfile: 'STEADY',
     upgradeEfficiency: {
-      attackDamage: 1, attackSpeed: 1, targetCount: 1, defense: 1, maxHealth: 1, specialAbility: 1,
+      attackDamage: 1.4, attackSpeed: 1, targetCount: 0.65, defense: 0.85, maxHealth: 0.8, specialAbility: 1.3,
     },
+    upgradeFocus: { primary: 'attackDamage', secondary: 'specialAbility', description: '공격력으로 한 발 처치선을 앞당기는 정밀 화력형' },
     specialAbility: ARC_OVERCHARGE,
   },
   {
     id: 'blade-warden',
     name: '블레이드 워든',
     description: '주변을 휩쓰는 검격으로 가까운 모든 적을 공격합니다.',
-    maxHealth: 250,
+    maxHealth: 230,
     defense: 5,
-    attackDamage: 34,
-    attackSpeed: 1.25,
+    attackDamage: 32,
+    attackSpeed: 1.2,
     attackRange: 145,
     attackAreaRadius: 145,
     baseTargetCount: 1,
@@ -42,17 +43,18 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.BLADE_SWEEP,
     growthProfile: 'EARLY',
     upgradeEfficiency: {
-      attackDamage: 0.8, attackSpeed: 0.85, targetCount: 1, defense: 0.85, maxHealth: 0.85, specialAbility: 0.8,
+      attackDamage: 0.75, attackSpeed: 0.75, targetCount: 0.6, defense: 0.9, maxHealth: 1.3, specialAbility: 0.8,
     },
+    upgradeFocus: { primary: 'maxHealth', secondary: 'defense', description: '최대 체력으로 근접 노출을 버티는 생존형' },
     specialAbility: BLADE_FURY,
   },
   {
     id: 'bastion-gunner',
     name: '바스티온',
     description: '높은 체력과 방어력으로 버티며 여러 적을 동시에 사격합니다.',
-    maxHealth: 320,
-    defense: 8,
-    attackDamage: 15,
+    maxHealth: 300,
+    defense: 10,
+    attackDamage: 14,
     attackSpeed: 1.45,
     attackRange: 295,
     attackAreaRadius: 24,
@@ -63,20 +65,21 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.BASTION_VOLLEY,
     growthProfile: 'EARLY',
     upgradeEfficiency: {
-      attackDamage: 0.85, attackSpeed: 0.85, targetCount: 1, defense: 0.8, maxHealth: 0.8, specialAbility: 0.85,
+      attackDamage: 0.75, attackSpeed: 0.75, targetCount: 1, defense: 1.3, maxHealth: 0.75, specialAbility: 0.55,
     },
+    upgradeFocus: { primary: 'defense', secondary: 'targetCount', description: '방어력으로 피해를 줄이며 다중 포화를 유지하는 탱커형' },
     specialAbility: rangeAreaBoost('saturation-fire', '분산 포화', '특수 강화가 사격 사거리와 효과 범위를 확장합니다.'),
   },
   {
     id: 'rune-mage',
     name: '룬 메이지',
     description: '가장 가까운 적의 위치에 폭발하는 원형 마법을 시전합니다.',
-    maxHealth: 150,
+    maxHealth: 145,
     defense: 1,
-    attackDamage: 22,
-    attackSpeed: 1.05,
-    attackRange: 335,
-    attackAreaRadius: 105,
+    attackDamage: 20,
+    attackSpeed: 1,
+    attackRange: 340,
+    attackAreaRadius: 110,
     baseTargetCount: 1,
     projectileSpeed: 1,
     knockbackForce: 0,
@@ -84,18 +87,19 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.RUNE_CAST,
     growthProfile: 'SCALING',
     upgradeEfficiency: {
-      attackDamage: 1.35, attackSpeed: 1.25, targetCount: 1, defense: 1.15, maxHealth: 1.15, specialAbility: 1.35,
+      attackDamage: 1.15, attackSpeed: 1.8, targetCount: 0.7, defense: 1, maxHealth: 1, specialAbility: 1.55,
     },
+    upgradeFocus: { primary: 'attackSpeed', secondary: 'specialAbility', description: '공격 속도로 광역 마법의 반복 주기를 줄이는 주문형' },
     specialAbility: rangeAreaBoost('rune-burst', '룬 폭발', '특수 강화가 주문 사거리와 폭발 범위를 확장합니다.'),
   },
   {
     id: 'needle-striker',
     name: '니들 스트라이커',
     description: '빠른 관통 광선으로 일직선상의 적들을 꿰뚫습니다.',
-    maxHealth: 165,
+    maxHealth: 160,
     defense: 2,
-    attackDamage: 13,
-    attackSpeed: 3.6,
+    attackDamage: 12,
+    attackSpeed: 3.8,
     attackRange: 390,
     attackAreaRadius: 22,
     baseTargetCount: 3,
@@ -105,18 +109,19 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.NEEDLE_BURST,
     growthProfile: 'STEADY',
     upgradeEfficiency: {
-      attackDamage: 1.05, attackSpeed: 1, targetCount: 1, defense: 0.95, maxHealth: 0.95, specialAbility: 1.05,
+      attackDamage: 1.4, attackSpeed: 0.8, targetCount: 1.15, defense: 0.8, maxHealth: 0.75, specialAbility: 1.1,
     },
+    upgradeFocus: { primary: 'attackDamage', secondary: 'targetCount', description: '높은 기본 연사에 공격력을 더하는 관통 화력형' },
     specialAbility: rangeAreaBoost('piercing-beam', '관통 광선', '특수 강화가 광선 사거리와 관통 폭을 확장합니다.'),
   },
   {
     id: 'storm-conductor',
     name: '스톰 컨덕터',
     description: '가까운 적 사이를 뛰어다니는 번개로 연쇄 피해를 줍니다.',
-    maxHealth: 175,
+    maxHealth: 170,
     defense: 2,
-    attackDamage: 18,
-    attackSpeed: 1.5,
+    attackDamage: 17,
+    attackSpeed: 1.4,
     attackRange: 320,
     attackAreaRadius: 155,
     baseTargetCount: 3,
@@ -126,8 +131,9 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.STORM_SURGE,
     growthProfile: 'SCALING',
     upgradeEfficiency: {
-      attackDamage: 1.25, attackSpeed: 1.2, targetCount: 1, defense: 1.1, maxHealth: 1.1, specialAbility: 1.3,
+      attackDamage: 1.05, attackSpeed: 1.2, targetCount: 1.7, defense: 0.9, maxHealth: 0.9, specialAbility: 1.45,
     },
+    upgradeFocus: { primary: 'targetCount', secondary: 'specialAbility', description: '연쇄 대상을 늘려 밀집 적을 지우는 확산형' },
     specialAbility: rangeAreaBoost('chain-lightning', '연쇄 번개', '특수 강화가 시전 사거리와 연쇄 거리를 확장합니다.'),
   },
 ];
@@ -158,6 +164,14 @@ export function validateCharacterData(character: CharacterData): string[] {
   for (const id of UPGRADE_ORDER) {
     const efficiency = character.upgradeEfficiency[id];
     if (!Number.isFinite(efficiency) || efficiency <= 0) errors.push(`upgradeEfficiency.${id} must be positive`);
+  }
+  if (character.upgradeFocus.primary === character.upgradeFocus.secondary) {
+    errors.push('upgradeFocus primary and secondary must be different');
+  }
+  if (!character.upgradeFocus.description.trim()) errors.push('upgradeFocus.description is required');
+  const highestEfficiency = Math.max(...UPGRADE_ORDER.map((id) => character.upgradeEfficiency[id]));
+  if (character.upgradeEfficiency[character.upgradeFocus.primary] < highestEfficiency) {
+    errors.push('upgradeFocus.primary must use the highest upgrade efficiency');
   }
   return errors;
 }

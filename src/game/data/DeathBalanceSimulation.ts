@@ -3,7 +3,7 @@ import type { AttackType, CharacterData, UpgradeId } from '../types/GameTypes';
 import { BASIC_ENEMY, CAPTAIN_ENEMY, calculateCaptainSpawnChance } from './EnemyData';
 import {
   EXPECTED_RUN_KILL_RATIO,
-  REPRESENTATIVE_COMPLETION_ALLOCATION,
+  getRoleCompletionAllocation,
   type UpgradeAllocation,
   simulateStageCombat,
 } from './RunBalanceSimulation';
@@ -29,12 +29,12 @@ const MIN_CLEAR_PRESSURE = 1;
 const MAX_CLEAR_PRESSURE = 2.5;
 
 const ROLE_EXPOSURE: Readonly<Record<AttackType, number>> = {
-  SINGLE_TARGET: 1.1,
-  MULTI_TARGET: 1.15,
-  AREA_MELEE: 0.85,
-  AREA_MAGIC: 1.5,
-  PIERCING: 1.4,
-  CHAIN: 1.55,
+  SINGLE_TARGET: 0.79,
+  MULTI_TARGET: 4.2,
+  AREA_MELEE: 1.8,
+  AREA_MAGIC: 1.15,
+  PIERCING: 0.75,
+  CHAIN: 0.85,
 };
 
 function emptyAllocation(): Record<UpgradeId, number> {
@@ -52,15 +52,19 @@ function copyAllocation(allocation: Record<UpgradeId, number>): UpgradeAllocatio
   return { ...allocation };
 }
 
-function purchasePlannedUpgrades(allocation: Record<UpgradeId, number>, availableGold: number): number {
+function purchasePlannedUpgrades(
+  allocation: Record<UpgradeId, number>,
+  availableGold: number,
+  targetAllocation: UpgradeAllocation,
+): number {
   let gold = availableGold;
   while (true) {
     const candidates = UPGRADE_ORDER
-      .filter((id) => allocation[id] < REPRESENTATIVE_COMPLETION_ALLOCATION[id])
+      .filter((id) => allocation[id] < targetAllocation[id])
       .filter((id) => calculateUpgradeCost(UPGRADE_DEFINITIONS[id], allocation[id]) <= gold)
       .sort((left, right) => {
-        const leftProgress = allocation[left] / REPRESENTATIVE_COMPLETION_ALLOCATION[left];
-        const rightProgress = allocation[right] / REPRESENTATIVE_COMPLETION_ALLOCATION[right];
+        const leftProgress = allocation[left] / targetAllocation[left];
+        const rightProgress = allocation[right] / targetAllocation[right];
         return leftProgress - rightProgress || UPGRADE_ORDER.indexOf(left) - UPGRADE_ORDER.indexOf(right);
       });
     const next = candidates[0];
@@ -70,7 +74,8 @@ function purchasePlannedUpgrades(allocation: Record<UpgradeId, number>, availabl
   }
 }
 
-export function buildRepresentativeStageAllocations(): readonly UpgradeAllocation[] {
+export function buildRepresentativeStageAllocations(character: CharacterData): readonly UpgradeAllocation[] {
+  const targetAllocation = getRoleCompletionAllocation(character);
   const allocation = emptyAllocation();
   const snapshots: UpgradeAllocation[] = [];
   let gold = 0;
@@ -78,7 +83,7 @@ export function buildRepresentativeStageAllocations(): readonly UpgradeAllocatio
     const stats = calculateStageStats(stage);
     const spawnCount = getStageDurationMs(stage) / stats.spawnInterval;
     gold += spawnCount * EXPECTED_RUN_KILL_RATIO * BASIC_ENEMY.goldReward;
-    gold = purchasePlannedUpgrades(allocation, gold);
+    gold = purchasePlannedUpgrades(allocation, gold, targetAllocation);
     snapshots.push(copyAllocation(allocation));
   }
   return snapshots;
@@ -101,7 +106,7 @@ function calculateExposureMultiplier(character: CharacterData): number {
 export function simulateRunDeaths(
   character: CharacterData,
   seed = 1,
-  stageAllocations = buildRepresentativeStageAllocations(),
+  stageAllocations = buildRepresentativeStageAllocations(character),
 ): number {
   const random = createRandom(seed);
   const exposureMultiplier = calculateExposureMultiplier(character);
@@ -144,7 +149,7 @@ export function simulateDeathSamples(
   sampleCount = DEFAULT_DEATH_SIMULATION_SAMPLES,
 ): DeathSimulationSummary {
   const safeSampleCount = Math.max(1, Math.floor(sampleCount));
-  const stageAllocations = buildRepresentativeStageAllocations();
+  const stageAllocations = buildRepresentativeStageAllocations(character);
   const samples = Array.from(
     { length: safeSampleCount },
     (_, index) => simulateRunDeaths(character, index + 1, stageAllocations),

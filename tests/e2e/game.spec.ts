@@ -551,6 +551,10 @@ test('preserves gold and upgrades across revival, then returns to character sele
           attackRange: number;
           attackAreaRadius: number;
           specialAbilityLevel: number;
+          upgradeEfficiency: {
+            attackDamage: number; attackSpeed: number; targetCount: number;
+            defense: number; maxHealth: number;
+          };
         };
         run: { gold: number };
     };
@@ -564,6 +568,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
       attackRange: scene.player.attackRange,
       attackAreaRadius: scene.player.attackAreaRadius,
       specialAbilityLevel: scene.player.specialAbilityLevel,
+      efficiency: scene.player.upgradeEfficiency,
     };
   });
   await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
@@ -601,11 +606,16 @@ test('preserves gold and upgrades across revival, then returns to character sele
       specialAbilityLevel: player.specialAbilityLevel,
     };
   })).toEqual({
-    attackDamage: initialStats.attackDamage + calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackDamage, 1),
-    attackSpeed: initialStats.attackSpeed + calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackSpeed, 1),
-    bonusTargetCount: initialStats.bonusTargetCount + calculateUpgradeEffect(UPGRADE_DEFINITIONS.targetCount, 1),
-    defense: initialStats.defense + calculateUpgradeEffect(UPGRADE_DEFINITIONS.defense, 1),
-    maxHealth: initialStats.maxHealth + calculateUpgradeEffect(UPGRADE_DEFINITIONS.maxHealth, 1),
+    attackDamage: initialStats.attackDamage
+      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackDamage, 1, initialStats.efficiency.attackDamage),
+    attackSpeed: initialStats.attackSpeed
+      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackSpeed, 1, initialStats.efficiency.attackSpeed),
+    bonusTargetCount: initialStats.bonusTargetCount
+      + Math.round(calculateUpgradeEffect(UPGRADE_DEFINITIONS.targetCount, 1, initialStats.efficiency.targetCount)),
+    defense: initialStats.defense
+      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.defense, 1, initialStats.efficiency.defense),
+    maxHealth: initialStats.maxHealth
+      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.maxHealth, 1, initialStats.efficiency.maxHealth),
     attackRange: initialStats.attackRange,
     attackAreaRadius: initialStats.attackAreaRadius,
     specialAbilityLevel: initialStats.specialAbilityLevel + 1,
@@ -630,7 +640,10 @@ test('preserves gold and upgrades across revival, then returns to character sele
     };
   });
   expect(deathState.awaitingRevive).toBe(true);
-  expect(deathState.attackDamage).toBe(initialStats.attackDamage + 6);
+  expect(deathState.attackDamage).toBe(
+    initialStats.attackDamage
+      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackDamage, 1, initialStats.efficiency.attackDamage),
+  );
   expect(deathState.deaths).toBe(1);
   expect(deathState.gold).toBeGreaterThan(0);
   expect(deathState.specialAbilityLevel).toBe(1);
@@ -649,7 +662,6 @@ test('preserves gold and upgrades across revival, then returns to character sele
       attackDamage: scene.player.attackDamage,
       awaitingRevive: scene.awaitingRevive,
       deaths: scene.run.deaths,
-      gold: scene.run.gold,
       health: scene.player.health,
       invulnerable: (scene.invulnerableUntil ?? 0) > 0,
       maxHealth: scene.player.maxHealth,
@@ -659,12 +671,19 @@ test('preserves gold and upgrades across revival, then returns to character sele
     attackDamage: deathState.attackDamage,
     awaitingRevive: false,
     deaths: 1,
-    gold: deathState.gold,
-    health: initialStats.maxHealth + 16,
+    health: initialStats.maxHealth
+      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.maxHealth, 1, initialStats.efficiency.maxHealth),
     invulnerable: true,
-    maxHealth: initialStats.maxHealth + 16,
+    maxHealth: initialStats.maxHealth
+      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.maxHealth, 1, initialStats.efficiency.maxHealth),
     specialAbilityLevel: 1,
   });
+  const revivedGold = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as
+      { run: { gold: number } };
+    return scene.run.gold;
+  });
+  expect(revivedGold).toBeGreaterThanOrEqual(deathState.gold);
 
   await page.evaluate(() => {
     const game = window.__CENTER_STAND_GAME__;

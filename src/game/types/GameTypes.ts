@@ -52,6 +52,12 @@ export interface BladeFuryAbilityData extends SpecialAbilityBase {
 
 export type SpecialAbilityData = RangeAreaBoostAbilityData | ArcOverchargeAbilityData | BladeFuryAbilityData;
 
+export interface UpgradeFocusData {
+  primary: UpgradeId;
+  secondary: UpgradeId;
+  description: string;
+}
+
 export interface CharacterData {
   id: string;
   name: string;
@@ -69,6 +75,7 @@ export interface CharacterData {
   attackMotion: AttackMotionData;
   growthProfile: GrowthProfile;
   upgradeEfficiency: Readonly<Record<UpgradeId, number>>;
+  upgradeFocus: UpgradeFocusData;
   specialAbility: SpecialAbilityData | null;
 }
 

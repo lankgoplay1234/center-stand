@@ -38,19 +38,26 @@ export const EXPECTED_RUN_KILL_RATIO = 0.58;
 export const MIN_LATE_STAGE_CLEAR_RATIO = 1;
 export const MIN_SURVIVABLE_HITS = 8;
 
-export const REPRESENTATIVE_COMPLETION_ALLOCATION: UpgradeAllocation = {
-  attackDamage: 72,
-  attackSpeed: 72,
-  targetCount: 55,
-  defense: 68,
-  maxHealth: 72,
-  specialAbility: 61,
+export const ROLE_COMPLETION_ALLOCATIONS: Readonly<Record<string, UpgradeAllocation>> = {
+  'arc-ranger': { attackDamage: 60, attackSpeed: 90, targetCount: 35, defense: 70, maxHealth: 70, specialAbility: 75 },
+  'blade-warden': { attackDamage: 55, attackSpeed: 55, targetCount: 45, defense: 78, maxHealth: 90, specialAbility: 77 },
+  'bastion-gunner': { attackDamage: 50, attackSpeed: 55, targetCount: 80, defense: 90, maxHealth: 80, specialAbility: 45 },
+  'rune-mage': { attackDamage: 70, attackSpeed: 95, targetCount: 45, defense: 65, maxHealth: 65, specialAbility: 60 },
+  'needle-striker': { attackDamage: 60, attackSpeed: 80, targetCount: 80, defense: 65, maxHealth: 65, specialAbility: 50 },
+  'storm-conductor': { attackDamage: 65, attackSpeed: 70, targetCount: 85, defense: 60, maxHealth: 60, specialAbility: 60 },
 };
 
-export const REPRESENTATIVE_PRE_COMPLETION_ALLOCATION: UpgradeAllocation = {
-  ...REPRESENTATIVE_COMPLETION_ALLOCATION,
-  attackDamage: REPRESENTATIVE_COMPLETION_ALLOCATION.attackDamage - 1,
-};
+export function getRoleCompletionAllocation(character: CharacterData): UpgradeAllocation {
+  const allocation = ROLE_COMPLETION_ALLOCATIONS[character.id];
+  if (!allocation) throw new Error(`Missing role completion allocation: ${character.id}`);
+  return allocation;
+}
+
+export function getPreCompletionAllocation(character: CharacterData): UpgradeAllocation {
+  const allocation = getRoleCompletionAllocation(character);
+  const primary = character.upgradeFocus.primary;
+  return { ...allocation, [primary]: Math.max(0, allocation[primary] - 1) };
+}
 
 function safeLevel(level: number): number {
   return Math.min(MAX_UPGRADE_LEVEL, Math.max(0, Math.floor(level)));
