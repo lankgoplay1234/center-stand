@@ -1,8 +1,10 @@
-import { calculateMobClearCost } from '../data/MobClearData';
+import { MOB_CLEAR_MAX_USES, calculateMobClearCost } from '../data/MobClearData';
 
 export interface MobClearState {
   usageCount: number;
   currentCost: number;
+  maxUses: number;
+  isMaxed: boolean;
 }
 
 export interface MobClearPurchaseResult {
@@ -26,12 +28,14 @@ export class MobClearSystem {
     return {
       usageCount: this.usageCount,
       currentCost: calculateMobClearCost(this.usageCount),
+      maxUses: MOB_CLEAR_MAX_USES,
+      isMaxed: this.usageCount >= MOB_CLEAR_MAX_USES,
     };
   }
 
   purchase(gold: number, activeEnemies: number, clearEnemies: () => MobClearOutcome): MobClearPurchaseResult {
     const currentCost = calculateMobClearCost(this.usageCount);
-    if (activeEnemies <= 0 || gold < currentCost) {
+    if (this.usageCount >= MOB_CLEAR_MAX_USES || activeEnemies <= 0 || gold < currentCost) {
       return { success: false, gold, clearedEnemies: 0, rewardGold: 0, stageKills: 0 };
     }
     const outcome = clearEnemies();

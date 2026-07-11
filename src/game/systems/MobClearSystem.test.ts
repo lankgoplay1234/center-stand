@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { MOB_CLEAR_BASE_COST, calculateMobClearCost } from '../data/MobClearData';
+import { MOB_CLEAR_BASE_COST, MOB_CLEAR_MAX_USES, calculateMobClearCost } from '../data/MobClearData';
 import { MobClearSystem } from './MobClearSystem';
 
 describe('MobClearSystem', () => {
@@ -26,7 +26,12 @@ describe('MobClearSystem', () => {
       rewardGold: 1_800,
       stageKills: 76,
     });
-    expect(system.state).toEqual({ usageCount: 1, currentCost: calculateMobClearCost(1) });
+    expect(system.state).toEqual({
+      usageCount: 1,
+      currentCost: calculateMobClearCost(1),
+      maxUses: MOB_CLEAR_MAX_USES,
+      isMaxed: false,
+    });
     expect(clear).toHaveBeenCalledOnce();
   });
 
@@ -36,5 +41,28 @@ describe('MobClearSystem', () => {
       success: false, gold: 5_000, clearedEnemies: 0, rewardGold: 0, stageKills: 0,
     });
     expect(system.state.usageCount).toBe(0);
+  });
+
+  it('allows ten uses and rejects every later purchase without clearing or charging', () => {
+    const system = new MobClearSystem();
+    const clear = vi.fn(() => ({ clearedEnemies: 1, rewardGold: 0, stageKills: 1 }));
+    for (let usage = 0; usage < MOB_CLEAR_MAX_USES; usage += 1) {
+      expect(system.purchase(1_000_000, 1, clear).success).toBe(true);
+    }
+    expect(system.state).toEqual({
+      usageCount: MOB_CLEAR_MAX_USES,
+      currentCost: calculateMobClearCost(MOB_CLEAR_MAX_USES),
+      maxUses: MOB_CLEAR_MAX_USES,
+      isMaxed: true,
+    });
+    clear.mockClear();
+    expect(system.purchase(1_000_000, 1, clear)).toEqual({
+      success: false,
+      gold: 1_000_000,
+      clearedEnemies: 0,
+      rewardGold: 0,
+      stageKills: 0,
+    });
+    expect(clear).not.toHaveBeenCalled();
   });
 });

@@ -105,7 +105,7 @@ export class UIManager {
     stageKills = 0,
     stageTarget = 0,
   ): void {
-    this.healthText.setText(`HP  ${Math.ceil(player.health)} / ${player.maxHealth}`);
+    this.healthText.setText(`HP  ${Math.ceil(player.health)} / ${Math.ceil(player.maxHealth)}`);
     this.healthText.setColor(player.health / player.maxHealth < 0.3 ? '#ff6b83' : '#bff7ff');
     this.goldText.setText(`GOLD  ${run.gold}`);
     this.stageText.setText(stageTarget > 0 ? `STAGE ${stage} · ${stageKills}/${stageTarget}` : `STAGE  ${stage}`);
@@ -131,9 +131,9 @@ export class UIManager {
       if (affordable) button.background.setInteractive({ useHandCursor: true });
       else button.background.disableInteractive();
     }
-    const canClear = activeEnemies > 0 && run.gold >= mobClear.currentCost;
+    const canClear = !mobClear.isMaxed && activeEnemies > 0 && run.gold >= mobClear.currentCost;
     this.mobClearButton.text.setText(
-      `${MOB_CLEAR_NAME}\n현재 ${activeEnemies}마리 · 사용 ${mobClear.usageCount}회\n비용 ${mobClear.currentCost} G`,
+      `${MOB_CLEAR_NAME}\n현재 ${activeEnemies}마리 · 사용 ${mobClear.usageCount}/${mobClear.maxUses}회\n${mobClear.isMaxed ? '사용 완료' : `비용 ${mobClear.currentCost} G`}`,
     );
     this.mobClearButton.background.setFillStyle(canClear ? 0x5a2130 : 0x1a2030, 1)
       .setStrokeStyle(2, canClear ? 0xff6b83 : 0x3a4358, canClear ? 0.95 : 0.65);

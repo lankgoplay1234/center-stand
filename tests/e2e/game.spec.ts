@@ -227,11 +227,78 @@ test('buys every-mob clear repeatedly with rewards and an increased next price',
   expect(after).toEqual({
     enemies: 0,
     projectiles: 0,
-    gold: before.reward,
+    gold: 700 + before.reward,
     earnedGold: before.earnedGold + before.reward,
     kills: before.kills + before.enemies,
-    mobClear: { currentCost: 1_300, usageCount: 1 },
+    mobClear: { currentCost: 600, usageCount: 1, maxUses: 10, isMaxed: false },
   });
+});
+
+test('shows integer health and locks every-mob clear after ten uses', async ({ page }) => {
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+
+  const result = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      player: { health: number; maxHealth: number };
+      run: { gold: number };
+      stages: { stage: number; defeatedKills: number; targetKills: number };
+      upgrades: unknown;
+      enemies: { activeCount: number };
+      projectiles: { activeCount: number };
+      mobClear: {
+        state: { currentCost: number; usageCount: number; maxUses: number; isMaxed: boolean };
+        purchase: (
+          gold: number,
+          activeEnemies: number,
+          clear: () => { clearedEnemies: number; rewardGold: number; stageKills: number },
+        ) => { success: boolean };
+      };
+      ui: {
+        healthText: { text: string };
+        mobClearButton: { text: { text: string }; background: { input?: { enabled: boolean } } };
+        update: (...args: unknown[]) => void;
+      };
+    };
+    scene.player.health = 123.45;
+    scene.player.maxHealth = 456.78;
+    for (let usage = 0; usage < 10; usage += 1) {
+      scene.mobClear.purchase(1_000_000, 1, () => ({ clearedEnemies: 1, rewardGold: 0, stageKills: 1 }));
+    }
+    scene.run.gold = 1_000_000;
+    scene.ui.update(
+      scene.player,
+      scene.run,
+      scene.stages.stage,
+      scene.upgrades,
+      scene.mobClear.state,
+      Math.max(1, scene.enemies.activeCount),
+      scene.projectiles.activeCount,
+      scene.stages.defeatedKills,
+      scene.stages.targetKills,
+    );
+    let callbackCalls = 0;
+    const blocked = scene.mobClear.purchase(1_000_000, 1, () => {
+      callbackCalls += 1;
+      return { clearedEnemies: 1, rewardGold: 0, stageKills: 1 };
+    });
+    return {
+      blocked: blocked.success,
+      callbackCalls,
+      healthText: scene.ui.healthText.text,
+      mobClearText: scene.ui.mobClearButton.text.text,
+      mobClearInteractive: scene.ui.mobClearButton.background.input?.enabled ?? false,
+      state: scene.mobClear.state,
+    };
+  });
+
+  expect(result.healthText).toBe('HP  124 / 457');
+  expect(result.state).toEqual({ currentCost: 307_200, usageCount: 10, maxUses: 10, isMaxed: true });
+  expect(result.mobClearText).toContain('사용 10/10회');
+  expect(result.mobClearText).toContain('사용 완료');
+  expect(result.mobClearInteractive).toBe(false);
+  expect(result.blocked).toBe(false);
+  expect(result.callbackCalls).toBe(0);
 });
 
 test('renders the real attack range and grows the same indicator with the range upgrade', async ({ page }) => {
