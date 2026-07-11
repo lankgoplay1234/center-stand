@@ -1,7 +1,8 @@
-import type { EnemyData } from '../types/GameTypes';
+import type { EnemyData, EnemyVisualProfile } from '../types/GameTypes';
 
 export const BASIC_ENEMY: Readonly<EnemyData> = {
   id: 'void-runner',
+  rank: 'NORMAL',
   health: 54,
   attackDamage: 9,
   moveSpeed: 66,
@@ -9,3 +10,51 @@ export const BASIC_ENEMY: Readonly<EnemyData> = {
   goldReward: 6,
   contactRange: 44,
 };
+
+export const CAPTAIN_ENEMY: Readonly<EnemyData> = {
+  id: 'void-captain',
+  rank: 'CAPTAIN',
+  health: BASIC_ENEMY.health * 12,
+  attackDamage: BASIC_ENEMY.attackDamage * 10,
+  moveSpeed: BASIC_ENEMY.moveSpeed * 0.82,
+  attackInterval: 1_200,
+  goldReward: BASIC_ENEMY.goldReward * 18,
+  contactRange: 58,
+};
+
+const NORMAL_VISUALS: readonly EnemyVisualProfile[] = [
+  { tier: 1, radius: 18, fillColor: 0xff446c, strokeColor: 0xffafbd, strokeWidth: 3 },
+  { tier: 2, radius: 19, fillColor: 0xf33d78, strokeColor: 0xffb2d0, strokeWidth: 3 },
+  { tier: 3, radius: 20, fillColor: 0xdc358b, strokeColor: 0xf8b4ff, strokeWidth: 4 },
+  { tier: 4, radius: 21, fillColor: 0xc42fa0, strokeColor: 0xeab7ff, strokeWidth: 4 },
+  { tier: 5, radius: 22, fillColor: 0xa92db5, strokeColor: 0xffd0ff, strokeWidth: 5 },
+];
+
+const CAPTAIN_VISUALS: readonly EnemyVisualProfile[] = [
+  { tier: 1, radius: 31, fillColor: 0x8f233f, strokeColor: 0xffd65a, strokeWidth: 6 },
+  { tier: 2, radius: 33, fillColor: 0x8d2050, strokeColor: 0xffdc72, strokeWidth: 7 },
+  { tier: 3, radius: 35, fillColor: 0x84205f, strokeColor: 0xffe28a, strokeWidth: 7 },
+  { tier: 4, radius: 37, fillColor: 0x75216f, strokeColor: 0xffe8a3, strokeWidth: 8 },
+  { tier: 5, radius: 39, fillColor: 0x64227e, strokeColor: 0xffefbd, strokeWidth: 8 },
+];
+
+export function calculateEnemyVisualTier(stage: number): number {
+  const safeStage = Math.min(100, Math.max(1, Math.floor(stage)));
+  return Math.min(5, Math.floor((safeStage - 1) / 20) + 1);
+}
+
+export function getEnemyVisualProfile(stage: number, rank: EnemyData['rank']): EnemyVisualProfile {
+  const tier = calculateEnemyVisualTier(stage);
+  return (rank === 'CAPTAIN' ? CAPTAIN_VISUALS : NORMAL_VISUALS)[tier - 1]!;
+}
+
+export function calculateCaptainSpawnChance(stage: number): number {
+  const safeStage = Math.min(100, Math.max(1, Math.floor(stage)));
+  if (safeStage < 10) return 0;
+  return 0.002 + (safeStage - 10) / 90 * 0.018;
+}
+
+export function selectEnemyData(stage: number, randomRoll: number): Readonly<EnemyData> {
+  const safeRoll = Math.min(1, Math.max(0, randomRoll));
+  return safeRoll < calculateCaptainSpawnChance(stage) ? CAPTAIN_ENEMY : BASIC_ENEMY;
+}

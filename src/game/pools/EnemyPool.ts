@@ -9,13 +9,21 @@ export class EnemyPool {
     for (let i = 0; i < initialSize; i += 1) this.items.push(new Enemy(scene, i));
   }
 
-  acquire(x: number, y: number, data: EnemyData, healthMultiplier: number, damageMultiplier: number, speedMultiplier: number): Enemy {
+  acquire(
+    x: number,
+    y: number,
+    data: EnemyData,
+    stage: number,
+    healthMultiplier: number,
+    damageMultiplier: number,
+    speedMultiplier: number,
+  ): Enemy {
     let enemy = this.items.find((item) => !item.active);
     if (!enemy) {
       enemy = new Enemy(this.items[0]?.scene ?? (() => { throw new Error('Enemy pool has no scene'); })(), this.items.length);
       this.items.push(enemy);
     }
-    enemy.activate(x, y, data, healthMultiplier, damageMultiplier, speedMultiplier);
+    enemy.activate(x, y, data, stage, healthMultiplier, damageMultiplier, speedMultiplier);
     return enemy;
   }
 
@@ -26,6 +34,14 @@ export class EnemyPool {
   get activeCount(): number {
     let count = 0;
     for (const item of this.items) if (item.active && item.isAlive) count += 1;
+    return count;
+  }
+
+  get activeCaptainCount(): number {
+    let count = 0;
+    for (const item of this.items) {
+      if (item.active && item.isAlive && item.rank === 'CAPTAIN') count += 1;
+    }
     return count;
   }
 

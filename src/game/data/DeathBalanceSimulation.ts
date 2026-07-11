@@ -1,6 +1,6 @@
 import { REVIVE_INVULNERABILITY_MS } from '../systems/ReviveSystem';
 import type { AttackType, CharacterData, UpgradeId } from '../types/GameTypes';
-import { BASIC_ENEMY } from './EnemyData';
+import { BASIC_ENEMY, CAPTAIN_ENEMY, calculateCaptainSpawnChance } from './EnemyData';
 import {
   EXPECTED_RUN_KILL_RATIO,
   REPRESENTATIVE_COMPLETION_ALLOCATION,
@@ -24,7 +24,7 @@ export const MAX_TARGET_DEATHS = 60;
 export const MAX_CHARACTER_DEATH_SPREAD = 12;
 export const DEFAULT_DEATH_SIMULATION_SAMPLES = 24;
 
-const CONTACTING_ENEMY_SHARE = 0.0041;
+const CONTACTING_ENEMY_SHARE = 0.0037;
 const MIN_CLEAR_PRESSURE = 1;
 const MAX_CLEAR_PRESSURE = 2.5;
 
@@ -110,9 +110,12 @@ export function simulateRunDeaths(
   for (let stage = 1; stage <= 100; stage += 1) {
     const stageStats = calculateStageStats(stage);
     const combat = simulateStageCombat(character, stageAllocations[stage - 1]!, stage);
+    const captainChance = calculateCaptainSpawnChance(stage);
+    const weightedHealthMultiplier = 1 + captainChance * (CAPTAIN_ENEMY.health / BASIC_ENEMY.health - 1);
+    const adjustedClearRatio = combat.lateStageClearRatio / weightedHealthMultiplier;
     const clearPressure = Math.min(
       MAX_CLEAR_PRESSURE,
-      Math.max(MIN_CLEAR_PRESSURE, 1 / Math.max(0.01, combat.lateStageClearRatio)),
+      Math.max(MIN_CLEAR_PRESSURE, 1 / Math.max(0.01, adjustedClearRatio)),
     );
     const stageVariance = 0.9 + random() * 0.2;
     const contactingEnemies = stageStats.maxActiveEnemies
@@ -120,8 +123,13 @@ export function simulateRunDeaths(
       * clearPressure
       * exposureMultiplier
       * stageVariance;
-    const damagePerHit = Math.max(1, combat.enemyDamage - combat.defense);
-    const incomingDamagePerSecond = contactingEnemies * damagePerHit * 1_000 / BASIC_ENEMY.attackInterval;
+    const normalDamagePerHit = Math.max(1, combat.enemyDamage - combat.defense);
+    const captainDamage = CAPTAIN_ENEMY.attackDamage * stageStats.enemyDamageMultiplier;
+    const captainDamagePerHit = Math.max(1, captainDamage - combat.defense);
+    const weightedDamagePerSecond = (1 - captainChance)
+      * normalDamagePerHit * 1_000 / BASIC_ENEMY.attackInterval
+      + captainChance * captainDamagePerHit * 1_000 / CAPTAIN_ENEMY.attackInterval;
+    const incomingDamagePerSecond = contactingEnemies * weightedDamagePerSecond;
     if (incomingDamagePerSecond <= 0) continue;
     const vulnerableLifetimeSeconds = combat.maxHealth / incomingDamagePerSecond;
     const lifeCycleSeconds = vulnerableLifetimeSeconds + REVIVE_INVULNERABILITY_MS / 1_000;

@@ -66,12 +66,21 @@ export interface CharacterData {
 
 export interface EnemyData {
   id: string;
+  rank: 'NORMAL' | 'CAPTAIN';
   health: number;
   attackDamage: number;
   moveSpeed: number;
   attackInterval: number;
   goldReward: number;
   contactRange: number;
+}
+
+export interface EnemyVisualProfile {
+  tier: number;
+  radius: number;
+  fillColor: number;
+  strokeColor: number;
+  strokeWidth: number;
 }
 
 export type UpgradeId =

@@ -168,6 +168,73 @@ test('pushes a standard enemy away from the player when hit', async ({ page }) =
   expect(damageTextStats.poolSize).toBeLessThanOrEqual(120);
 });
 
+test('spawns stronger stage-100 captains with distinct visuals from the existing pool', async ({ page }) => {
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+
+  const result = await page.evaluate(() => {
+    const game = window.__CENTER_STAND_GAME__;
+    const scene = game?.scene.getScene('GameScene') as unknown as {
+      enemies: {
+        activeCount: number;
+        activeCaptainCount: number;
+        activeEnemies: Array<{
+          rank: 'NORMAL' | 'CAPTAIN';
+          visualTier: number;
+          radius: number;
+          maxHealth: number;
+          attackDamage: number;
+          goldReward: number;
+        }>;
+        destroyAll: () => void;
+      };
+      stages: { currentStage: number };
+      runStressTest: () => void;
+    };
+
+    scene.enemies.destroyAll();
+    scene.stages.currentStage = 1;
+    scene.runStressTest();
+    const stageOneCaptains = scene.enemies.activeCaptainCount;
+
+    scene.enemies.destroyAll();
+    scene.stages.currentStage = 100;
+    scene.runStressTest();
+    const normal = scene.enemies.activeEnemies.find((enemy) => enemy.rank === 'NORMAL');
+    const captain = scene.enemies.activeEnemies.find((enemy) => enemy.rank === 'CAPTAIN');
+    if (!normal || !captain) throw new Error('Expected normal and captain enemies at stage 100');
+    return {
+      stageOneCaptains,
+      activeCount: scene.enemies.activeCount,
+      captainCount: scene.enemies.activeCaptainCount,
+      normal: {
+        tier: normal.visualTier,
+        radius: normal.radius,
+        maxHealth: normal.maxHealth,
+        attackDamage: normal.attackDamage,
+        goldReward: normal.goldReward,
+      },
+      captain: {
+        tier: captain.visualTier,
+        radius: captain.radius,
+        maxHealth: captain.maxHealth,
+        attackDamage: captain.attackDamage,
+        goldReward: captain.goldReward,
+      },
+    };
+  });
+
+  expect(result.stageOneCaptains).toBe(0);
+  expect(result.activeCount).toBe(100);
+  expect(result.captainCount).toBe(2);
+  expect(result.normal.tier).toBe(5);
+  expect(result.captain.tier).toBe(5);
+  expect(result.captain.radius).toBeGreaterThan(result.normal.radius);
+  expect(result.captain.maxHealth).toBeGreaterThanOrEqual(result.normal.maxHealth * 11.9);
+  expect(result.captain.attackDamage).toBeGreaterThanOrEqual(result.normal.attackDamage * 9.9);
+  expect(result.captain.goldReward).toBe(result.normal.goldReward * 18);
+});
+
 test('locks a level 99 upgrade without spending gold', async ({ page }) => {
   await clickGamePoint(page, 360, 900);
   await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
