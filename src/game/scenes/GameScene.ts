@@ -17,6 +17,8 @@ import { canPlayerTakeDamage, revivePlayer } from '../systems/ReviveSystem';
 import { UpgradeSystem } from '../systems/UpgradeSystem';
 import { MobClearSystem } from '../systems/MobClearSystem';
 import { scaleGameDelta, toggleGameSpeed, type GameSpeed } from '../systems/GameSpeedSystem';
+import { recommendUpgrade } from '../systems/UpgradeRecommendationSystem';
+import { StageDeathTracker } from '../systems/StageDeathTracker';
 import type { RunStats, UpgradeId } from '../types/GameTypes';
 
 export class GameScene extends Phaser.Scene {
@@ -40,6 +42,7 @@ export class GameScene extends Phaser.Scene {
   private invulnerableUntil = 0;
   private gameSpeed: GameSpeed = 1;
   private simulationTime = 0;
+  private readonly stageDeaths = new StageDeathTracker();
   private run: RunStats = { gold: 0, earnedGold: 0, kills: 0, deaths: 0, elapsedSeconds: 0 };
 
   constructor() {
@@ -53,6 +56,7 @@ export class GameScene extends Phaser.Scene {
     this.invulnerableUntil = 0;
     this.gameSpeed = 1;
     this.simulationTime = 0;
+    this.stageDeaths.enterStage(1);
     this.time.timeScale = 1;
     this.tweens.timeScale = 1;
     this.run = { gold: 0, earnedGold: 0, kills: 0, deaths: 0, elapsedSeconds: 0 };
@@ -101,7 +105,12 @@ export class GameScene extends Phaser.Scene {
     this.run.elapsedSeconds += scaledDelta / 1000;
     this.stages.update(scaledDelta);
     if (this.gameEnded) return;
-    this.enemies.update(this.simulationTime, scaledDelta, this.stages.stats);
+    this.enemies.update(
+      this.simulationTime,
+      scaledDelta,
+      this.stages.stats,
+      this.stages.remainingSpawnCount(this.enemies.activeCount),
+    );
     this.combat.update(this.simulationTime);
     this.projectiles.update(scaledDelta);
     this.ui.update(
@@ -112,6 +121,8 @@ export class GameScene extends Phaser.Scene {
       this.mobClear.state,
       this.enemies.activeCount,
       this.projectiles.activeCount,
+      this.stages.defeatedKills,
+      this.stages.targetKills,
     );
   }
 
@@ -161,8 +172,10 @@ export class GameScene extends Phaser.Scene {
     this.run.earnedGold += enemy.goldReward;
     this.run.kills += 1;
     this.effects.showExplosion(x, y);
+    const countsTowardStage = enemy.countsTowardStage;
     this.enemies.release(enemy);
     this.cameras.main.shake(55, 0.0014);
+    if (countsTowardStage) this.stages.recordKills(1);
   }
 
   private handlePlayerHit(rawDamage: number, x: number, y: number): void {
@@ -178,9 +191,24 @@ export class GameScene extends Phaser.Scene {
     if (this.awaitingRevive || this.gameEnded) return;
     this.awaitingRevive = true;
     this.run.deaths += 1;
+    const stageDeathCount = this.stageDeaths.recordDeath(this.stages.currentStage);
+    const recommendation = this.stageDeaths.shouldRecommend
+      ? recommendUpgrade(
+        this.player.character,
+        this.upgrades.getLevels(),
+        this.stages.currentStage,
+        this.run.gold,
+      )
+      : null;
     this.player.setAlpha(0.45);
     this.ui.showDeathOptions(
-      { deaths: this.run.deaths, gold: this.run.gold, stage: this.stages.currentStage },
+      {
+        deaths: this.run.deaths,
+        stageDeaths: stageDeathCount,
+        gold: this.run.gold,
+        stage: this.stages.currentStage,
+        recommendation,
+      },
       () => this.revive(),
       () => this.restartFromCharacterSelect(),
     );
@@ -265,6 +293,7 @@ export class GameScene extends Phaser.Scene {
     this.run.earnedGold += result.rewardGold;
     this.run.kills += result.clearedEnemies;
     this.projectiles.destroyAll();
+    this.stages.recordKills(result.stageKills);
     this.effects.showStageClear(this.player.x, this.player.y);
     this.cameras.main.flash(180, 255, 75, 105, false);
     this.cameras.main.shake(180, 0.006);
@@ -276,6 +305,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private beginNextStage(stage: number): void {
+    this.stageDeaths.enterStage(stage);
     const clearedEnemies = this.enemies.clearForStageTransition(STAGE_TRANSITION_SPAWN_DELAY_MS);
     this.projectiles.destroyAll();
     if (clearedEnemies > 0) this.effects.showStageClear(this.player.x, this.player.y);

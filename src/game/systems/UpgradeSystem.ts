@@ -7,6 +7,7 @@ import {
 import { calculateAttackRangeAtLevel } from '../data/AttackRangeData';
 import type { Player } from '../entities/Player';
 import type { UpgradeId, UpgradeState } from '../types/GameTypes';
+import type { UpgradeAllocation } from '../data/RunBalanceSimulation';
 
 export class UpgradeSystem {
   private readonly states: Record<UpgradeId, UpgradeState> = {
@@ -43,6 +44,16 @@ export class UpgradeSystem {
 
   get totalLevels(): number {
     return Object.values(this.states).reduce((sum, state) => sum + state.level, 0);
+  }
+
+  getLevels(): UpgradeAllocation {
+    return {
+      attackDamage: this.states.attackDamage.level,
+      attackSpeed: this.states.attackSpeed.level,
+      defense: this.states.defense.level,
+      maxHealth: this.states.maxHealth.level,
+      attackRange: this.states.attackRange.level,
+    };
   }
 
   purchase(id: UpgradeId, gold: number): { success: boolean; gold: number } {

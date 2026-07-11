@@ -16,8 +16,16 @@ interface UpgradeButton {
 
 export interface DeathSummary {
   deaths: number;
+  stageDeaths: number;
   gold: number;
   stage: number;
+  recommendation: {
+    name: string;
+    level: number;
+    cost: number;
+    affordable: boolean;
+    reason: string;
+  } | null;
 }
 
 export class UIManager {
@@ -94,15 +102,17 @@ export class UIManager {
     mobClear: MobClearState,
     activeEnemies: number,
     activeProjectiles: number,
+    stageKills = 0,
+    stageTarget = 0,
   ): void {
     this.healthText.setText(`HP  ${Math.ceil(player.health)} / ${player.maxHealth}`);
     this.healthText.setColor(player.health / player.maxHealth < 0.3 ? '#ff6b83' : '#bff7ff');
     this.goldText.setText(`GOLD  ${run.gold}`);
-    this.stageText.setText(`STAGE  ${stage}`);
+    this.stageText.setText(stageTarget > 0 ? `STAGE ${stage} · ${stageKills}/${stageTarget}` : `STAGE  ${stage}`);
     this.killsText.setText(`처치  ${run.kills}  ·  사망  ${run.deaths}`);
     this.timeText.setText(this.formatTime(run.elapsedSeconds));
     this.debugText.setText(
-      `FPS ${Math.round(this.scene.game.loop.actualFps)}  |  적 ${activeEnemies}  |  투사체 ${activeProjectiles}\n스테이지 ${stage}  |  ${this.formatTime(run.elapsedSeconds)}`,
+      `FPS ${Math.round(this.scene.game.loop.actualFps)}  |  적 ${activeEnemies}  |  투사체 ${activeProjectiles}\n스테이지 ${stage} · ${stageKills}/${stageTarget}  |  ${this.formatTime(run.elapsedSeconds)}`,
     );
 
     for (const [id, button] of this.buttons) {
@@ -180,9 +190,16 @@ export class UIManager {
       fontFamily: 'Arial Black, sans-serif', fontSize: '48px', color: '#ff7892', stroke: '#3a1020', strokeThickness: 8,
     }).setOrigin(0.5);
     const info = this.scene.add.text(360, 495,
-      `사망 ${summary.deaths}회   ·   STAGE ${summary.stage}\n보유 골드 ${summary.gold} G와 업그레이드는 유지됩니다`,
+      `총 사망 ${summary.deaths}회   ·   STAGE ${summary.stage} 사망 ${summary.stageDeaths}회\n보유 골드 ${summary.gold} G와 업그레이드는 유지됩니다`,
       { fontFamily: 'Arial, sans-serif', fontSize: '21px', color: '#d4e3f2', align: 'center', lineSpacing: 12 },
     ).setOrigin(0.5);
+    const recommendation = summary.recommendation;
+    const recommendationText = this.scene.add.text(360, 565, recommendation
+      ? `추천 강화: ${recommendation.name} Lv.${recommendation.level + 1} · ${recommendation.cost} G\n${recommendation.affordable ? '부활 후 바로 구매 가능' : `${recommendation.cost - summary.gold} G 부족`} · ${recommendation.reason}`
+      : '', {
+      fontFamily: 'Arial, sans-serif', fontSize: '16px', color: '#ffe58a', align: 'center',
+      wordWrap: { width: 520 }, lineSpacing: 5,
+    }).setOrigin(0.5);
     const reviveBg = this.scene.add.rectangle(360, 650, 430, 86, 0x26b8c5).setStrokeStyle(3, 0xa6fbff)
       .setInteractive({ useHandCursor: true });
     const reviveText = this.scene.add.text(360, 650, '부활하기', {
@@ -197,7 +214,7 @@ export class UIManager {
       fontFamily: 'Arial, sans-serif', fontSize: '17px', color: '#8190a7',
     }).setOrigin(0.5);
     this.deathOverlay = this.scene.add.container(0, 0, [
-      blocker, panel, title, info, reviveBg, reviveText, restartBg, restartText, hint,
+      blocker, panel, title, info, recommendationText, reviveBg, reviveText, restartBg, restartText, hint,
     ]).setDepth(100);
     reviveBg.on('pointerup', () => {
       reviveBg.disableInteractive();

@@ -16,6 +16,7 @@ export class Enemy extends Phaser.GameObjects.Arc {
   rank: EnemyData['rank'] = 'NORMAL';
   visualTier = 1;
   isAlive = false;
+  countsTowardStage = true;
   lastAttackAt = 0;
   private baseFillColor = 0xff446c;
 
@@ -50,6 +51,7 @@ export class Enemy extends Phaser.GameObjects.Arc {
     this.goldReward = data.goldReward;
     this.contactRange = data.contactRange;
     this.isAlive = true;
+    this.countsTowardStage = true;
     this.lastAttackAt = 0;
   }
 

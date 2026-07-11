@@ -7,6 +7,7 @@ import {
   calculateAllocationTotal,
   getPreCompletionAllocation,
   getRoleCompletionAllocation,
+  estimateRunClearTimeMs,
   simulateCompletionReadiness,
   simulateStageCombat,
 } from './RunBalanceSimulation';
@@ -65,5 +66,23 @@ describe('400-upgrade completion balance', () => {
         expect(full.lateStageClearRatio, character.name).toBeGreaterThan(lower.lateStageClearRatio);
       }
     }
+  });
+
+  it('makes clear time depend on upgrade choices from about 20 minutes to over an hour', () => {
+    for (const character of CHARACTERS) {
+      const fastMinutes = estimateRunClearTimeMs(character, getRoleCompletionAllocation(character)) / 60_000;
+      expect(fastMinutes, character.name).toBeGreaterThanOrEqual(18);
+      expect(fastMinutes, character.name).toBeLessThanOrEqual(24);
+    }
+    const arc = CHARACTERS.find((character) => character.id === 'arc-ranger')!;
+    const poorAllocation = {
+      attackDamage: 99,
+      attackSpeed: 4,
+      defense: 99,
+      maxHealth: 99,
+      attackRange: 99,
+    } as const;
+    expect(calculateAllocationTotal(poorAllocation)).toBe(400);
+    expect(estimateRunClearTimeMs(arc, poorAllocation)).toBeGreaterThanOrEqual(60 * 60_000);
   });
 });

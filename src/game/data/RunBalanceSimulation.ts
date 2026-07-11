@@ -1,7 +1,7 @@
 import type { CharacterData, UpgradeId } from '../types/GameTypes';
-import { BASIC_ENEMY } from './EnemyData';
+import { BASIC_ENEMY, CAPTAIN_ENEMY, calculateCaptainSpawnChance } from './EnemyData';
 import { calculateOverchargeDamageMultiplier } from './SpecialAbilityData';
-import { calculateStageStats, getStageDurationMs } from './StageData';
+import { calculateStageStats, getStageKillTarget } from './StageData';
 import {
   MAX_UPGRADE_LEVEL,
   UPGRADE_DEFINITIONS,
@@ -30,10 +30,12 @@ export interface StageCombatSnapshot {
   enemyDamage: number;
   lateStageClearRatio: number;
   survivableHits: number;
+  killsPerSecond: number;
+  spawnRate: number;
 }
 
 export const STABLE_COMPLETION_MIN_UPGRADES = 400;
-export const EXPECTED_RUN_KILL_RATIO = 0.58;
+export const EXPECTED_RUN_KILL_RATIO = 1;
 export const MIN_LATE_STAGE_CLEAR_RATIO = 1;
 export const MIN_SURVIVABLE_HITS = 8;
 
@@ -76,14 +78,25 @@ export function calculateAllocationCost(allocation: UpgradeAllocation): number {
 export function estimateRunSpawnCount(): number {
   let total = 0;
   for (let stage = 1; stage <= 100; stage += 1) {
-    total += Math.floor(getStageDurationMs(stage) / calculateStageStats(stage).spawnInterval);
+    total += getStageKillTarget(stage);
   }
   return total;
 }
 
 export function estimateRunGold(killRatio = EXPECTED_RUN_KILL_RATIO): number {
   const safeRatio = Math.min(1, Math.max(0, killRatio));
-  return Math.floor(estimateRunSpawnCount() * safeRatio) * BASIC_ENEMY.goldReward;
+  let total = 0;
+  for (let stage = 1; stage <= 100; stage += 1) {
+    total += estimateStageGold(stage) * safeRatio;
+  }
+  return Math.floor(total);
+}
+
+export function estimateStageGold(stage: number): number {
+  const captainChance = calculateCaptainSpawnChance(stage);
+  const expectedReward = BASIC_ENEMY.goldReward
+    + captainChance * (CAPTAIN_ENEMY.goldReward - BASIC_ENEMY.goldReward);
+  return Math.floor(getStageKillTarget(stage) * expectedReward);
 }
 
 function calculateTargetCapacity(character: CharacterData): number {
@@ -178,5 +191,28 @@ export function simulateStageCombat(
     enemyDamage,
     lateStageClearRatio,
     survivableHits,
+    killsPerSecond,
+    spawnRate: enemiesPerSecond,
   };
+}
+
+export function estimateStageClearTimeMs(
+  character: CharacterData,
+  allocation: UpgradeAllocation,
+  stage: number,
+): number {
+  const combat = simulateStageCombat(character, allocation, stage);
+  const effectiveKillsPerSecond = Math.max(0.001, Math.min(combat.spawnRate, combat.killsPerSecond));
+  return getStageKillTarget(stage) / effectiveKillsPerSecond * 1_000;
+}
+
+export function estimateRunClearTimeMs(
+  character: CharacterData,
+  allocation: UpgradeAllocation,
+): number {
+  let total = 0;
+  for (let stage = 1; stage <= 100; stage += 1) {
+    total += estimateStageClearTimeMs(character, allocation, stage);
+  }
+  return total;
 }

@@ -33,11 +33,15 @@ export class EnemyManager {
     return this.pool.activeCaptainCount;
   }
 
-  update(time: number, delta: number, stageStats: StageStats): void {
+  update(time: number, delta: number, stageStats: StageStats, spawnBudget = Number.POSITIVE_INFINITY): void {
     this.spawnAccumulator += delta;
-    while (this.spawnAccumulator >= stageStats.spawnInterval && this.activeCount < stageStats.maxActiveEnemies) {
+    let remainingBudget = Math.max(0, Math.floor(spawnBudget));
+    while (this.spawnAccumulator >= stageStats.spawnInterval
+      && this.activeCount < stageStats.maxActiveEnemies
+      && remainingBudget > 0) {
       this.spawnAccumulator -= stageStats.spawnInterval;
       this.spawn(stageStats);
+      remainingBudget -= 1;
     }
 
     for (const enemy of this.activeEnemies) {
@@ -61,7 +65,7 @@ export class EnemyManager {
 
   spawnBurst(count: number, stageStats: StageStats): void {
     for (let i = 0; i < count; i += 1) {
-      this.spawn(stageStats, i, (i + 0.5) / Math.max(1, count));
+      this.spawn(stageStats, i, (i + 0.5) / Math.max(1, count), false);
     }
   }
 
@@ -76,13 +80,14 @@ export class EnemyManager {
     return clearedCount;
   }
 
-  clearWithRewards(): { clearedEnemies: number; rewardGold: number } {
+  clearWithRewards(): { clearedEnemies: number; rewardGold: number; stageKills: number } {
     const activeEnemies = this.activeEnemies;
     const rewardGold = activeEnemies.reduce((sum, enemy) => sum + enemy.goldReward, 0);
+    const stageKills = activeEnemies.reduce((sum, enemy) => sum + (enemy.countsTowardStage ? 1 : 0), 0);
     const clearedEnemies = activeEnemies.length;
     this.pool.releaseAll();
     this.spawnAccumulator = 0;
-    return { clearedEnemies, rewardGold };
+    return { clearedEnemies, rewardGold, stageKills };
   }
 
   clearForStageTransition(delayMs: number): number {
@@ -92,7 +97,7 @@ export class EnemyManager {
     return clearedCount;
   }
 
-  private spawn(stageStats: StageStats, burstIndex = -1, forcedRoll?: number): void {
+  private spawn(stageStats: StageStats, burstIndex = -1, forcedRoll?: number, countsTowardStage = true): void {
     const margin = 45;
     const width = this.scene.scale.width;
     const height = this.scene.scale.height;
@@ -105,7 +110,7 @@ export class EnemyManager {
     ];
     const point = positions[side]!;
     const enemyData = selectEnemyData(stageStats.stage, forcedRoll ?? Math.random());
-    this.pool.acquire(
+    const enemy = this.pool.acquire(
       point.x,
       point.y,
       enemyData,
@@ -114,5 +119,6 @@ export class EnemyManager {
       stageStats.enemyDamageMultiplier,
       stageStats.enemySpeedMultiplier,
     );
+    enemy.countsTowardStage = countsTowardStage;
   }
 }

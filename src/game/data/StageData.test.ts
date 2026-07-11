@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
-  STAGE_DURATION_SEGMENTS,
-  TOTAL_STAGE_DURATION_MS,
+  STAGE_KILL_TARGET_SEGMENTS,
+  THEORETICAL_FASTEST_CLEAR_MS,
+  TOTAL_STAGE_KILL_TARGET,
   calculateStageStats,
-  calculateTotalStageDurationMs,
-  getStageDurationMs,
+  calculateTheoreticalFastestClearMs,
+  calculateTotalStageKillTarget,
+  getStageKillTarget,
 } from './StageData';
 
 describe('stage difficulty', () => {
@@ -19,28 +21,28 @@ describe('stage difficulty', () => {
 
   it('clamps invalid stages to stage one', () => {
     expect(calculateStageStats(0)).toEqual(calculateStageStats(1));
+    expect(getStageKillTarget(0)).toBe(getStageKillTarget(1));
+    expect(getStageKillTarget(Number.NaN)).toBe(getStageKillTarget(1));
   });
 
-  it('uses progressively longer stage duration segments', () => {
-    expect(STAGE_DURATION_SEGMENTS).toHaveLength(3);
-    expect(getStageDurationMs(1)).toBe(18_000);
-    expect(getStageDurationMs(20)).toBe(18_000);
-    expect(getStageDurationMs(21)).toBe(23_000);
-    expect(getStageDurationMs(60)).toBe(23_000);
-    expect(getStageDurationMs(61)).toBe(26_500);
-    expect(getStageDurationMs(100)).toBe(26_500);
+  it('uses increasing kill targets instead of fixed stage durations', () => {
+    expect(STAGE_KILL_TARGET_SEGMENTS).toHaveLength(3);
+    expect(getStageKillTarget(1)).toBe(18);
+    expect(getStageKillTarget(5)).toBe(27);
+    expect(getStageKillTarget(10)).toBe(45);
+    expect(getStageKillTarget(15)).toBe(75);
+    expect(getStageKillTarget(20)).toBe(75);
+    expect(getStageKillTarget(21)).toBe(96);
+    expect(getStageKillTarget(60)).toBe(96);
+    expect(getStageKillTarget(61)).toBe(111);
+    expect(getStageKillTarget(100)).toBe(111);
   });
 
-  it('clamps duration lookups to the playable stage range', () => {
-    expect(getStageDurationMs(0)).toBe(getStageDurationMs(1));
-    expect(getStageDurationMs(101)).toBe(getStageDurationMs(100));
-    expect(getStageDurationMs(Number.NaN)).toBe(getStageDurationMs(1));
-  });
-
-  it('sets the uninterrupted 1 to 100 run time to 39 minutes', () => {
-    expect(TOTAL_STAGE_DURATION_MS).toBe(39 * 60_000);
-    expect(calculateTotalStageDurationMs(1, 100)).toBe(TOTAL_STAGE_DURATION_MS);
-    expect(TOTAL_STAGE_DURATION_MS).toBeGreaterThanOrEqual(38 * 60_000);
-    expect(TOTAL_STAGE_DURATION_MS).toBeLessThanOrEqual(42 * 60_000);
+  it('sets a finite 100-stage target and an approximately 20-minute theoretical floor', () => {
+    expect(TOTAL_STAGE_KILL_TARGET).toBe(9_264);
+    expect(calculateTotalStageKillTarget()).toBe(TOTAL_STAGE_KILL_TARGET);
+    expect(calculateTheoreticalFastestClearMs()).toBe(THEORETICAL_FASTEST_CLEAR_MS);
+    expect(THEORETICAL_FASTEST_CLEAR_MS).toBeGreaterThanOrEqual(19 * 60_000);
+    expect(THEORETICAL_FASTEST_CLEAR_MS).toBeLessThanOrEqual(21 * 60_000);
   });
 });

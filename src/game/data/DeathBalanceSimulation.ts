@@ -3,12 +3,15 @@ import type { AttackType, CharacterData, UpgradeId } from '../types/GameTypes';
 import { BASIC_ENEMY, CAPTAIN_ENEMY, calculateCaptainSpawnChance } from './EnemyData';
 import {
   EXPECTED_RUN_KILL_RATIO,
+  estimateStageGold,
   getRoleCompletionAllocation,
   type UpgradeAllocation,
+  estimateStageClearTimeMs,
   simulateStageCombat,
 } from './RunBalanceSimulation';
-import { calculateStageStats, getStageDurationMs } from './StageData';
+import { calculateStageStats } from './StageData';
 import { UPGRADE_DEFINITIONS, UPGRADE_ORDER, calculateUpgradeCost } from './UpgradeData';
+import { calculateAttackRangeAtLevel } from './AttackRangeData';
 
 export interface DeathSimulationSummary {
   samples: readonly number[];
@@ -29,12 +32,12 @@ const MIN_CLEAR_PRESSURE = 1;
 const MAX_CLEAR_PRESSURE = 2.5;
 
 const ROLE_EXPOSURE: Readonly<Record<AttackType, number>> = {
-  SINGLE_TARGET: 1.31,
-  MULTI_TARGET: 4.4,
-  AREA_MELEE: 2.48,
-  AREA_MAGIC: 0.99,
-  PIERCING: 1.38,
-  CHAIN: 1.22,
+  SINGLE_TARGET: 3.16,
+  MULTI_TARGET: 8.96,
+  AREA_MELEE: 3.52,
+  AREA_MAGIC: 2.3,
+  PIERCING: 3.02,
+  CHAIN: 3.18,
 };
 
 function emptyAllocation(): Record<UpgradeId, number> {
@@ -79,9 +82,7 @@ export function buildRepresentativeStageAllocations(character: CharacterData): r
   const snapshots: UpgradeAllocation[] = [];
   let gold = 0;
   for (let stage = 1; stage <= 100; stage += 1) {
-    const stats = calculateStageStats(stage);
-    const spawnCount = getStageDurationMs(stage) / stats.spawnInterval;
-    gold += spawnCount * EXPECTED_RUN_KILL_RATIO * BASIC_ENEMY.goldReward;
+    gold += estimateStageGold(stage) * EXPECTED_RUN_KILL_RATIO;
     gold = purchasePlannedUpgrades(allocation, gold, targetAllocation);
     snapshots.push(copyAllocation(allocation));
   }
@@ -96,8 +97,13 @@ function createRandom(seed: number): () => number {
   };
 }
 
-function calculateExposureMultiplier(character: CharacterData): number {
-  const rangeExposure = Math.min(1.35, Math.max(0.75, 300 / character.attackRange));
+function calculateExposureMultiplier(character: CharacterData, allocation: UpgradeAllocation): number {
+  const attackRange = calculateAttackRangeAtLevel(
+    character.attackRange,
+    character.maxAttackRange,
+    allocation.attackRange,
+  );
+  const rangeExposure = Math.min(1.35, Math.max(0.75, 300 / attackRange));
   const knockbackMitigation = 1 - Math.min(0.17, character.knockbackForce / 200);
   return rangeExposure * knockbackMitigation * ROLE_EXPOSURE[character.attackType];
 }
@@ -108,12 +114,13 @@ export function simulateRunDeaths(
   stageAllocations = buildRepresentativeStageAllocations(character),
 ): number {
   const random = createRandom(seed);
-  const exposureMultiplier = calculateExposureMultiplier(character);
   let expectedDeaths = 0;
 
   for (let stage = 1; stage <= 100; stage += 1) {
     const stageStats = calculateStageStats(stage);
-    const combat = simulateStageCombat(character, stageAllocations[stage - 1]!, stage);
+    const allocation = stageAllocations[stage - 1]!;
+    const combat = simulateStageCombat(character, allocation, stage);
+    const exposureMultiplier = calculateExposureMultiplier(character, allocation);
     const captainChance = calculateCaptainSpawnChance(stage);
     const weightedHealthMultiplier = 1 + captainChance * (CAPTAIN_ENEMY.health / BASIC_ENEMY.health - 1);
     const adjustedClearRatio = combat.lateStageClearRatio / weightedHealthMultiplier;
@@ -137,7 +144,7 @@ export function simulateRunDeaths(
     if (incomingDamagePerSecond <= 0) continue;
     const vulnerableLifetimeSeconds = combat.maxHealth / incomingDamagePerSecond;
     const lifeCycleSeconds = vulnerableLifetimeSeconds + REVIVE_INVULNERABILITY_MS / 1_000;
-    expectedDeaths += getStageDurationMs(stage) / 1_000 / lifeCycleSeconds;
+    expectedDeaths += estimateStageClearTimeMs(character, allocation, stage) / 1_000 / lifeCycleSeconds;
   }
 
   return Math.round(expectedDeaths);

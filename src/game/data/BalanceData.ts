@@ -1,16 +1,18 @@
 import type { CharacterData, GrowthProfile } from '../types/GameTypes';
-import { TOTAL_STAGE_DURATION_MS } from './StageData';
 import { UPGRADE_DEFINITIONS, UPGRADE_ORDER, calculateUpgradeEffect } from './UpgradeData';
 
-export const TARGET_RUN_DURATION_MS = 40 * 60_000;
-export const EXPECTED_REVIVES_PER_RUN = 50;
+export const FAST_CLEAR_REFERENCE_MS = 20 * 60_000;
+export const LONG_CLEAR_REFERENCE_MS = 60 * 60_000;
 export const EXPECTED_REVIVE_DECISION_MS = 1_200;
 
-export function estimateRunDurationMs(
-  reviveCount = EXPECTED_REVIVES_PER_RUN,
+export function estimateWallClockRunMs(
+  simulationDurationMs: number,
+  gameSpeed: 1 | 2 = 1,
+  reviveCount = 0,
   reviveDecisionMs = EXPECTED_REVIVE_DECISION_MS,
 ): number {
-  return TOTAL_STAGE_DURATION_MS + Math.max(0, reviveCount) * Math.max(0, reviveDecisionMs);
+  return Math.max(0, simulationDurationMs) / gameSpeed
+    + Math.max(0, reviveCount) * Math.max(0, reviveDecisionMs);
 }
 
 export const GROWTH_PROFILE_LABELS: Readonly<Record<GrowthProfile, string>> = {

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { getStageDurationMs, STAGE_TRANSITION_SPAWN_DELAY_MS } from '../../src/game/data/StageData';
+import { getStageKillTarget, STAGE_TRANSITION_SPAWN_DELAY_MS } from '../../src/game/data/StageData';
 import { calculateAttackRangeAtLevel } from '../../src/game/data/AttackRangeData';
 import { UPGRADE_DEFINITIONS, UPGRADE_ORDER, calculateUpgradeEffect } from '../../src/game/data/UpgradeData';
 
@@ -657,7 +657,7 @@ test('clears remaining enemies and projectiles at a stage boundary without rewar
   await clickGamePoint(page, 360, 900);
   await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
 
-  const transition = await page.evaluate(({ stageDuration, transitionDelay }) => {
+  const transition = await page.evaluate(({ stageTarget, transitionDelay }) => {
     const game = window.__CENTER_STAND_GAME__;
     const scene = game?.scene.getScene('GameScene') as unknown as {
       player: { x: number; y: number };
@@ -672,7 +672,11 @@ test('clears remaining enemies and projectiles at a stage boundary without rewar
         activeCount: number;
         fire: (x: number, y: number, target: object, damage: number, speed: number) => void;
       };
-      stages: { currentStage: number; stats: { spawnInterval: number }; update: (delta: number) => void };
+      stages: {
+        currentStage: number;
+        stats: { spawnInterval: number };
+        recordKills: (count: number) => void;
+      };
     };
     scene.run.gold = 321;
     scene.run.kills = 9;
@@ -682,7 +686,7 @@ test('clears remaining enemies and projectiles at a stage boundary without rewar
     scene.projectiles.fire(scene.player.x, scene.player.y, target, 1, 1);
     const before = { enemies: scene.enemies.activeCount, projectiles: scene.projectiles.activeCount };
 
-    scene.stages.update(stageDuration);
+    scene.stages.recordKills(stageTarget);
     const afterClear = {
       enemies: scene.enemies.activeCount,
       projectiles: scene.projectiles.activeCount,
@@ -699,7 +703,7 @@ test('clears remaining enemies and projectiles at a stage boundary without rewar
       scene.stages.stats,
     );
     return { before, afterClear, beforeDelayEnds, afterRespawn: scene.enemies.activeCount };
-  }, { stageDuration: getStageDurationMs(1), transitionDelay: STAGE_TRANSITION_SPAWN_DELAY_MS });
+  }, { stageTarget: getStageKillTarget(1), transitionDelay: STAGE_TRANSITION_SPAWN_DELAY_MS });
 
   expect(transition.before.enemies).toBeGreaterThanOrEqual(100);
   expect(transition.before.projectiles).toBe(1);
@@ -910,19 +914,65 @@ test('preserves gold and upgrades across revival, then returns to character sele
   expect(runtimeErrors).toEqual([]);
 });
 
+test('recommends an efficient upgrade after five deaths in one stage and resets next stage', async ({ page }) => {
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+
+  const recommendation = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      handlePlayerDeath: () => void;
+      revive: () => void;
+      player: { health: number };
+      run: { gold: number };
+      ui: { deathOverlay: { list: Array<{ text?: string }> } | null };
+    };
+    scene.run.gold = 100_000;
+    const deathTexts: string[][] = [];
+    for (let death = 1; death <= 5; death += 1) {
+      scene.player.health = 0;
+      scene.handlePlayerDeath();
+      deathTexts.push(scene.ui.deathOverlay?.list.flatMap((entry) => entry.text ? [entry.text] : []) ?? []);
+      if (death < 5) scene.revive();
+    }
+    return deathTexts;
+  });
+  for (let index = 0; index < 4; index += 1) {
+    expect(recommendation[index]!.join('\n')).not.toContain('추천 강화:');
+  }
+  expect(recommendation[4]!.join('\n')).toContain('추천 강화:');
+  expect(recommendation[4]!.join('\n')).toContain('부활 후 바로 구매 가능');
+
+  const nextStageDeath = await page.evaluate((stageTarget) => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      handlePlayerDeath: () => void;
+      revive: () => void;
+      player: { health: number };
+      stages: { recordKills: (count: number) => void };
+      ui: { deathOverlay: { list: Array<{ text?: string }> } | null };
+    };
+    scene.revive();
+    scene.stages.recordKills(stageTarget);
+    scene.player.health = 0;
+    scene.handlePlayerDeath();
+    return scene.ui.deathOverlay?.list.flatMap((entry) => entry.text ? [entry.text] : []) ?? [];
+  }, getStageKillTarget(1));
+  expect(nextStageDeath.join('\n')).toContain('STAGE 2 사망 1회');
+  expect(nextStageDeath.join('\n')).not.toContain('추천 강화:');
+});
+
 test('completes stage 100 once and reports the selected character death count', async ({ page }) => {
   await clickGamePoint(page, 360, 900);
   await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
-  await page.evaluate((finalStageDuration) => {
+  await page.evaluate((finalStageTarget) => {
     const game = window.__CENTER_STAND_GAME__;
     const scene = game?.scene.getScene('GameScene') as unknown as {
       run: { deaths: number };
-      stages: { currentStage: number; update: (delta: number) => void };
+      stages: { currentStage: number; recordKills: (count: number) => void };
     };
     scene.run.deaths = 3;
     scene.stages.currentStage = 100;
-    scene.stages.update(finalStageDuration);
-  }, getStageDurationMs(100));
+    scene.stages.recordKills(finalStageTarget);
+  }, getStageKillTarget(100));
   await expect.poll(() => activeSceneKey(page)).toBe('GameOverScene');
   const result = await page.evaluate(() => {
     const game = window.__CENTER_STAND_GAME__;

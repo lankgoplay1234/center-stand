@@ -2,18 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { CHARACTERS } from './CharacterData';
 import {
   GROWTH_EFFICIENCY_RANGES,
-  TARGET_RUN_DURATION_MS,
+  FAST_CLEAR_REFERENCE_MS,
+  LONG_CLEAR_REFERENCE_MS,
   calculateAverageUpgradeEfficiency,
   calculateBaselineCombatScore,
   calculateProjectedCombatScore,
-  estimateRunDurationMs,
+  estimateWallClockRunMs,
 } from './BalanceData';
 import type { GrowthProfile } from '../types/GameTypes';
 
 describe('character growth balance', () => {
-  it('estimates a typical run at 40 minutes including revival decisions', () => {
-    expect(estimateRunDurationMs()).toBe(TARGET_RUN_DURATION_MS);
-    expect(estimateRunDurationMs(0)).toBe(39 * 60_000);
+  it('keeps clear time variable and halves wall time at double speed', () => {
+    expect(estimateWallClockRunMs(FAST_CLEAR_REFERENCE_MS)).toBe(20 * 60_000);
+    expect(estimateWallClockRunMs(FAST_CLEAR_REFERENCE_MS, 2)).toBe(10 * 60_000);
+    expect(estimateWallClockRunMs(LONG_CLEAR_REFERENCE_MS, 1, 5)).toBe(60 * 60_000 + 6_000);
   });
 
   it('assigns two characters to each growth profile', () => {

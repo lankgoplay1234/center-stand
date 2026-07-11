@@ -47,7 +47,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.BLADE_SWEEP,
     growthProfile: 'EARLY',
     upgradeEfficiency: {
-      attackDamage: 0.75, attackSpeed: 0.75, defense: 0.9, maxHealth: 1.3, attackRange: 0.8,
+      attackDamage: 0.7, attackSpeed: 0.7, defense: 0.5, maxHealth: 1.7, attackRange: 0.8,
     },
     upgradeFocus: { primary: 'maxHealth', secondary: 'defense', description: '최대 체력으로 근접 노출을 버티는 생존형' },
     specialAbility: BLADE_FURY,

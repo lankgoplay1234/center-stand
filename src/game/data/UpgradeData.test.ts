@@ -36,7 +36,7 @@ describe('upgrade cost', () => {
   it('keeps level 99 costs finite and balanced for a single run', () => {
     for (const id of UPGRADE_ORDER) {
       const totalCost = calculateTotalUpgradeCost(UPGRADE_DEFINITIONS[id], MAX_UPGRADE_LEVEL);
-      expect(totalCost).toBeGreaterThan(30_000);
+      expect(totalCost).toBeGreaterThan(25_000);
       expect(totalCost).toBeLessThan(60_000);
       expect(Number.isSafeInteger(totalCost)).toBe(true);
     }

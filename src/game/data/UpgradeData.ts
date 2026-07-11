@@ -27,7 +27,7 @@ export const UPGRADE_DEFINITIONS: Readonly<Record<UpgradeId, UpgradeDefinition>>
   attackSpeed: {
     id: 'attackSpeed',
     name: '공격 속도',
-    baseCost: 30,
+    baseCost: 22,
     costGrowth: 1.04,
     effectPerLevel: 0.09,
     maxLevel: MAX_UPGRADE_LEVEL,
