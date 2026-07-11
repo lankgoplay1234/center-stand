@@ -27,12 +27,14 @@ export class UIManager {
   private readonly soundText: Phaser.GameObjects.Text;
   private readonly buttons = new Map<UpgradeId, UpgradeButton>();
   private deathOverlay: Phaser.GameObjects.Container | null = null;
+  private pauseOverlay: Phaser.GameObjects.Container | null = null;
 
   constructor(
     private readonly scene: Phaser.Scene,
     private readonly onUpgrade: (id: UpgradeId) => void,
     onStressTest: () => void,
     onToggleMute: () => boolean,
+    onPauseRequested: () => void,
   ) {
     scene.add.rectangle(360, 54, 680, 78, 0x090d1a, 0.78).setStrokeStyle(2, 0x33446c).setDepth(30);
     this.healthText = this.label(42, 34, '', 21).setOrigin(0, 0);
@@ -55,6 +57,11 @@ export class UIManager {
       .setDepth(40).setInteractive({ useHandCursor: true });
     this.soundText = this.label(642, 116, '♪ BGM ON', 14).setOrigin(0.5).setDepth(41);
     soundBg.on('pointerup', () => this.setMuted(onToggleMute()));
+
+    const pauseBg = scene.add.rectangle(510, 116, 116, 36, 0x17263a, 0.92).setStrokeStyle(2, 0x4d7890)
+      .setDepth(40).setInteractive({ useHandCursor: true });
+    this.label(510, 116, 'Ⅱ 일시정지', 14).setOrigin(0.5).setDepth(41);
+    pauseBg.on('pointerup', onPauseRequested);
 
     this.debugText = this.label(18, 112, '', 14).setOrigin(0).setColor('#83a1c8').setVisible(import.meta.env.DEV);
     if (import.meta.env.DEV) {
@@ -167,6 +174,49 @@ export class UIManager {
   hideDeathOptions(): void {
     this.deathOverlay?.destroy(true);
     this.deathOverlay = null;
+  }
+
+  showPauseOptions(onContinue: () => void, onHome: () => void): void {
+    this.hidePauseOptions();
+    const blocker = this.scene.add.rectangle(360, 640, 720, 1280, 0x03050b, 0.78).setInteractive();
+    const panel = this.scene.add.rectangle(360, 620, 580, 510, 0x101a2b, 0.98)
+      .setStrokeStyle(4, 0x63dce8, 0.85);
+    const title = this.scene.add.text(360, 430, '일시정지', {
+      fontFamily: 'Arial Black, sans-serif', fontSize: '50px', color: '#d9fbff',
+      stroke: '#12364c', strokeThickness: 8,
+    }).setOrigin(0.5);
+    const hint = this.scene.add.text(360, 510, '현재 전투 진행이 멈췄습니다', {
+      fontFamily: 'Arial, sans-serif', fontSize: '20px', color: '#9cb6ca',
+    }).setOrigin(0.5);
+    const continueBg = this.scene.add.rectangle(360, 620, 430, 86, 0x26b8c5)
+      .setStrokeStyle(3, 0xa6fbff).setInteractive({ useHandCursor: true });
+    const continueText = this.scene.add.text(360, 620, '계속 진행', {
+      fontFamily: 'Arial Black, sans-serif', fontSize: '29px', color: '#07131d',
+    }).setOrigin(0.5);
+    const homeBg = this.scene.add.rectangle(360, 735, 430, 76, 0x252f43)
+      .setStrokeStyle(2, 0x72819c).setInteractive({ useHandCursor: true });
+    const homeText = this.scene.add.text(360, 735, '홈 · 캐릭터 선택', {
+      fontFamily: 'Arial, sans-serif', fontSize: '23px', color: '#dce7f3', fontStyle: 'bold',
+    }).setOrigin(0.5);
+    const warning = this.scene.add.text(360, 815, '홈으로 이동하면 현재 런의 진행과 업그레이드가 초기화됩니다', {
+      fontFamily: 'Arial, sans-serif', fontSize: '16px', color: '#8393aa',
+    }).setOrigin(0.5);
+    this.pauseOverlay = this.scene.add.container(0, 0, [
+      blocker, panel, title, hint, continueBg, continueText, homeBg, homeText, warning,
+    ]).setDepth(100);
+    continueBg.on('pointerup', () => {
+      continueBg.disableInteractive();
+      onContinue();
+    });
+    homeBg.on('pointerup', () => {
+      homeBg.disableInteractive();
+      onHome();
+    });
+  }
+
+  hidePauseOptions(): void {
+    this.pauseOverlay?.destroy(true);
+    this.pauseOverlay = null;
   }
 
   private createUpgradeButton(x: number, y: number, id: UpgradeId): void {

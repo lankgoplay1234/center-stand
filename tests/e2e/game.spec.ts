@@ -79,6 +79,46 @@ test('selects all six characters and enters combat', async ({ page }) => {
   expect(runtimeErrors).toEqual([]);
 });
 
+test('pauses combat, continues the same run, and returns home', async ({ page }) => {
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+
+  await clickGamePoint(page, 510, 116);
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as
+      { isPaused?: boolean } | undefined;
+    return scene?.isPaused ?? false;
+  })).toBe(true);
+  const pausedAt = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as
+      { run: { elapsedSeconds: number } };
+    return scene.run.elapsedSeconds;
+  });
+  await page.waitForTimeout(300);
+  const whilePaused = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as
+      { run: { elapsedSeconds: number } };
+    return scene.run.elapsedSeconds;
+  });
+  expect(whilePaused - pausedAt).toBeLessThan(0.02);
+
+  await clickGamePoint(page, 360, 620);
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as
+      { isPaused?: boolean } | undefined;
+    return scene?.isPaused ?? true;
+  })).toBe(false);
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as
+      { run: { elapsedSeconds: number } };
+    return scene.run.elapsedSeconds;
+  })).toBeGreaterThan(whilePaused + 0.1);
+
+  await clickGamePoint(page, 510, 116);
+  await clickGamePoint(page, 360, 735);
+  await expect.poll(() => activeSceneKey(page)).toBe('CharacterSelectScene');
+});
+
 test('renders a distinct pooled attack motion for every character', async ({ page }) => {
   for (let index = 0; index < CHARACTER_CARDS.length; index += 1) {
     const card = CHARACTER_CARDS[index]!;

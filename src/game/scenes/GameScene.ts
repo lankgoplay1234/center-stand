@@ -31,6 +31,7 @@ export class GameScene extends Phaser.Scene {
   private arenaBackground!: Phaser.GameObjects.Image;
   private currentThemeKey = '';
   private criticalChance = PLAYER_CRITICAL_CHANCE;
+  private isPaused = false;
   private awaitingRevive = false;
   private invulnerableUntil = 0;
   private run: RunStats = { gold: 0, earnedGold: 0, kills: 0, deaths: 0, elapsedSeconds: 0 };
@@ -42,6 +43,7 @@ export class GameScene extends Phaser.Scene {
   create(data: { characterId?: string }): void {
     this.gameEnded = false;
     this.awaitingRevive = false;
+    this.isPaused = false;
     this.invulnerableUntil = 0;
     this.run = { gold: 0, earnedGold: 0, kills: 0, deaths: 0, elapsedSeconds: 0 };
     this.cameras.main.setBackgroundColor('#090d1a');
@@ -67,16 +69,18 @@ export class GameScene extends Phaser.Scene {
       (id) => this.purchaseUpgrade(id),
       () => this.runStressTest(),
       () => this.audio.toggleMuted(),
+      () => this.pauseGame(),
     );
     this.ui.showStageTransition(1);
     void this.audio.unlock();
     this.input.once('pointerdown', () => void this.audio.unlock());
     this.input.keyboard?.once('keydown', () => void this.audio.unlock());
+    this.input.keyboard?.on('keydown-ESC', () => this.togglePause());
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.audio.destroy());
   }
 
   update(time: number, delta: number): void {
-    if (this.gameEnded || this.awaitingRevive) return;
+    if (this.gameEnded || this.awaitingRevive || this.isPaused) return;
     const safeDelta = Math.min(delta, 50);
     this.run.elapsedSeconds += safeDelta / 1000;
     this.stages.update(safeDelta);
@@ -144,6 +148,27 @@ export class GameScene extends Phaser.Scene {
     );
   }
 
+  private togglePause(): void {
+    if (this.gameEnded || this.awaitingRevive) return;
+    if (this.isPaused) this.continueGame();
+    else this.pauseGame();
+  }
+
+  private pauseGame(): void {
+    if (this.gameEnded || this.awaitingRevive || this.isPaused) return;
+    this.isPaused = true;
+    this.ui.showPauseOptions(
+      () => this.continueGame(),
+      () => this.restartFromCharacterSelect(),
+    );
+  }
+
+  private continueGame(): void {
+    if (!this.isPaused || this.gameEnded) return;
+    this.isPaused = false;
+    this.ui.hidePauseOptions();
+  }
+
   private revive(): void {
     this.invulnerableUntil = revivePlayer(this.player, this.time.now);
     this.awaitingRevive = false;
@@ -162,7 +187,9 @@ export class GameScene extends Phaser.Scene {
 
   private restartFromCharacterSelect(): void {
     this.awaitingRevive = false;
+    this.isPaused = false;
     this.ui.hideDeathOptions();
+    this.ui.hidePauseOptions();
     this.enemies.destroyAll();
     this.projectiles.destroyAll();
     this.scene.start('CharacterSelectScene');
