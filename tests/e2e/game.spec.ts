@@ -119,6 +119,47 @@ test('pauses combat, continues the same run, and returns home', async ({ page })
   await expect.poll(() => activeSceneKey(page)).toBe('CharacterSelectScene');
 });
 
+test('toggles double speed and resets to normal for a fresh run', async ({ page }) => {
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+  await clickGamePoint(page, 378, 116);
+  const doubled = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      gameSpeed: 1 | 2;
+      isPaused: boolean;
+      run: { elapsedSeconds: number };
+      update: (time: number, delta: number) => void;
+      ui: { speedText: { text: string } };
+    };
+    scene.run.elapsedSeconds = 0;
+    scene.update(0, 20);
+    scene.isPaused = true;
+    return { speed: scene.gameSpeed, elapsedSeconds: scene.run.elapsedSeconds, label: scene.ui.speedText.text };
+  });
+  expect(doubled).toEqual({ speed: 2, elapsedSeconds: 0.04, label: '속도 ×2' });
+
+  await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as { isPaused: boolean };
+    scene.isPaused = false;
+  });
+  await clickGamePoint(page, 378, 116);
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as
+      { gameSpeed?: number } | undefined;
+    return scene?.gameSpeed ?? 0;
+  })).toBe(1);
+
+  await page.evaluate(() => window.__CENTER_STAND_GAME__?.scene.getScene('GameScene')?.scene.start('CharacterSelectScene'));
+  await expect.poll(() => activeSceneKey(page)).toBe('CharacterSelectScene');
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as
+      { gameSpeed?: number } | undefined;
+    return scene?.gameSpeed ?? 0;
+  })).toBe(1);
+});
+
 test('renders a distinct pooled attack motion for every character', async ({ page }) => {
   for (let index = 0; index < CHARACTER_CARDS.length; index += 1) {
     const card = CHARACTER_CARDS[index]!;

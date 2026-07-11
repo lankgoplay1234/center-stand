@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import { UPGRADE_ORDER, canUpgrade } from '../data/UpgradeData';
 import type { Player } from '../entities/Player';
+import type { GameSpeed } from '../systems/GameSpeedSystem';
 import type { UpgradeSystem } from '../systems/UpgradeSystem';
 import type { RunStats, UpgradeId } from '../types/GameTypes';
 
@@ -25,6 +26,7 @@ export class UIManager {
   private readonly timeText: Phaser.GameObjects.Text;
   private readonly debugText: Phaser.GameObjects.Text;
   private readonly soundText: Phaser.GameObjects.Text;
+  private readonly speedText: Phaser.GameObjects.Text;
   private readonly buttons = new Map<UpgradeId, UpgradeButton>();
   private deathOverlay: Phaser.GameObjects.Container | null = null;
   private pauseOverlay: Phaser.GameObjects.Container | null = null;
@@ -35,6 +37,7 @@ export class UIManager {
     onStressTest: () => void,
     onToggleMute: () => boolean,
     onPauseRequested: () => void,
+    onToggleSpeed: () => GameSpeed,
   ) {
     scene.add.rectangle(360, 54, 680, 78, 0x090d1a, 0.78).setStrokeStyle(2, 0x33446c).setDepth(30);
     this.healthText = this.label(42, 34, '', 21).setOrigin(0, 0);
@@ -62,6 +65,11 @@ export class UIManager {
       .setDepth(40).setInteractive({ useHandCursor: true });
     this.label(510, 116, 'Ⅱ 일시정지', 14).setOrigin(0.5).setDepth(41);
     pauseBg.on('pointerup', onPauseRequested);
+
+    const speedBg = scene.add.rectangle(378, 116, 116, 36, 0x17263a, 0.92).setStrokeStyle(2, 0x4d7890)
+      .setDepth(40).setInteractive({ useHandCursor: true });
+    this.speedText = this.label(378, 116, '속도 ×1', 14).setOrigin(0.5).setDepth(41);
+    speedBg.on('pointerup', () => this.setGameSpeed(onToggleSpeed()));
 
     this.debugText = this.label(18, 112, '', 14).setOrigin(0).setColor('#83a1c8').setVisible(import.meta.env.DEV);
     if (import.meta.env.DEV) {
@@ -124,6 +132,10 @@ export class UIManager {
 
   setMuted(muted: boolean): void {
     this.soundText.setText(muted ? '♪ BGM OFF' : '♪ BGM ON').setColor(muted ? '#8592a3' : '#bff7ff');
+  }
+
+  setGameSpeed(speed: GameSpeed): void {
+    this.speedText.setText(`속도 ×${speed}`).setColor(speed === 2 ? '#fff0a3' : '#bff7ff');
   }
 
   showStageTransition(stage: number): void {
