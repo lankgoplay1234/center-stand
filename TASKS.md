@@ -170,7 +170,7 @@
 - ID: DEPLOY-001
 - 작업명: GitHub 저장소 초기화와 Pages 자동 배포
 - 우선순위: HIGH
-- 상태: REVIEW
+- 상태: DONE
 - 설명: 현재 프로젝트를 Git 저장소로 초기화하고 GitHub 원격 저장소에 업로드한 뒤, pull request 중심 작업 흐름과 GitHub Actions 기반 타입 검사·린트·테스트·빌드·Pages 배포를 구성한다. 공개 저장소 여부와 저장소 이름은 업로드 직전 사용자 확인을 받는다.
 - 완료 조건: 비밀값과 `.env`가 커밋되지 않고, 기본 브랜치 보호를 고려한 작업 브랜치가 존재하며, GitHub Actions 네 가지 검사가 통과한 빌드만 Pages에 배포된다. 배포 링크에서 로그인 없이 게임이 실행된다.
 - 관련 파일: `.gitignore`, 향후 `.github/workflows/ci.yml`, `.github/workflows/deploy.yml`, `vite.config.ts`, `README.md`
