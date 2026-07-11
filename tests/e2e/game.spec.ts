@@ -341,6 +341,46 @@ test('renders a distinct pooled attack motion for every character', async ({ pag
   }
 });
 
+test('keeps the character sprite bounded during overlapping rapid attacks', async ({ page }) => {
+  await clickGamePoint(page, 530, 475);
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+
+  const scales = await page.evaluate(async () => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      isPaused: boolean;
+      player: {
+        x: number;
+        y: number;
+        visualTier: number;
+        sprite: { scaleX: number; scaleY: number };
+        applyUpgradeVisual: (levels: number) => void;
+        playAttackMotion: (target: { x: number; y: number }) => void;
+      };
+    };
+    scene.isPaused = true;
+    scene.player.applyUpgradeVisual(400);
+    const baseScale = 0.76 + scene.player.visualTier * 0.025;
+    let maximumScale = baseScale;
+    for (let attack = 0; attack < 50; attack += 1) {
+      scene.player.playAttackMotion({ x: scene.player.x + 100, y: scene.player.y });
+      await new Promise((resolve) => window.setTimeout(resolve, 8));
+      maximumScale = Math.max(maximumScale, scene.player.sprite.scaleX, scene.player.sprite.scaleY);
+    }
+    await new Promise((resolve) => window.setTimeout(resolve, 300));
+    return {
+      baseScale,
+      finalScaleX: scene.player.sprite.scaleX,
+      finalScaleY: scene.player.sprite.scaleY,
+      maximumScale,
+    };
+  });
+
+  expect(scales.maximumScale).toBeLessThanOrEqual(scales.baseScale * 1.15);
+  expect(scales.finalScaleX).toBeCloseTo(scales.baseScale, 4);
+  expect(scales.finalScaleY).toBeCloseTo(scales.baseScale, 4);
+});
+
 test('triggers Blade Fury on the fourth valid melee attack without duplicate damage', async ({ page }) => {
   await clickGamePoint(page, 530, 265);
   await clickGamePoint(page, 360, 900);

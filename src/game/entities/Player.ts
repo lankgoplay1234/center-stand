@@ -65,6 +65,10 @@ export class Player extends Phaser.GameObjects.Container {
     return calculateTotalTargetCount(this.baseTargetCount, this.bonusTargetCount);
   }
 
+  private get spriteBaseScale(): number {
+    return 0.76 + this.visualTier * 0.025;
+  }
+
   get visualStats(): { tier: number; totalUpgradeLevels: number; ornamentCount: number; coreRadius: number; auraRadius: number } {
     return {
       tier: this.visualTier,
@@ -93,7 +97,7 @@ export class Player extends Phaser.GameObjects.Container {
         .setPosition(Math.cos(angle) * visual.ornamentDistance, Math.sin(angle) * visual.ornamentDistance)
         .setFillStyle(primaryColor, 0.92).setStrokeStyle(2, finalAccent, 0.95);
     }
-    this.sprite.setScale(0.76 + visual.tier * 0.025);
+    this.sprite.setScale(this.spriteBaseScale);
   }
 
   playAttackMotion(target?: { x: number; y: number }): void {
@@ -105,9 +109,10 @@ export class Player extends Phaser.GameObjects.Container {
     this.scene.tweens.killTweensOf(this.core);
     this.scene.tweens.killTweensOf(this.sight);
     this.scene.tweens.killTweensOf(this.sprite);
+    const spriteBaseScale = this.spriteBaseScale;
     this.core.setScale(1).setAlpha(1);
     this.sight.setScale(1).setAlpha(1);
-    this.sprite.setPosition(0, -8).setAngle(0).setAlpha(1);
+    this.sprite.setPosition(0, -8).setAngle(0).setScale(spriteBaseScale).setAlpha(1);
     const motion = this.character.attackMotion.style;
     const spriteTargets = motion === 'BLADE_SWEEP'
       ? { x: 15, angle: 12, scaleX: this.sprite.scaleX * 1.08, scaleY: this.sprite.scaleY * 0.94 }
@@ -120,7 +125,7 @@ export class Player extends Phaser.GameObjects.Container {
       duration: durationMs / 2,
       yoyo: true,
       ease: 'Back.easeOut',
-      onComplete: () => this.sprite.setPosition(0, -8).setAngle(0).setScale(0.76 + this.visualTier * 0.025),
+      onComplete: () => this.sprite.setPosition(0, -8).setAngle(0).setScale(this.spriteBaseScale),
     });
     this.scene.tweens.add({
       targets: [this.core, this.sight],
