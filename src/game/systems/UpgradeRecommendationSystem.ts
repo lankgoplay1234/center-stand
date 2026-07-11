@@ -5,6 +5,7 @@ import {
   UPGRADE_ORDER,
   calculateUpgradeCost,
   calculateUpgradeEffect,
+  calculateTotalUpgradeCost,
   canUpgrade,
 } from '../data/UpgradeData';
 import type { AttackType, CharacterData, UpgradeId } from '../types/GameTypes';
@@ -22,6 +23,10 @@ export interface UpgradeEfficiencyAnalysis {
   offenseGain: number;
   survivalGain: number;
   rangeGain: number;
+  investedCost: number;
+  projectedCostShare: number;
+  targetCostShare: number;
+  balanceMultiplier: number;
   score: number;
   reason: string;
 }
@@ -36,7 +41,31 @@ const RANGE_UTILITY: Readonly<Record<AttackType, number>> = {
 };
 
 function relativeGain(current: number, next: number): number {
-  return Math.max(0, (next - current) / Math.max(0.000_001, current));
+  return Math.max(0, Math.log(Math.max(0.000_001, next) / Math.max(0.000_001, current)));
+}
+
+function clamp(value: number, minimum: number, maximum: number): number {
+  return Math.min(maximum, Math.max(minimum, value));
+}
+
+function modeRelevance(id: UpgradeId, mode: RecommendationMode): number {
+  if (id === 'attackDamage' || id === 'attackSpeed') return mode === 'FAST_CLEAR' ? 1.25 : 0.7;
+  if (id === 'defense' || id === 'maxHealth') return mode === 'FAST_CLEAR' ? 0.7 : 1.35;
+  return mode === 'FAST_CLEAR' ? 1 : 0.9;
+}
+
+function targetInvestmentShares(
+  character: CharacterData,
+  mode: RecommendationMode,
+): Readonly<Record<UpgradeId, number>> {
+  const weights = Object.fromEntries(UPGRADE_ORDER.map((id) => {
+    const focus = id === character.upgradeFocus.primary
+      ? 1.2
+      : id === character.upgradeFocus.secondary ? 1.08 : 1;
+    return [id, character.upgradeEfficiency[id] * focus * modeRelevance(id, mode)];
+  })) as Record<UpgradeId, number>;
+  const total = UPGRADE_ORDER.reduce((sum, id) => sum + weights[id], 0);
+  return Object.fromEntries(UPGRADE_ORDER.map((id) => [id, weights[id] / total])) as Record<UpgradeId, number>;
 }
 
 function nextAllocation(levels: UpgradeAllocation, id: UpgradeId): UpgradeAllocation {
@@ -77,7 +106,14 @@ export function analyzeUpgradeEfficiency(
     character.attackRange,
     character.maxAttackRange,
     levels.attackRange,
+    character.upgradeEfficiency.attackRange,
   );
+  const investedCosts = Object.fromEntries(UPGRADE_ORDER.map((id) => [
+    id,
+    calculateTotalUpgradeCost(UPGRADE_DEFINITIONS[id], levels[id]),
+  ])) as Record<UpgradeId, number>;
+  const totalInvestedCost = UPGRADE_ORDER.reduce((sum, id) => sum + investedCosts[id], 0);
+  const targetShares = targetInvestmentShares(character, mode);
 
   return UPGRADE_ORDER.flatMap((id) => {
     const definition = UPGRADE_DEFINITIONS[id];
@@ -89,6 +125,7 @@ export function analyzeUpgradeEfficiency(
       character.attackRange,
       character.maxAttackRange,
       nextLevels.attackRange,
+      character.upgradeEfficiency.attackRange,
     );
     const offenseGain = Math.max(
       relativeGain(currentCombat.lateStageClearRatio, nextCombat.lateStageClearRatio),
@@ -99,13 +136,13 @@ export function analyzeUpgradeEfficiency(
       ? relativeGain(currentRange, nextRange) * RANGE_UTILITY[character.attackType]
       : 0;
     const cost = calculateUpgradeCost(definition, level);
-    const focusMultiplier = id === character.upgradeFocus.primary
-      ? 1.16
-      : id === character.upgradeFocus.secondary ? 1.07 : 1;
+    const projectedCostShare = (investedCosts[id] + cost) / Math.max(1, totalInvestedCost + cost);
+    const targetCostShare = targetShares[id];
+    const balanceMultiplier = clamp(Math.sqrt(targetCostShare / Math.max(0.01, projectedCostShare)), 0.65, 1.6);
     const weightedGain = mode === 'FAST_CLEAR'
       ? offenseGain * 1.35 + survivalGain * 0.45 + rangeGain * 0.8
       : offenseGain * 0.65 + survivalGain * 1.6 + rangeGain;
-    const score = weightedGain * focusMultiplier * 1_000 / Math.max(1, cost);
+    const score = weightedGain * balanceMultiplier * 1_000 / Math.max(1, cost);
     return [{
       id,
       name: definition.name,
@@ -115,6 +152,10 @@ export function analyzeUpgradeEfficiency(
       offenseGain,
       survivalGain,
       rangeGain,
+      investedCost: investedCosts[id],
+      projectedCostShare,
+      targetCostShare,
+      balanceMultiplier,
       score,
       reason: buildReason(offenseGain, survivalGain, rangeGain),
     }];

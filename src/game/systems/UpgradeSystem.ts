@@ -85,6 +85,7 @@ export class UpgradeSystem {
           this.player.character.attackRange,
           this.player.character.maxAttackRange,
           state.level,
+          efficiency,
         );
         if (this.player.character.specialAbility?.type === 'ARC_OVERCHARGE'
           || this.player.character.specialAbility?.type === 'BLADE_FURY') {

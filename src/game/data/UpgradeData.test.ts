@@ -9,16 +9,23 @@ import {
 } from './UpgradeData';
 
 describe('upgrade cost', () => {
-  it('uses floor(baseCost × costGrowth ^ level)', () => {
+  it('uses exponential growth with a strict per-level minimum increase', () => {
     const upgrade = UPGRADE_DEFINITIONS.attackDamage;
     expect(calculateUpgradeCost(upgrade, 0)).toBe(20);
-    expect(calculateUpgradeCost(upgrade, 1)).toBe(Math.floor(upgrade.baseCost * upgrade.costGrowth));
-    expect(calculateUpgradeCost(upgrade, 4)).toBe(Math.floor(upgrade.baseCost * upgrade.costGrowth ** 4));
+    expect(calculateUpgradeCost(upgrade, 1)).toBe(Math.ceil(upgrade.baseCost * upgrade.costGrowth));
+    expect(calculateUpgradeCost(upgrade, 4)).toBe(Math.ceil(upgrade.baseCost * upgrade.costGrowth ** 4));
   });
 
-  it('increases with each level', () => {
-    const upgrade = UPGRADE_DEFINITIONS.defense;
-    expect(calculateUpgradeCost(upgrade, 2)).toBeGreaterThan(calculateUpgradeCost(upgrade, 1));
+  it('strictly increases at every level for every upgrade', () => {
+    for (const id of UPGRADE_ORDER) {
+      const definition = UPGRADE_DEFINITIONS[id];
+      for (let level = 0; level < MAX_UPGRADE_LEVEL - 1; level += 1) {
+        expect(calculateUpgradeCost(definition, level + 1), `${id} level ${level + 1}`)
+          .toBeGreaterThan(calculateUpgradeCost(definition, level));
+      }
+      expect(calculateUpgradeCost(definition, 10)).toBeGreaterThan(calculateUpgradeCost(definition, 1));
+      expect(calculateUpgradeCost(definition, 50)).toBeGreaterThan(calculateUpgradeCost(definition, 10));
+    }
   });
 
   it('defines the five persistent upgrades with a level 99 cap in display order', () => {

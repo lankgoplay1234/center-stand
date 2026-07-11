@@ -797,7 +797,12 @@ test('preserves gold and upgrades across revival, then returns to character sele
       + calculateUpgradeEffect(UPGRADE_DEFINITIONS.defense, 1, initialStats.efficiency.defense),
     maxHealth: initialStats.maxHealth
       + calculateUpgradeEffect(UPGRADE_DEFINITIONS.maxHealth, 1, initialStats.efficiency.maxHealth),
-    attackRange: calculateAttackRangeAtLevel(initialStats.attackRange, initialStats.maxAttackRange, 1),
+    attackRange: calculateAttackRangeAtLevel(
+      initialStats.attackRange,
+      initialStats.maxAttackRange,
+      1,
+      initialStats.efficiency.attackRange,
+    ),
     attackAreaRadius: initialStats.attackAreaRadius,
     specialAbilityLevel: initialStats.specialAbilityLevel + 1,
   });
@@ -857,7 +862,12 @@ test('preserves gold and upgrades across revival, then returns to character sele
     };
   })).toEqual({
     attackDamage: deathState.attackDamage,
-    attackRange: calculateAttackRangeAtLevel(initialStats.attackRange, initialStats.maxAttackRange, 1),
+    attackRange: calculateAttackRangeAtLevel(
+      initialStats.attackRange,
+      initialStats.maxAttackRange,
+      1,
+      initialStats.efficiency.attackRange,
+    ),
     awaitingRevive: false,
     deaths: 1,
     health: initialStats.maxHealth

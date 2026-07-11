@@ -4,6 +4,7 @@ import {
   MIN_LATE_STAGE_CLEAR_RATIO,
   MIN_SURVIVABLE_HITS,
   STABLE_COMPLETION_MIN_UPGRADES,
+  calculateAllocationCost,
   calculateAllocationTotal,
   getPreCompletionAllocation,
   getRoleCompletionAllocation,
@@ -84,5 +85,17 @@ describe('400-upgrade completion balance', () => {
     } as const;
     expect(calculateAllocationTotal(poorAllocation)).toBe(400);
     expect(estimateRunClearTimeMs(arc, poorAllocation)).toBeGreaterThanOrEqual(60 * 60_000);
+  });
+
+  it('makes a mixed offensive build cheaper and faster than damage overinvestment', () => {
+    const arc = CHARACTERS.find((character) => character.id === 'arc-ranger')!;
+    const concentrated = {
+      attackDamage: 50, attackSpeed: 1, defense: 1, maxHealth: 1, attackRange: 1,
+    } as const;
+    const mixed = {
+      attackDamage: 30, attackSpeed: 20, defense: 1, maxHealth: 1, attackRange: 10,
+    } as const;
+    expect(calculateAllocationCost(mixed)).toBeLessThan(calculateAllocationCost(concentrated));
+    expect(estimateRunClearTimeMs(arc, mixed)).toBeLessThan(estimateRunClearTimeMs(arc, concentrated));
   });
 });

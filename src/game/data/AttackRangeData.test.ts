@@ -32,4 +32,13 @@ describe('attack range progression', () => {
     expect(calculateAttackRangeAtLevel(100, 150, 50)).toBeGreaterThan(100);
     expect(calculateAttackRangeAtLevel(100, 150, 500)).toBe(150);
   });
+
+  it('applies character efficiency during growth while preserving both endpoints', () => {
+    expect(calculateAttackRangeAtLevel(100, 200, 0, 1.5)).toBe(100);
+    expect(calculateAttackRangeAtLevel(100, 200, MAX_UPGRADE_LEVEL, 0.5)).toBe(200);
+    expect(calculateAttackRangeAtLevel(100, 200, 40, 1.5))
+      .toBeGreaterThan(calculateAttackRangeAtLevel(100, 200, 40, 1));
+    expect(calculateAttackRangeAtLevel(100, 200, 40, 0.5))
+      .toBeLessThan(calculateAttackRangeAtLevel(100, 200, 40, 1));
+  });
 });

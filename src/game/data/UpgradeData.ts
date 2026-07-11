@@ -63,7 +63,11 @@ export const UPGRADE_DEFINITIONS: Readonly<Record<UpgradeId, UpgradeDefinition>>
 };
 
 export function calculateUpgradeCost(definition: UpgradeDefinition, level: number): number {
-  return Math.floor(definition.baseCost * definition.costGrowth ** level);
+  const safeLevel = Math.max(0, Math.floor(level));
+  return Math.max(
+    Math.ceil(definition.baseCost * definition.costGrowth ** safeLevel),
+    Math.ceil(definition.baseCost) + safeLevel,
+  );
 }
 
 export function calculateUpgradeEffect(definition: UpgradeDefinition, level: number, efficiency = 1): number {

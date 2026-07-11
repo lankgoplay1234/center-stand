@@ -102,6 +102,7 @@ function calculateExposureMultiplier(character: CharacterData, allocation: Upgra
     character.attackRange,
     character.maxAttackRange,
     allocation.attackRange,
+    character.upgradeEfficiency.attackRange,
   );
   const rangeExposure = Math.min(1.35, Math.max(0.75, 300 / attackRange));
   const knockbackMitigation = 1 - Math.min(0.17, character.knockbackForce / 200);

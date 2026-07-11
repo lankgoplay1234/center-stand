@@ -73,4 +73,37 @@ describe('UpgradeRecommendationSystem', () => {
     expect(range?.rangeGain).toBeGreaterThan(0);
     expect(levels).toEqual(before);
   });
+
+  it('penalizes cumulative overinvestment and recommends a low-level complement', () => {
+    const character = CHARACTERS.find((entry) => entry.id === 'arc-ranger')!;
+    const concentrated: UpgradeAllocation = {
+      attackDamage: 50, attackSpeed: 1, defense: 1, maxHealth: 1, attackRange: 1,
+    };
+    const analyses = analyzeUpgradeEfficiency(character, concentrated, 40, 100_000, 'FAST_CLEAR');
+    const damage = analyses.find((entry) => entry.id === 'attackDamage')!;
+    const recommendation = recommendUpgrade(character, concentrated, 40, 100_000, 'FAST_CLEAR');
+    expect(recommendation?.id).not.toBe('attackDamage');
+    expect(recommendation?.id).toBe('attackSpeed');
+    expect(damage.projectedCostShare).toBeGreaterThan(damage.targetCostShare);
+    expect(damage.balanceMultiplier).toBeLessThan(1);
+  });
+
+  it('keeps representative character recommendations role-diverse', () => {
+    const recommendations = CHARACTERS.map((character) =>
+      recommendUpgrade(character, MID_RUN_LEVELS, 50, 100_000, 'FAST_CLEAR')?.id);
+    const counts = new Map(recommendations.map((id) => [id, recommendations.filter((entry) => entry === id).length]));
+    expect(new Set(recommendations).size).toBeGreaterThanOrEqual(3);
+    expect(Math.max(...counts.values())).toBeLessThanOrEqual(3);
+  });
+
+  it('changes priorities when each character overinvests in its primary upgrade', () => {
+    for (const character of CHARACTERS) {
+      const levels: UpgradeAllocation = {
+        attackDamage: 1, attackSpeed: 1, defense: 1, maxHealth: 1, attackRange: 1,
+        [character.upgradeFocus.primary]: 60,
+      };
+      const recommendation = recommendUpgrade(character, levels, 50, 100_000, 'FAST_CLEAR');
+      expect(recommendation?.id, character.name).not.toBe(character.upgradeFocus.primary);
+    }
+  });
 });
