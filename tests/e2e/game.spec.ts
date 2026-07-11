@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { STAGE_DURATION_MS, STAGE_TRANSITION_SPAWN_DELAY_MS } from '../../src/game/data/StageData';
+import { getStageDurationMs, STAGE_TRANSITION_SPAWN_DELAY_MS } from '../../src/game/data/StageData';
 
 const GAME_WIDTH = 720;
 const GAME_HEIGHT = 1280;
@@ -251,7 +251,7 @@ test('clears remaining enemies and projectiles at a stage boundary without rewar
       scene.stages.stats,
     );
     return { before, afterClear, beforeDelayEnds, afterRespawn: scene.enemies.activeCount };
-  }, { stageDuration: STAGE_DURATION_MS, transitionDelay: STAGE_TRANSITION_SPAWN_DELAY_MS });
+  }, { stageDuration: getStageDurationMs(1), transitionDelay: STAGE_TRANSITION_SPAWN_DELAY_MS });
 
   expect(transition.before.enemies).toBeGreaterThanOrEqual(100);
   expect(transition.before.projectiles).toBe(1);
@@ -437,7 +437,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
 test('completes stage 100 once and reports the selected character death count', async ({ page }) => {
   await clickGamePoint(page, 360, 900);
   await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
-  await page.evaluate(() => {
+  await page.evaluate((finalStageDuration) => {
     const game = window.__CENTER_STAND_GAME__;
     const scene = game?.scene.getScene('GameScene') as unknown as {
       run: { deaths: number };
@@ -445,8 +445,8 @@ test('completes stage 100 once and reports the selected character death count', 
     };
     scene.run.deaths = 3;
     scene.stages.currentStage = 100;
-    scene.stages.update(30_000);
-  });
+    scene.stages.update(finalStageDuration);
+  }, getStageDurationMs(100));
   await expect.poll(() => activeSceneKey(page)).toBe('GameOverScene');
   const result = await page.evaluate(() => {
     const game = window.__CENTER_STAND_GAME__;
