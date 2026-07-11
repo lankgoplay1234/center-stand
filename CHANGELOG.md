@@ -21,6 +21,7 @@
 - `BALANCE-004` 평균 약 50회 사망 시뮬레이션 검수; 실제 장시간 수동 플레이 표본은 미확보로 차단 기록
 - `GIT-001` 인증·원격 추적·백업 이력·작업 브랜치·Draft PR 완료 조건 최종 검수
 - `ENEMY-002` 5단계 외형·대장 배율·출현율·기존 풀 재사용 완료 조건 최종 검수
+- `FX-003` 누적 업그레이드 6단계 외형·고정 장식·런 상태 완료 조건 최종 검수
 
 ### Verified
 
@@ -40,6 +41,7 @@
 - DeathBalanceSimulation·RunBalanceSimulation 8개 테스트와 desktop/mobile 부활·완주 4개 통과
 - GitHub CLI 인증, origin 추적과 main 대상 Draft PR #4 품질 성공 확인
 - EnemyData·DeathBalanceSimulation 8개 테스트와 desktop/mobile stage-100 대장 풀 검사 2개 통과
+- CharacterVisualData·UpgradeSystem 8개 테스트와 desktop/mobile 400회 외형 흐름 2개 통과
 
 ## 0.26.0 - 2026-07-12
 
