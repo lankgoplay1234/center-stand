@@ -34,6 +34,7 @@ describe('character data', () => {
     const character = {
       ...CHARACTERS[0]!,
       attackSpeed: 0,
+      baseCriticalChance: 0.201,
       maxAttackRange: CHARACTERS[0]!.attackRange,
       attackAreaRadius: 0,
       baseTargetCount: 0,
@@ -41,11 +42,27 @@ describe('character data', () => {
       upgradeEfficiency: { ...CHARACTERS[0]!.upgradeEfficiency, attackDamage: 0 },
     };
     expect(validateCharacterData(character)).toContain('attackSpeed must be positive');
+    expect(validateCharacterData(character)).toContain('baseCriticalChance must be between 0 and 0.2');
     expect(validateCharacterData(character)).toContain('maxAttackRange must be greater than attackRange');
     expect(validateCharacterData(character)).toContain('attackAreaRadius must be positive');
     expect(validateCharacterData(character)).toContain('baseTargetCount must be a positive integer');
     expect(validateCharacterData(character)).toContain('knockbackForce cannot be negative');
     expect(validateCharacterData(character)).toContain('upgradeEfficiency.attackDamage must be positive');
+  });
+
+  it('uses bounded role-pair critical chances from the fastest-clear analysis', () => {
+    expect(Object.fromEntries(CHARACTERS.map((character) => [character.id, character.baseCriticalChance]))).toEqual({
+      'arc-ranger': 0.2,
+      'blade-warden': 0,
+      'bastion-gunner': 0.2,
+      'rune-mage': 0.2,
+      'needle-striker': 0,
+      'storm-conductor': 0,
+    });
+    for (const character of CHARACTERS) {
+      expect(character.baseCriticalChance).toBeGreaterThanOrEqual(0);
+      expect(character.baseCriticalChance).toBeLessThanOrEqual(0.2);
+    }
   });
 
   it('uses strong melee, light standard, and zero area knockback profiles', () => {

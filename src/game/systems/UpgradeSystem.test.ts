@@ -10,7 +10,7 @@ function createPlayer(
   specialAbility: SpecialAbilityData | null = null,
 ): Player {
   return {
-    character: { specialAbility, attackRange: 200, maxAttackRange: 300 },
+    character: { specialAbility, attackRange: 200, maxAttackRange: 300, baseCriticalChance: 0.08 },
     attackDamage: 10,
     attackSpeed: 2,
     baseTargetCount: 1,

@@ -66,6 +66,7 @@ export interface CharacterData {
   defense: number;
   attackDamage: number;
   attackSpeed: number;
+  baseCriticalChance: number;
   attackRange: number;
   maxAttackRange: number;
   attackArcDegrees: number | null;

@@ -70,7 +70,8 @@ test('selects all six characters and enters combat', async ({ page }) => {
       .filter((text) => text.includes('CRIT')) ?? [];
   });
   expect(criticalLabels).toHaveLength(6);
-  expect(criticalLabels.every((label) => label.includes('CRIT 8.0%'))).toBe(true);
+  expect(criticalLabels.filter((label) => label.includes('CRIT 0.0%'))).toHaveLength(3);
+  expect(criticalLabels.filter((label) => label.includes('CRIT 20.0%'))).toHaveLength(3);
 
   for (const card of CHARACTER_CARDS) {
     await clickGamePoint(page, card.x, card.y);
@@ -353,7 +354,7 @@ test('renders the real attack range and grows the same indicator with the range 
   expect(before.indicatorRadius).toBe(before.playerRange);
   expect(before.label).toContain('공격가능범위');
   expect(before.label).toContain(`/${before.maxRange}`);
-  expect(before.label).toContain('치명타 8.0%');
+  expect(before.label).toContain('치명타 20.0%');
 
   await clickGamePoint(page, 588, 1182);
   const after = await page.evaluate(() => {
@@ -378,8 +379,8 @@ test('renders the real attack range and grows the same indicator with the range 
   expect(after.reused).toBe(true);
   expect(after.indicatorRadius).toBe(after.playerRange);
   expect(after.playerRange).toBeGreaterThan(before.playerRange);
-  expect(after.criticalChance).toBeCloseTo(0.082);
-  expect(after.label).toContain('치명타 8.2%');
+  expect(after.criticalChance).toBeCloseTo(0.202);
+  expect(after.label).toContain('치명타 20.2%');
 });
 
 test('renders a distinct pooled attack motion for every character', async ({ page }) => {

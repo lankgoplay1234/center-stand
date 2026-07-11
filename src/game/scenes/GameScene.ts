@@ -58,7 +58,6 @@ export class GameScene extends Phaser.Scene {
     this.invulnerableUntil = 0;
     this.gameSpeed = 1;
     this.simulationTime = 0;
-    this.criticalChance = calculatePlayerCriticalChance(0);
     this.stageDeaths.enterStage(1);
     this.time.timeScale = 1;
     this.tweens.timeScale = 1;
@@ -66,6 +65,7 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#090d1a');
     this.createArena();
     this.player = new Player(this, 360, 595, getCharacterById(data.characterId ?? 'arc-ranger')).setDepth(10);
+    this.criticalChance = calculatePlayerCriticalChance(this.player.character.baseCriticalChance, 0);
     this.createAttackRangeIndicator();
     this.effects = new EffectsManager(this);
     this.audio = new AudioManager();
@@ -288,7 +288,10 @@ export class GameScene extends Phaser.Scene {
     this.ui.pulseUpgrade(id);
     if (id === 'attackRange') {
       this.updateAttackRangeIndicator();
-      this.criticalChance = calculatePlayerCriticalChance(this.upgrades.getState(id).level);
+      this.criticalChance = calculatePlayerCriticalChance(
+        this.player.character.baseCriticalChance,
+        this.upgrades.getState(id).level,
+      );
     }
     this.refreshUI(!this.awaitingRevive);
     this.cameras.main.flash(65, 30, 150, 170, false);

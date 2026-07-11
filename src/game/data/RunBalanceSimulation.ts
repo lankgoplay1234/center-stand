@@ -9,6 +9,10 @@ import {
   calculateTotalUpgradeCost,
   calculateUpgradeEffect,
 } from './UpgradeData';
+import {
+  calculateExpectedCriticalDamageMultiplier,
+  calculatePlayerCriticalChance,
+} from './CriticalHitData';
 
 export type UpgradeAllocation = Readonly<Record<UpgradeId, number>>;
 
@@ -40,7 +44,7 @@ export const MIN_LATE_STAGE_CLEAR_RATIO = 1;
 export const MIN_SURVIVABLE_HITS = 8;
 
 export const ROLE_COMPLETION_ALLOCATIONS: Readonly<Record<string, UpgradeAllocation>> = {
-  'arc-ranger': { attackDamage: 35, attackSpeed: 99, defense: 90, maxHealth: 90, attackRange: 86 },
+  'arc-ranger': { attackDamage: 25, attackSpeed: 99, defense: 95, maxHealth: 95, attackRange: 86 },
   'blade-warden': { attackDamage: 65, attackSpeed: 70, defense: 85, maxHealth: 95, attackRange: 85 },
   'bastion-gunner': { attackDamage: 70, attackSpeed: 75, defense: 95, maxHealth: 90, attackRange: 70 },
   'rune-mage': { attackDamage: 80, attackSpeed: 99, defense: 75, maxHealth: 75, attackRange: 71 },
@@ -108,14 +112,19 @@ function calculateTargetCapacity(character: CharacterData): number {
 }
 
 function calculateAverageDamageMultiplier(character: CharacterData, allocation: UpgradeAllocation): number {
+  const criticalMultiplier = calculateExpectedCriticalDamageMultiplier(calculatePlayerCriticalChance(
+    character.baseCriticalChance,
+    allocation.attackRange,
+  ));
   const ability = character.specialAbility;
-  if (ability?.type !== 'ARC_OVERCHARGE') return 1;
+  if (ability?.type !== 'ARC_OVERCHARGE') return criticalMultiplier;
   const overchargeMultiplier = calculateOverchargeDamageMultiplier(
     ability,
     allocation.attackRange,
     character.upgradeEfficiency.attackRange,
   );
-  return ((ability.triggerEveryAttacks - 1) + overchargeMultiplier) / ability.triggerEveryAttacks;
+  return criticalMultiplier
+    * ((ability.triggerEveryAttacks - 1) + overchargeMultiplier) / ability.triggerEveryAttacks;
 }
 
 export function simulateCompletionReadiness(

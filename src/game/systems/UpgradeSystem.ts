@@ -33,7 +33,7 @@ export class UpgradeSystem {
     const state = this.states[id];
     const efficiency = this.getEfficiency(id);
     if (id === 'attackRange') {
-      return `범위 ${Math.round(this.player.attackRange)}/${Math.round(this.player.character.maxAttackRange)} · 치명타 ${formatCriticalChance(calculatePlayerCriticalChance(state.level))}`;
+      return `범위 ${Math.round(this.player.attackRange)}/${Math.round(this.player.character.maxAttackRange)} · 치명타 ${formatCriticalChance(calculatePlayerCriticalChance(this.player.character.baseCriticalChance, state.level))}`;
     }
     return state.definition.effectLabel(state.level, efficiency);
   }

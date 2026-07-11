@@ -12,6 +12,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     defense: 2,
     attackDamage: 28,
     attackSpeed: 2,
+    baseCriticalChance: 0.2,
     attackRange: 200,
     maxAttackRange: 550,
     attackArcDegrees: null,
@@ -36,6 +37,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     defense: 5,
     attackDamage: 32,
     attackSpeed: 1.2,
+    baseCriticalChance: 0,
     attackRange: 80,
     maxAttackRange: 240,
     attackArcDegrees: 45,
@@ -60,6 +62,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     defense: 10,
     attackDamage: 14,
     attackSpeed: 1.45,
+    baseCriticalChance: 0.2,
     attackRange: 50,
     maxAttackRange: 150,
     attackArcDegrees: 90,
@@ -84,6 +87,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     defense: 1,
     attackDamage: 20,
     attackSpeed: 1,
+    baseCriticalChance: 0.2,
     attackRange: 155,
     maxAttackRange: 430,
     attackArcDegrees: null,
@@ -108,6 +112,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     defense: 2,
     attackDamage: 12,
     attackSpeed: 3.8,
+    baseCriticalChance: 0,
     attackRange: 240,
     maxAttackRange: 660,
     attackArcDegrees: null,
@@ -132,6 +137,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     defense: 2,
     attackDamage: 17,
     attackSpeed: 1.4,
+    baseCriticalChance: 0,
     attackRange: 170,
     maxAttackRange: 470,
     attackArcDegrees: null,
@@ -158,6 +164,11 @@ export function validateCharacterData(character: CharacterData): string[] {
   if (character.defense < 0) errors.push('defense cannot be negative');
   if (character.attackDamage <= 0) errors.push('attackDamage must be positive');
   if (character.attackSpeed <= 0) errors.push('attackSpeed must be positive');
+  if (!Number.isFinite(character.baseCriticalChance)
+    || character.baseCriticalChance < 0
+    || character.baseCriticalChance > 0.2) {
+    errors.push('baseCriticalChance must be between 0 and 0.2');
+  }
   if (character.attackRange <= 0) errors.push('attackRange must be positive');
   if (!Number.isFinite(character.maxAttackRange) || character.maxAttackRange <= character.attackRange) {
     errors.push('maxAttackRange must be greater than attackRange');
