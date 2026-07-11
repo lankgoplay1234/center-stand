@@ -1,0 +1,199 @@
+# Task Backlog
+
+## GAME-002
+
+- ID: GAME-002
+- 작업명: 캐릭터 공격 전략 분리 — 1단계
+- 우선순위: HIGH
+- 상태: REVIEW
+- 설명: 공격 전략 인터페이스와 SINGLE_TARGET, MULTI_TARGET, AREA_MELEE 전략을 도입한다. 나머지 캐릭터 데이터 추가는 후속 작업으로 분리한다.
+- 완료 조건: attackType으로 세 전략이 선택되고, 기존 캐릭터의 단일 원거리 공격이 유지되며, 대상 제한·범위·중복 방지·업그레이드 반영 테스트가 통과한다.
+- 관련 파일: `CharacterData.ts`, `CombatSystem.ts`, `TargetingSystem.ts`, `GameTypes.ts`, `strategies/`
+- 테스트 방법: `npm run typecheck`, `npm run lint`, `npm run test`, `npm run build`
+
+## GAME-005
+
+- ID: GAME-005
+- 작업명: 추가 캐릭터와 공격 전략 — 2단계
+- 우선순위: HIGH
+- 상태: REVIEW
+- 설명: 전략별 선택 가능한 캐릭터 데이터를 추가하고 AREA_MAGIC, PIERCING, CHAIN을 단계적으로 구현한다.
+- 완료 조건: 캐릭터 선택 화면에서 전략별 캐릭터를 선택할 수 있고 각 전략의 단위·브라우저 테스트가 통과한다.
+- 관련 파일: `CharacterData.ts`, `CharacterSelectScene.ts`, `strategies/`
+- 테스트 방법: `npm run test && npm run build`
+
+## GAME-003
+
+- ID: GAME-003
+- 작업명: Playwright 전투 스모크 테스트
+- 우선순위: HIGH
+- 상태: REVIEW
+- 설명: 시작, 전투 진입, 업그레이드, 게임오버 재시작의 브라우저 테스트를 추가한다.
+- 완료 조건: 모바일/데스크톱 뷰포트에서 핵심 흐름 테스트가 통과한다.
+- 관련 파일: `package.json`, `playwright.config.ts`, `tests/e2e/`
+- 테스트 방법: `npm run test:e2e`
+
+## GAME-006
+
+- ID: GAME-006
+- 작업명: 전투 업그레이드 6종 완성
+- 우선순위: HIGH
+- 상태: REVIEW
+- 설명: 공격 속도, 방어력, 최대 체력, 특수 강화를 데이터 기반 무한 업그레이드로 추가해 기존 공격력·대상 수와 함께 하단 6개 버튼을 완성한다.
+- 완료 조건: 6개 업그레이드가 비용 증가, 골드 차감, 현재 수치 반영, 버튼 상태 및 데스크톱·모바일 흐름 검증을 통과한다.
+- 관련 파일: `UpgradeData.ts`, `UpgradeSystem.ts`, `UIManager.ts`, `GameTypes.ts`, `tests/`
+- 테스트 방법: `npm run typecheck`, `npm run lint`, `npm run test`, `npm run build`, `npm run test:e2e`
+
+## FX-001
+
+- ID: FX-001
+- 작업명: 모든 공격 전략 피해 숫자 표시 검수·보강
+- 우선순위: HIGH
+- 상태: REVIEW
+- 설명: 이미 구현된 DamageTextPool을 기준으로 여섯 공격 전략이 적을 타격할 때마다 피해 위치에 작은 피해 숫자가 빠짐없이 표시되는지 검수하고, 대량 전투에서도 겹침과 가독성을 보강한다.
+- 완료 조건: SINGLE_TARGET, MULTI_TARGET, AREA_MELEE, AREA_MAGIC, PIERCING, CHAIN 모두 적 위치에 실제 적용 피해량을 표시하며 100 적 상태에서 풀링과 FPS가 유지된다.
+- 관련 파일: `GameScene.ts`, `EffectsManager.ts`, `DamageTextPool.ts`, `strategies/`
+- 테스트 방법: 전략별 단위 테스트, Playwright 스크린샷 검수, 100 적 개발 테스트
+
+## RANK-001
+
+- ID: RANK-001
+- 작업명: 익명 완주 랭킹 API와 저장소 설계
+- 우선순위: MEDIUM
+- 상태: BACKLOG
+- 설명: STAGE-002 완료 후 로그인 없이 1~5자 닉네임, 캐릭터 ID, 100스테이지 사망 횟수, 완주 시간을 저장하고 사망 횟수 오름차순 기준 상위 10개를 반환하는 외부 API를 설계한다. 외부 서버·DB 도입이므로 구현 전 사용자 승인을 받는다.
+- 완료 조건: 입력 검증, 닉네임 길이/금칙어, 중복 제출, 속도 제한, 조작 방지 정책과 동점 정렬 기준이 문서화되고 API 통합 테스트가 통과한다.
+- 관련 파일: 향후 `server/`, `services/LeaderboardService.ts`, `.env.example`, 배포 설정
+- 테스트 방법: API 계약 테스트, 잘못된 기록 거부, 동점/상위 10개 정렬, 속도 제한 테스트
+
+## RANK-002
+
+- ID: RANK-002
+- 작업명: 완주 랭킹 UI와 내 기록 업로드
+- 우선순위: MEDIUM
+- 상태: BACKLOG
+- 설명: RANK-001과 STAGE-002 완료 후 완주 화면에서 5자 이내 닉네임을 입력해 내 성적을 업로드하고, 1~10위의 닉네임·캐릭터·사망 횟수를 표시한다. 서버 장애 시 게임과 로컬 결과 화면은 정상 동작해야 한다.
+- 완료 조건: 사망 횟수가 적은 순서로 10개만 표시되고 내 업로드 성공/실패/재시도 상태가 명확하며 모바일 입력 UI가 깨지지 않는다.
+- 관련 파일: `GameOverScene.ts`, `UIManager.ts`, `services/LeaderboardService.ts`, `GameTypes.ts`
+- 테스트 방법: API 모의 단위 테스트, 닉네임 1~5자 검증, 데스크톱·모바일 Playwright 테스트
+
+## COMBAT-002
+
+- ID: COMBAT-002
+- 작업명: 캐릭터별 적 넉백 시스템
+- 우선순위: HIGH
+- 상태: REVIEW
+- 설명: 캐릭터 데이터에 넉백 강도를 분리하고 타격 방향으로 적을 밀어낸다. 일반 캐릭터는 약한 넉백, 근접형은 강한 넉백, 범위형으로 지정된 캐릭터는 넉백 0을 사용한다.
+- 완료 조건: 연속 타격 중 위치가 안정적으로 갱신되고, 범위형 제외·근접형 강화·화면 밖 처리·100 적 성능 테스트가 통과한다.
+- 관련 파일: `CharacterData.ts`, `Enemy.ts`, `EnemyManager.ts`, `GameScene.ts`, `CombatSystem.ts`
+- 테스트 방법: 넉백 방향/강도 단위 테스트, 전략별 Playwright 검수, 100 적 개발 테스트
+
+## RUN-001
+
+- ID: RUN-001
+- 작업명: 무한 부활과 캐릭터 재선택
+- 우선순위: HIGH
+- 상태: REVIEW
+- 설명: 플레이어 HP가 0이 되면 즉시 런을 종료하지 않고 부활/다시하기 선택 UI를 표시한다. 부활은 현재 스테이지와 성장 상태를 유지하고, 다시하기는 캐릭터 선택 화면부터 새 런을 시작한다.
+- 완료 조건: 부활 횟수 제한이 없고 부활 시 안전 시간·체력 복구가 적용되며, 다시하기 시 런 상태가 완전히 초기화된다.
+- 관련 파일: `GameScene.ts`, `GameOverScene.ts`, `UIManager.ts`, `GameTypes.ts`
+- 테스트 방법: 부활 반복, 상태 유지, 캐릭터 재선택 Playwright 테스트
+
+## STAGE-002
+
+- ID: STAGE-002
+- 작업명: 스테이지 1~100 완주와 사망 횟수 집계
+- 우선순위: HIGH
+- 상태: REVIEW
+- 설명: 스테이지를 100에서 종료하고 캐릭터별 런 사망 횟수를 집계해 완주 결과 화면에 표시한다. 캐릭터 선택 화면에서 시작하는 새 런은 스테이지·골드·업그레이드·사망 횟수를 초기화하고 같은 런의 부활은 상태를 유지한다.
+- 완료 조건: 100스테이지 완료 상태가 한 번만 발생하고 선택 캐릭터, 총 사망 횟수, 처치 수, 생존 시간을 결과에 표시한다. 캐릭터 재선택 후 새 런은 스테이지 1과 기본 능력·0 골드로 시작한다.
+- 관련 파일: `StageManager.ts`, `StageData.ts`, `GameScene.ts`, `GameOverScene.ts`, `SaveManager.ts`
+- 테스트 방법: 스테이지 경계 단위 테스트와 99→100→완주 Playwright 테스트
+
+## BALANCE-001
+
+- ID: BALANCE-001
+- 작업명: 캐릭터 6종 성장 곡선 밸런스
+- 우선순위: MEDIUM
+- 상태: REVIEW
+- 설명: 캐릭터별 성장 프로필과 업그레이드 효율 배율을 데이터화해 성장형은 초반이 어렵고 후반이 강하며, 안정형은 전 구간 평균적이고, 초반형은 강한 시작 대신 업그레이드 효율이 낮도록 조정한다. 원클릭 구매, 골드 충분 시 버튼 활성화, 단계별 가격 상승은 공통 규칙으로 유지하고 100스테이지 구조와 전투 지표가 준비된 뒤 진행한다.
+- 완료 조건: 최소 세 성장 유형이 존재하고 캐릭터별 6개 업그레이드 효율·초기 능력·동일 골드 구간별 전투력·스테이지별 생존/처치 지표가 목표 범위에 들어온다. 사망·부활 후 골드와 업그레이드 레벨이 유지되는 회귀 테스트가 통과한다.
+- 관련 파일: `CharacterData.ts`, `UpgradeData.ts`, `UpgradeSystem.ts`, `StageData.ts`
+- 테스트 방법: 성장 곡선 단위 테스트, 자동 시뮬레이션, 스테이지 구간별 플레이 검수
+
+## SHARE-001
+
+- ID: SHARE-001
+- 작업명: 100스테이지 완주 결과 스크린샷 공유
+- 우선순위: MEDIUM
+- 상태: REVIEW
+- 설명: STAGE-002 완료 결과 화면에 공유하기 버튼을 추가해 선택 캐릭터와 사망 횟수가 포함된 결과 이미지를 생성하고 Web Share API 또는 안전한 이미지 저장 대체 경로를 제공한다.
+- 완료 조건: 지원 브라우저는 공유 시트를 열고 미지원 브라우저는 이미지 저장을 제공하며 모바일·PC에서 결과 카드가 잘리지 않는다.
+- 관련 파일: `GameOverScene.ts`, `services/`, `GameTypes.ts`
+- 테스트 방법: 공유 API 모의 테스트, 생성 이미지 크기/텍스트 검증, 모바일·데스크톱 Playwright 테스트
+
+## UPGRADE-002
+
+- ID: UPGRADE-002
+- 작업명: 업그레이드 99레벨 상한과 후반 밸런스 조정
+- 우선순위: HIGH
+- 상태: REVIEW
+- 설명: 여섯 업그레이드의 최대 레벨을 각각 99로 제한하고, 캐릭터별 성장 프로필과 100스테이지 난이도에 맞춰 비용 증가율과 레벨당 효과를 재조정한다. 99레벨 도달 후 구매 버튼은 최대 레벨 상태를 명확히 표시하며 골드를 차감하지 않는다.
+- 완료 조건: 모든 업그레이드가 99레벨을 초과하지 않고, 99레벨에서 구매가 거부되며, 캐릭터별 초반/중반/후반 예상 전투력이 목표 범위에 들어간다. 사망·부활 시 레벨과 골드는 유지되고 캐릭터 재선택 시 초기화된다.
+- 관련 파일: `UpgradeData.ts`, `UpgradeSystem.ts`, `UIManager.ts`, `CharacterData.ts`, `BalanceData.ts`, `StageData.ts`
+- 테스트 방법: 98→99→구매 거부 단위 테스트, 비용·전투력 시뮬레이션, 부활·새 런 Playwright 회귀 테스트
+
+## AUDIO-001
+
+- ID: AUDIO-001
+- 작업명: 기본 반복 BGM과 업그레이드 성공 피드백
+- 우선순위: MEDIUM
+- 상태: REVIEW
+- 설명: 로그인 없이 즉시 실행되는 환경을 유지하면서 전투 화면에 단순한 반복 BGM을 추가하고, 업그레이드 성공 시 짧은 `띠링` 효과음과 버튼 중심의 시각 효과를 동시에 재생한다. 브라우저 자동 재생 정책에 맞춰 첫 사용자 입력 이후 오디오를 시작하며 음소거 기능을 제공한다.
+- 완료 조건: 첫 입력 후 BGM이 자연스럽게 반복되고 중복 재생되지 않으며, 성공한 업그레이드에만 짧은 효과음과 시각 효과가 발생한다. 음소거 상태는 게임 진행을 방해하지 않고 모바일·PC에서 정상 동작한다.
+- 관련 파일: 향후 `AudioManager.ts`, `GameScene.ts`, `UIManager.ts`, `EffectsManager.ts`, `assets/audio/`
+- 테스트 방법: 오디오 상태 단위 테스트, 업그레이드 성공/실패 분기 테스트, 모바일·데스크톱 브라우저 수동 검수
+
+## PERF-001
+
+- ID: PERF-001
+- 작업명: 대상 탐색 공간 분할 벤치마크
+- 우선순위: MEDIUM
+- 상태: REVIEW
+- 설명: 300개 적 기준 현재 bounded selection과 spatial hash를 비교한다.
+- 완료 조건: 측정 결과를 문서화하고, 이점이 확인된 경우 동일 인터페이스로 교체한다.
+- 관련 파일: `TargetingSystem.ts`, `EnemyManager.ts`
+- 테스트 방법: 단위 벤치마크 및 100 적 개발 버튼 육안 확인
+
+## DEPLOY-001
+
+- ID: DEPLOY-001
+- 작업명: GitHub 저장소 초기화와 Pages 자동 배포
+- 우선순위: HIGH
+- 상태: IN_PROGRESS
+- 설명: 현재 프로젝트를 Git 저장소로 초기화하고 GitHub 원격 저장소에 업로드한 뒤, pull request 중심 작업 흐름과 GitHub Actions 기반 타입 검사·린트·테스트·빌드·Pages 배포를 구성한다. 공개 저장소 여부와 저장소 이름은 업로드 직전 사용자 확인을 받는다.
+- 완료 조건: 비밀값과 `.env`가 커밋되지 않고, 기본 브랜치 보호를 고려한 작업 브랜치가 존재하며, GitHub Actions 네 가지 검사가 통과한 빌드만 Pages에 배포된다. 배포 링크에서 로그인 없이 게임이 실행된다.
+- 관련 파일: `.gitignore`, 향후 `.github/workflows/ci.yml`, `.github/workflows/deploy.yml`, `vite.config.ts`, `README.md`
+- 테스트 방법: 로컬 네 가지 검사, GitHub Actions 성공 확인, Pages 데스크톱·모바일 접속 확인
+
+## OPS-001
+
+- ID: OPS-001
+- 작업명: 텔레그램 보고 구현체
+- 우선순위: MEDIUM
+- 상태: BACKLOG
+- 설명: 환경변수를 이용해 작업/빌드/테스트 결과를 선택적으로 전송한다.
+- 완료 조건: 토큰이 로그에 노출되지 않고, 무설정 환경에서는 안전하게 건너뛴다.
+- 관련 파일: `scripts/telegram/`, `.env.example`
+- 테스트 방법: 모의 HTTP 테스트
+
+## GAME-004
+
+- ID: GAME-004
+- 작업명: 적 변형 및 보스 데이터 설계
+- 우선순위: LOW
+- 상태: BACKLOG
+- 설명: 기존 적 동작을 유지하며 타입별 데이터와 생성 정책을 설계한다.
+- 완료 조건: 최소 2개 변형 적이 데이터 기반으로 생성된다.
+- 관련 파일: `EnemyData.ts`, `EnemyManager.ts`, `StageData.ts`
+- 테스트 방법: `npm run test && npm run build`
