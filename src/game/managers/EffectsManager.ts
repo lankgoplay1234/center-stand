@@ -92,7 +92,10 @@ export class EffectsManager {
         this.showAreaWave(effect.x, effect.y, effect.radius, 0xff8a3d, 0xfff0a3);
         break;
       case 'AREA_MELEE':
-        this.showAreaWave(effect.x, effect.y, effect.radius, 0x63f4ff, 0xa8fbff);
+        this.showConeAttack(effect, 0x58e7a0, 0xf6ffd2);
+        break;
+      case 'BASTION_CONE':
+        this.showConeAttack(effect, 0xff8b38, 0xffe19a);
         break;
       case 'AREA_MAGIC':
         this.showAreaWave(effect.x, effect.y, effect.radius, 0x9d63ff, 0xe0b5ff);
@@ -150,10 +153,11 @@ export class EffectsManager {
     const angle = Math.atan2(target.y - effect.from.y, target.x - effect.from.x);
     const radius = Math.min(175, Math.max(72, effect.radius));
     const line = this.acquireLine().setPosition(effect.from.x, effect.from.y);
+    const halfArc = 22.5 * Math.PI / 180;
     line.lineStyle(18, effect.motion.primaryColor, 0.18)
-      .beginPath().arc(0, 0, radius, angle - 1.15, angle + 1.15).strokePath();
+      .beginPath().arc(0, 0, radius, angle - halfArc, angle + halfArc).strokePath();
     line.lineStyle(7, effect.motion.accentColor, 0.95)
-      .beginPath().arc(0, 0, radius, angle - 1.08, angle + 1.08).strokePath();
+      .beginPath().arc(0, 0, radius, angle - halfArc, angle + halfArc).strokePath();
     this.scene.tweens.add({
       targets: line,
       angle: 18,
@@ -277,6 +281,27 @@ export class EffectsManager {
       duration: 230,
       ease: 'Quad.easeOut',
       onComplete: () => wave.setVisible(false).setActive(false),
+    });
+  }
+
+  private showConeAttack(
+    effect: Extract<AttackEffect, { type: 'AREA_MELEE' | 'BASTION_CONE' }>,
+    fillColor: number,
+    strokeColor: number,
+  ): void {
+    const angle = Math.atan2(effect.targetY - effect.y, effect.targetX - effect.x);
+    const halfArc = effect.arcDegrees * Math.PI / 360;
+    const cone = this.acquireLine().setPosition(effect.x, effect.y);
+    cone.fillStyle(fillColor, 0.2).lineStyle(5, strokeColor, 0.95);
+    cone.beginPath().moveTo(0, 0).arc(0, 0, effect.radius, angle - halfArc, angle + halfArc)
+      .closePath().fillPath().strokePath();
+    this.scene.tweens.add({
+      targets: cone,
+      scale: 1.08,
+      alpha: 0,
+      duration: effect.type === 'AREA_MELEE' ? 180 : 140,
+      ease: 'Quad.easeOut',
+      onComplete: () => cone.clear().setVisible(false).setActive(false),
     });
   }
 

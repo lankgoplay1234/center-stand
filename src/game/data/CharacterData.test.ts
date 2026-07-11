@@ -56,6 +56,16 @@ describe('character data', () => {
     expect(byId.get('storm-conductor')?.knockbackForce).toBe(0);
   });
 
+  it('uses narrow directional arcs for Blade Warden and Bastion only', () => {
+    const byId = new Map(CHARACTERS.map((character) => [character.id, character]));
+    expect(byId.get('blade-warden')?.attackArcDegrees).toBe(45);
+    expect(byId.get('bastion-gunner')?.attackArcDegrees).toBe(90);
+    expect(byId.get('bastion-gunner')?.attackRange).toBeLessThan(byId.get('blade-warden')?.attackRange ?? 0);
+    for (const id of ['arc-ranger', 'rune-mage', 'needle-striker', 'storm-conductor']) {
+      expect(byId.get(id)?.attackArcDegrees).toBeNull();
+    }
+  });
+
   it('gives every role an explicit primary and secondary upgrade focus', () => {
     expect(Object.fromEntries(CHARACTERS.map((character) => [character.id, character.upgradeFocus.primary]))).toEqual({
       'arc-ranger': 'attackDamage',

@@ -13,6 +13,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackDamage: 28,
     attackSpeed: 2,
     attackRange: 360,
+    attackArcDegrees: null,
     attackAreaRadius: 24,
     baseTargetCount: 1,
     projectileSpeed: 720,
@@ -35,6 +36,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackDamage: 32,
     attackSpeed: 1.2,
     attackRange: 145,
+    attackArcDegrees: 45,
     attackAreaRadius: 145,
     baseTargetCount: 1,
     projectileSpeed: 1,
@@ -56,7 +58,8 @@ export const CHARACTERS: readonly CharacterData[] = [
     defense: 10,
     attackDamage: 14,
     attackSpeed: 1.45,
-    attackRange: 295,
+    attackRange: 115,
+    attackArcDegrees: 90,
     attackAreaRadius: 24,
     baseTargetCount: 3,
     projectileSpeed: 560,
@@ -79,6 +82,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackDamage: 20,
     attackSpeed: 1,
     attackRange: 340,
+    attackArcDegrees: null,
     attackAreaRadius: 110,
     baseTargetCount: 1,
     projectileSpeed: 1,
@@ -101,6 +105,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackDamage: 12,
     attackSpeed: 3.8,
     attackRange: 390,
+    attackArcDegrees: null,
     attackAreaRadius: 22,
     baseTargetCount: 3,
     projectileSpeed: 920,
@@ -123,6 +128,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackDamage: 17,
     attackSpeed: 1.4,
     attackRange: 320,
+    attackArcDegrees: null,
     attackAreaRadius: 155,
     baseTargetCount: 3,
     projectileSpeed: 1,
@@ -147,6 +153,10 @@ export function validateCharacterData(character: CharacterData): string[] {
   if (character.attackDamage <= 0) errors.push('attackDamage must be positive');
   if (character.attackSpeed <= 0) errors.push('attackSpeed must be positive');
   if (character.attackRange <= 0) errors.push('attackRange must be positive');
+  if (character.attackArcDegrees !== null
+    && (!Number.isFinite(character.attackArcDegrees) || character.attackArcDegrees <= 0 || character.attackArcDegrees > 360)) {
+    errors.push('attackArcDegrees must be null or between 0 and 360');
+  }
   if (character.attackAreaRadius <= 0) errors.push('attackAreaRadius must be positive');
   if (!Number.isInteger(character.baseTargetCount) || character.baseTargetCount < 1) {
     errors.push('baseTargetCount must be a positive integer');

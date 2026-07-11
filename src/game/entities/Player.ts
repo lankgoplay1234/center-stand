@@ -12,6 +12,7 @@ export class Player extends Phaser.GameObjects.Container {
   attackDamage: number;
   attackSpeed: number;
   attackRange: number;
+  attackArcDegrees: number | null;
   attackAreaRadius: number;
   baseTargetCount: number;
   bonusTargetCount = 0;
@@ -37,6 +38,7 @@ export class Player extends Phaser.GameObjects.Container {
     this.attackDamage = character.attackDamage;
     this.attackSpeed = character.attackSpeed;
     this.attackRange = character.attackRange;
+    this.attackArcDegrees = character.attackArcDegrees;
     this.attackAreaRadius = character.attackAreaRadius;
     this.baseTargetCount = character.baseTargetCount;
     this.projectileSpeed = character.projectileSpeed;

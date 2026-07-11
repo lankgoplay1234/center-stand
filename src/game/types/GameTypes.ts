@@ -67,6 +67,7 @@ export interface CharacterData {
   attackDamage: number;
   attackSpeed: number;
   attackRange: number;
+  attackArcDegrees: number | null;
   attackAreaRadius: number;
   baseTargetCount: number;
   projectileSpeed: number;

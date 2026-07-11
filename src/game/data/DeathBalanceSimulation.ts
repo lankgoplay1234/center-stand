@@ -30,7 +30,7 @@ const MAX_CLEAR_PRESSURE = 2.5;
 
 const ROLE_EXPOSURE: Readonly<Record<AttackType, number>> = {
   SINGLE_TARGET: 0.79,
-  MULTI_TARGET: 4.2,
+  MULTI_TARGET: 3.5,
   AREA_MELEE: 1.8,
   AREA_MAGIC: 1.15,
   PIERCING: 0.75,

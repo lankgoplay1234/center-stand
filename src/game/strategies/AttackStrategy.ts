@@ -7,6 +7,7 @@ export interface AttackSource {
   attackDamage: number;
   attackSpeed: number;
   attackRange: number;
+  attackArcDegrees: number | null;
   attackAreaRadius: number;
   totalTargetCount: number;
   projectileSpeed: number;
@@ -29,7 +30,8 @@ export type AttackEffect =
   | CharacterMotionEffect
   | { type: 'ARC_OVERCHARGE'; x: number; y: number; radius: number }
   | { type: 'BLADE_FURY'; x: number; y: number; radius: number }
-  | { type: 'AREA_MELEE'; x: number; y: number; radius: number }
+  | { type: 'AREA_MELEE'; x: number; y: number; targetX: number; targetY: number; radius: number; arcDegrees: number }
+  | { type: 'BASTION_CONE'; x: number; y: number; targetX: number; targetY: number; radius: number; arcDegrees: number }
   | { type: 'AREA_MAGIC'; x: number; y: number; radius: number }
   | { type: 'PIERCING'; from: AttackEffectPoint; to: AttackEffectPoint }
   | { type: 'CHAIN'; points: readonly AttackEffectPoint[] };
