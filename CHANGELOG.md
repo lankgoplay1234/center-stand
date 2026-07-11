@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.27.0 - 2026-07-12
+
+### Reviewed
+
+- `GAME-002` 캐릭터 공격 전략 분리 1단계 완료 조건 최종 검수
+- attackType 전략 선택, 단일·다중·근접 범위 대상 규칙, 중복 방지와 실시간 업그레이드 반영 확인
+
+### Verified
+
+- AttackStrategy·TargetingSystem 관련 25개 테스트 통과
+
 ## 0.26.0 - 2026-07-12
 
 ### Added

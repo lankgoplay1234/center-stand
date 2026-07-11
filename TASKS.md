@@ -5,7 +5,7 @@
 - ID: GAME-002
 - 작업명: 캐릭터 공격 전략 분리 — 1단계
 - 우선순위: HIGH
-- 상태: REVIEW
+- 상태: DONE
 - 설명: 공격 전략 인터페이스와 SINGLE_TARGET, MULTI_TARGET, AREA_MELEE 전략을 도입한다. 나머지 캐릭터 데이터 추가는 후속 작업으로 분리한다.
 - 완료 조건: attackType으로 세 전략이 선택되고, 기존 캐릭터의 단일 원거리 공격이 유지되며, 대상 제한·범위·중복 방지·업그레이드 반영 테스트가 통과한다.
 - 관련 파일: `CharacterData.ts`, `CombatSystem.ts`, `TargetingSystem.ts`, `GameTypes.ts`, `strategies/`

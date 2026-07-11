@@ -77,6 +77,8 @@
 
 ## 최근 테스트 결과
 
+- 2026-07-12 `GAME-002` 최종 검수: 공격 전략 팩토리·SINGLE_TARGET·MULTI_TARGET·AREA_MELEE·대상 중복 방지·실시간 업그레이드 반영 25개 관련 테스트 통과, `DONE` 전환
+
 - 2026-07-11 `npm install`: 성공, 0 vulnerabilities
 - 2026-07-11 `npm run typecheck`: 성공
 - 2026-07-11 `npm run lint`: 성공
