@@ -324,7 +324,7 @@
 - ID: ABILITY-002
 - 작업명: 블레이드 워든 고유 능력 — 격노의 검무
 - 우선순위: HIGH
-- 상태: REVIEW
+- 상태: DONE
 - 설명: 블레이드 워든의 4번째 유효 범위 공격이 범위 안의 모든 적에게 강화 피해를 주며, 특수 강화 레벨에 따라 피해 배율이 증가한다.
 - 완료 조건: 빈 공격은 발동 횟수에 포함되지 않고, 4번째 유효 공격의 고유 대상들이 한 번씩만 강화 피해를 받는다. 특수 강화가 실시간 반영되고 전용 검격 파동이 풀링 효과로 표시된다.
 - 관련 파일: `SpecialAbilityData.ts`, `SpecialAbilitySystem.ts`, `CharacterData.ts`, `UpgradeSystem.ts`, `EffectsManager.ts`
