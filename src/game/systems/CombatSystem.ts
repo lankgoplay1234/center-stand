@@ -2,8 +2,14 @@ import type { Enemy } from '../entities/Enemy';
 import type { Player } from '../entities/Player';
 import type { EnemyManager } from '../managers/EnemyManager';
 import type { ProjectileManager } from '../managers/ProjectileManager';
-import type { AttackEffect, AttackStrategy } from '../strategies/AttackStrategy';
+import type {
+  AttackEffect,
+  AttackEffectPoint,
+  AttackStrategy,
+  CharacterMotionEffect,
+} from '../strategies/AttackStrategy';
 import { createAttackStrategy } from '../strategies/AttackStrategyFactory';
+import { SpecialAbilitySystem } from '../abilities/SpecialAbilitySystem';
 
 export interface CombatSystemCallbacks {
   applyInstantDamage: (enemy: Enemy, damage: number) => void;
@@ -17,6 +23,9 @@ export function calculateAttackIntervalMs(attackSpeed: number): number {
 export class CombatSystem {
   private nextAttackAt = 0;
   private readonly strategy: AttackStrategy<Enemy>;
+  private readonly specialAbility: SpecialAbilitySystem<Enemy>;
+  private readonly motionTargets: AttackEffectPoint[] = [];
+  private readonly motionEffect: CharacterMotionEffect;
 
   constructor(
     private readonly player: Player,
@@ -25,17 +34,40 @@ export class CombatSystem {
     private readonly callbacks: CombatSystemCallbacks,
   ) {
     this.strategy = createAttackStrategy<Enemy>(player.character.attackType);
+    this.motionEffect = {
+      type: 'CHARACTER_MOTION',
+      motion: player.character.attackMotion,
+      from: player,
+      targets: this.motionTargets,
+      radius: player.attackAreaRadius,
+    };
+    this.specialAbility = new SpecialAbilitySystem<Enemy>(
+      player.character.specialAbility,
+      () => player.specialAbilityLevel,
+      () => player.upgradeEfficiency.specialAbility,
+    );
   }
 
   update(time: number): void {
     if (time < this.nextAttackAt) return;
-    const attacked = this.strategy.execute({
+    this.motionTargets.length = 0;
+    const attacked = this.specialAbility.execute(this.strategy, {
       attacker: this.player,
       candidates: this.enemies.activeEnemies,
-      fireProjectile: (target, damage, speed) => this.projectiles.fire(this.player.x, this.player.y, target, damage, speed),
-      applyInstantDamage: this.callbacks.applyInstantDamage,
+      fireProjectile: (target, damage, speed) => {
+        this.motionTargets.push(target);
+        this.projectiles.fire(this.player.x, this.player.y, target, damage, speed);
+      },
+      applyInstantDamage: (target, damage) => {
+        this.motionTargets.push(target);
+        this.callbacks.applyInstantDamage(target, damage);
+      },
       emitEffect: this.callbacks.emitEffect,
     });
-    if (attacked > 0) this.nextAttackAt = time + calculateAttackIntervalMs(this.player.attackSpeed);
+    if (attacked <= 0) return;
+    this.motionEffect.radius = this.player.attackAreaRadius;
+    this.player.playAttackMotion(this.motionTargets[0]);
+    this.callbacks.emitEffect(this.motionEffect);
+    this.nextAttackAt = time + calculateAttackIntervalMs(this.player.attackSpeed);
   }
 }

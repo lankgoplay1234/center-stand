@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { calculateAppliedDamage, type DamageResult } from '../systems/DamageSystem';
 import { calculateKnockbackPosition } from '../systems/KnockbackSystem';
+import { getEnemyVisualProfile } from '../data/EnemyData';
 import type { EnemyData } from '../types/GameTypes';
 
 export class Enemy extends Phaser.GameObjects.Arc {
@@ -12,8 +13,11 @@ export class Enemy extends Phaser.GameObjects.Arc {
   attackInterval = 0;
   goldReward = 0;
   contactRange = 0;
+  rank: EnemyData['rank'] = 'NORMAL';
+  visualTier = 1;
   isAlive = false;
   lastAttackAt = 0;
+  private baseFillColor = 0xff446c;
 
   constructor(scene: Phaser.Scene, poolId: number) {
     super(scene, 0, 0, 18, 0, 360, false, 0xff446c, 1);
@@ -22,8 +26,22 @@ export class Enemy extends Phaser.GameObjects.Arc {
     scene.add.existing(this);
   }
 
-  activate(x: number, y: number, data: EnemyData, healthMultiplier: number, damageMultiplier: number, speedMultiplier: number): void {
-    this.setPosition(x, y).setScale(1).setAlpha(1).setFillStyle(0xff446c).setVisible(true).setActive(true);
+  activate(
+    x: number,
+    y: number,
+    data: EnemyData,
+    stage: number,
+    healthMultiplier: number,
+    damageMultiplier: number,
+    speedMultiplier: number,
+  ): void {
+    const visual = getEnemyVisualProfile(stage, data.rank);
+    this.rank = data.rank;
+    this.visualTier = visual.tier;
+    this.baseFillColor = visual.fillColor;
+    this.setPosition(x, y).setRadius(visual.radius).setScale(1).setAlpha(1)
+      .setFillStyle(visual.fillColor).setStrokeStyle(visual.strokeWidth, visual.strokeColor, 0.95)
+      .setVisible(true).setActive(true);
     this.maxHealth = Math.round(data.health * healthMultiplier);
     this.health = this.maxHealth;
     this.attackDamage = Math.round(data.attackDamage * damageMultiplier);
@@ -38,6 +56,10 @@ export class Enemy extends Phaser.GameObjects.Arc {
   deactivate(): void {
     this.isAlive = false;
     this.setActive(false).setVisible(false);
+  }
+
+  restoreVisual(): void {
+    if (this.fillColor === 0xffffff) this.setFillStyle(this.baseFillColor);
   }
 
   takeDamage(damage: number): DamageResult {

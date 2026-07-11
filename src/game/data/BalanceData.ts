@@ -1,5 +1,17 @@
 import type { CharacterData, GrowthProfile } from '../types/GameTypes';
+import { TOTAL_STAGE_DURATION_MS } from './StageData';
 import { UPGRADE_DEFINITIONS, UPGRADE_ORDER, calculateUpgradeEffect } from './UpgradeData';
+
+export const TARGET_RUN_DURATION_MS = 40 * 60_000;
+export const EXPECTED_REVIVES_PER_RUN = 50;
+export const EXPECTED_REVIVE_DECISION_MS = 1_200;
+
+export function estimateRunDurationMs(
+  reviveCount = EXPECTED_REVIVES_PER_RUN,
+  reviveDecisionMs = EXPECTED_REVIVE_DECISION_MS,
+): number {
+  return TOTAL_STAGE_DURATION_MS + Math.max(0, reviveCount) * Math.max(0, reviveDecisionMs);
+}
 
 export const GROWTH_PROFILE_LABELS: Readonly<Record<GrowthProfile, string>> = {
   EARLY: '초반 강세',

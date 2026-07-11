@@ -1,4 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
+import { getStageDurationMs, STAGE_TRANSITION_SPAWN_DELAY_MS } from '../../src/game/data/StageData';
+import { UPGRADE_DEFINITIONS, UPGRADE_ORDER, calculateUpgradeEffect } from '../../src/game/data/UpgradeData';
 
 const GAME_WIDTH = 720;
 const GAME_HEIGHT = 1280;
@@ -18,6 +20,15 @@ const CHARACTER_CARDS: readonly CharacterCardPoint[] = [
   { id: 'needle-striker', x: 190, y: 685 },
   { id: 'storm-conductor', x: 530, y: 685 },
 ];
+
+const CHARACTER_MOTION_STYLES = [
+  'ARC_SHOT',
+  'BLADE_SWEEP',
+  'BASTION_VOLLEY',
+  'RUNE_CAST',
+  'NEEDLE_BURST',
+  'STORM_SURGE',
+] as const;
 
 async function clickGamePoint(page: Page, gameX: number, gameY: number): Promise<void> {
   const canvas = page.locator('canvas');
@@ -68,6 +79,137 @@ test('selects all six characters and enters combat', async ({ page }) => {
   expect(runtimeErrors).toEqual([]);
 });
 
+test('pauses combat, continues the same run, and returns home', async ({ page }) => {
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+
+  await clickGamePoint(page, 510, 116);
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as
+      { isPaused?: boolean } | undefined;
+    return scene?.isPaused ?? false;
+  })).toBe(true);
+  const pausedAt = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as
+      { run: { elapsedSeconds: number } };
+    return scene.run.elapsedSeconds;
+  });
+  await page.waitForTimeout(300);
+  const whilePaused = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as
+      { run: { elapsedSeconds: number } };
+    return scene.run.elapsedSeconds;
+  });
+  expect(whilePaused - pausedAt).toBeLessThan(0.02);
+
+  await clickGamePoint(page, 360, 620);
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as
+      { isPaused?: boolean } | undefined;
+    return scene?.isPaused ?? true;
+  })).toBe(false);
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as
+      { run: { elapsedSeconds: number } };
+    return scene.run.elapsedSeconds;
+  })).toBeGreaterThan(whilePaused + 0.1);
+
+  await clickGamePoint(page, 510, 116);
+  await clickGamePoint(page, 360, 735);
+  await expect.poll(() => activeSceneKey(page)).toBe('CharacterSelectScene');
+});
+
+test('renders a distinct pooled attack motion for every character', async ({ page }) => {
+  for (let index = 0; index < CHARACTER_CARDS.length; index += 1) {
+    const card = CHARACTER_CARDS[index]!;
+    await clickGamePoint(page, card.x, card.y);
+    await clickGamePoint(page, 360, 900);
+    await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+    await expect.poll(() => page.evaluate(() => {
+      const game = window.__CENTER_STAND_GAME__;
+      const scene = game?.scene.getScene('GameScene') as unknown as
+        { enemies?: { activeCount: number } } | undefined;
+      return scene?.enemies?.activeCount ?? 0;
+    })).toBeGreaterThan(0);
+
+    const motion = await page.evaluate(() => {
+      const game = window.__CENTER_STAND_GAME__;
+      const scene = game?.scene.getScene('GameScene') as unknown as {
+        player: { x: number; y: number };
+        enemies: { activeEnemies: Array<{ setPosition: (x: number, y: number) => void }> };
+        combat: { update: (time: number) => void };
+        effects: {
+          attackMotionStats: { active: number; poolSize: number; totalShown: number; lastStyle: string | null };
+        };
+      };
+      const enemy = scene.enemies.activeEnemies[0];
+      if (!enemy) throw new Error('Expected an enemy for attack motion test');
+      enemy.setPosition(scene.player.x + 40, scene.player.y);
+      scene.combat.update(1_000_000);
+      return scene.effects.attackMotionStats;
+    });
+
+    expect(motion.lastStyle).toBe(CHARACTER_MOTION_STYLES[index]);
+    expect(motion.totalShown).toBeGreaterThan(0);
+    expect(motion.poolSize).toBe(12);
+    expect(motion.active).toBeLessThanOrEqual(motion.poolSize);
+
+    if (index < CHARACTER_CARDS.length - 1) {
+      await page.evaluate(() => {
+        const game = window.__CENTER_STAND_GAME__;
+        const scene = game?.scene.getScene('GameScene');
+        scene?.scene.start('CharacterSelectScene');
+      });
+      await expect.poll(() => activeSceneKey(page)).toBe('CharacterSelectScene');
+    }
+  }
+});
+
+test('triggers Blade Fury on the fourth valid melee attack without duplicate damage', async ({ page }) => {
+  await clickGamePoint(page, 530, 265);
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+  await expect.poll(() => page.evaluate(() => {
+    const game = window.__CENTER_STAND_GAME__;
+    const scene = game?.scene.getScene('GameScene') as unknown as
+      { enemies?: { activeCount: number } } | undefined;
+    return scene?.enemies?.activeCount ?? 0;
+  })).toBeGreaterThanOrEqual(3);
+
+  const result = await page.evaluate(() => {
+    const game = window.__CENTER_STAND_GAME__;
+    const scene = game?.scene.getScene('GameScene') as unknown as {
+      player: { x: number; y: number; attackDamage: number; knockbackForce: number };
+      criticalChance: number;
+      enemies: {
+        activeEnemies: Array<{
+          health: number;
+          maxHealth: number;
+          setPosition: (x: number, y: number) => void;
+        }>;
+      };
+      combat: { update: (time: number) => void };
+    };
+    scene.criticalChance = 0;
+    scene.player.knockbackForce = 0;
+    const targets = scene.enemies.activeEnemies.slice(0, 3);
+    for (let index = 0; index < targets.length; index += 1) {
+      const target = targets[index]!;
+      target.health = 1_000;
+      target.maxHealth = 1_000;
+      target.setPosition(scene.player.x + 45 + index * 20, scene.player.y);
+    }
+    for (let attack = 0; attack < 4; attack += 1) scene.combat.update(1_000_000 + attack * 1_000);
+    return {
+      attackDamage: scene.player.attackDamage,
+      remainingHealth: targets.map((target) => target.health),
+    };
+  });
+
+  const expectedDamage = result.attackDamage * (3 + 1.35);
+  for (const health of result.remainingHealth) expect(health).toBeCloseTo(1_000 - expectedDamage);
+});
+
 test('pushes a standard enemy away from the player when hit', async ({ page }) => {
   await clickGamePoint(page, 360, 900);
   await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
@@ -111,6 +253,73 @@ test('pushes a standard enemy away from the player when hit', async ({ page }) =
   expect(damageTextStats.poolSize).toBeLessThanOrEqual(120);
 });
 
+test('spawns stronger stage-100 captains with distinct visuals from the existing pool', async ({ page }) => {
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+
+  const result = await page.evaluate(() => {
+    const game = window.__CENTER_STAND_GAME__;
+    const scene = game?.scene.getScene('GameScene') as unknown as {
+      enemies: {
+        activeCount: number;
+        activeCaptainCount: number;
+        activeEnemies: Array<{
+          rank: 'NORMAL' | 'CAPTAIN';
+          visualTier: number;
+          radius: number;
+          maxHealth: number;
+          attackDamage: number;
+          goldReward: number;
+        }>;
+        destroyAll: () => void;
+      };
+      stages: { currentStage: number };
+      runStressTest: () => void;
+    };
+
+    scene.enemies.destroyAll();
+    scene.stages.currentStage = 1;
+    scene.runStressTest();
+    const stageOneCaptains = scene.enemies.activeCaptainCount;
+
+    scene.enemies.destroyAll();
+    scene.stages.currentStage = 100;
+    scene.runStressTest();
+    const normal = scene.enemies.activeEnemies.find((enemy) => enemy.rank === 'NORMAL');
+    const captain = scene.enemies.activeEnemies.find((enemy) => enemy.rank === 'CAPTAIN');
+    if (!normal || !captain) throw new Error('Expected normal and captain enemies at stage 100');
+    return {
+      stageOneCaptains,
+      activeCount: scene.enemies.activeCount,
+      captainCount: scene.enemies.activeCaptainCount,
+      normal: {
+        tier: normal.visualTier,
+        radius: normal.radius,
+        maxHealth: normal.maxHealth,
+        attackDamage: normal.attackDamage,
+        goldReward: normal.goldReward,
+      },
+      captain: {
+        tier: captain.visualTier,
+        radius: captain.radius,
+        maxHealth: captain.maxHealth,
+        attackDamage: captain.attackDamage,
+        goldReward: captain.goldReward,
+      },
+    };
+  });
+
+  expect(result.stageOneCaptains).toBe(0);
+  expect(result.activeCount).toBe(100);
+  expect(result.captainCount).toBe(2);
+  expect(result.normal.tier).toBe(5);
+  expect(result.captain.tier).toBe(5);
+  expect(result.captain.radius).toBeGreaterThan(result.normal.radius);
+  expect(result.captain.maxHealth).toBeGreaterThanOrEqual(result.normal.maxHealth * 11.9);
+  expect(result.captain.attackDamage).toBeGreaterThanOrEqual(result.normal.attackDamage * 9.9);
+  expect(result.captain.goldReward).toBe(result.normal.goldReward * 18);
+});
+
 test('locks a level 99 upgrade without spending gold', async ({ page }) => {
   await clickGamePoint(page, 360, 900);
   await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
@@ -151,6 +360,70 @@ test('locks a level 99 upgrade without spending gold', async ({ page }) => {
     label: expect.stringContaining('MAX LEVEL'),
     enabled: false,
   });
+});
+
+test('evolves the player appearance through 400 upgrades and preserves it only within the run', async ({ page }, testInfo) => {
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+
+  const progression = await page.evaluate((upgradeOrder) => {
+    const game = window.__CENTER_STAND_GAME__;
+    const scene = game?.scene.getScene('GameScene') as unknown as {
+      player: {
+        health: number;
+        visualStats: {
+          tier: number;
+          totalUpgradeLevels: number;
+          ornamentCount: number;
+          coreRadius: number;
+          auraRadius: number;
+        };
+      };
+      upgrades: { purchase: (id: string, gold: number) => { success: boolean; gold: number } };
+      handlePlayerDeath: () => void;
+      revive: () => void;
+    };
+    const snapshots = [{ ...scene.player.visualStats }];
+    let gold = 1_000_000_000;
+    for (let total = 1; total <= 400; total += 1) {
+      const result = scene.upgrades.purchase(upgradeOrder[(total - 1) % upgradeOrder.length]!, gold);
+      if (!result.success) throw new Error(`Upgrade purchase failed at total level ${total}`);
+      gold = result.gold;
+      if (total % 80 === 0) snapshots.push({ ...scene.player.visualStats });
+    }
+    scene.player.health = 0;
+    scene.handlePlayerDeath();
+    scene.revive();
+    return { snapshots, afterRevive: { ...scene.player.visualStats } };
+  }, UPGRADE_ORDER);
+
+  expect(progression.snapshots.map((snapshot) => snapshot.tier)).toEqual([0, 1, 2, 3, 4, 5]);
+  expect(progression.snapshots.map((snapshot) => snapshot.ornamentCount)).toEqual([0, 2, 3, 4, 5, 6]);
+  expect(progression.snapshots.map((snapshot) => snapshot.totalUpgradeLevels)).toEqual([0, 80, 160, 240, 320, 400]);
+  expect(progression.snapshots.map((snapshot) => snapshot.coreRadius)).toEqual([25, 27, 29, 31, 33, 35]);
+  expect(progression.snapshots.map((snapshot) => snapshot.auraRadius)).toEqual([43, 47, 51, 56, 61, 67]);
+  expect(progression.afterRevive).toEqual(progression.snapshots.at(-1));
+  await testInfo.attach('tier-5-player-visual', {
+    body: await page.screenshot(),
+    contentType: 'image/png',
+  });
+
+  await page.evaluate(() => {
+    const game = window.__CENTER_STAND_GAME__;
+    const scene = game?.scene.getScene('GameScene') as unknown as { restartFromCharacterSelect: () => void };
+    scene.restartFromCharacterSelect();
+  });
+  await expect.poll(() => activeSceneKey(page)).toBe('CharacterSelectScene');
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+  const freshVisual = await page.evaluate(() => {
+    const game = window.__CENTER_STAND_GAME__;
+    const scene = game?.scene.getScene('GameScene') as unknown as {
+      player: { visualStats: { tier: number; totalUpgradeLevels: number; ornamentCount: number } };
+    };
+    return scene.player.visualStats;
+  });
+  expect(freshVisual).toEqual(expect.objectContaining({ tier: 0, totalUpgradeLevels: 0, ornamentCount: 0 }));
 });
 
 test('plays upgrade feedback only for successful unmuted purchases', async ({ page }) => {
@@ -204,6 +477,61 @@ test('plays upgrade feedback only for successful unmuted purchases', async ({ pa
   expect(mutedState.upgradeEffectCount).toBe(1);
 });
 
+test('clears remaining enemies and projectiles at a stage boundary without rewards', async ({ page }) => {
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+
+  const transition = await page.evaluate(({ stageDuration, transitionDelay }) => {
+    const game = window.__CENTER_STAND_GAME__;
+    const scene = game?.scene.getScene('GameScene') as unknown as {
+      player: { x: number; y: number };
+      run: { gold: number; kills: number };
+      runStressTest: () => void;
+      enemies: {
+        activeCount: number;
+        activeEnemies: Array<object>;
+        update: (time: number, delta: number, stats: object) => void;
+      };
+      projectiles: {
+        activeCount: number;
+        fire: (x: number, y: number, target: object, damage: number, speed: number) => void;
+      };
+      stages: { currentStage: number; stats: { spawnInterval: number }; update: (delta: number) => void };
+    };
+    scene.run.gold = 321;
+    scene.run.kills = 9;
+    scene.runStressTest();
+    const target = scene.enemies.activeEnemies[0];
+    if (!target) throw new Error('Expected an enemy for stage transition test');
+    scene.projectiles.fire(scene.player.x, scene.player.y, target, 1, 1);
+    const before = { enemies: scene.enemies.activeCount, projectiles: scene.projectiles.activeCount };
+
+    scene.stages.update(stageDuration);
+    const afterClear = {
+      enemies: scene.enemies.activeCount,
+      projectiles: scene.projectiles.activeCount,
+      gold: scene.run.gold,
+      kills: scene.run.kills,
+      stage: scene.stages.currentStage,
+    };
+
+    scene.enemies.update(transitionDelay - 1, transitionDelay - 1, scene.stages.stats);
+    const beforeDelayEnds = scene.enemies.activeCount;
+    scene.enemies.update(
+      transitionDelay + scene.stages.stats.spawnInterval,
+      scene.stages.stats.spawnInterval + 1,
+      scene.stages.stats,
+    );
+    return { before, afterClear, beforeDelayEnds, afterRespawn: scene.enemies.activeCount };
+  }, { stageDuration: getStageDurationMs(1), transitionDelay: STAGE_TRANSITION_SPAWN_DELAY_MS });
+
+  expect(transition.before.enemies).toBeGreaterThanOrEqual(100);
+  expect(transition.before.projectiles).toBe(1);
+  expect(transition.afterClear).toEqual({ enemies: 0, projectiles: 0, gold: 321, kills: 9, stage: 2 });
+  expect(transition.beforeDelayEnds).toBe(0);
+  expect(transition.afterRespawn).toBeGreaterThan(0);
+});
+
 test('preserves gold and upgrades across revival, then returns to character select', async ({ page }) => {
   const runtimeErrors: string[] = [];
   page.on('pageerror', (error) => runtimeErrors.push(error.message));
@@ -222,6 +550,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
           maxHealth: number;
           attackRange: number;
           attackAreaRadius: number;
+          specialAbilityLevel: number;
         };
         run: { gold: number };
     };
@@ -234,6 +563,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
       maxHealth: scene.player.maxHealth,
       attackRange: scene.player.attackRange,
       attackAreaRadius: scene.player.attackAreaRadius,
+      specialAbilityLevel: scene.player.specialAbilityLevel,
     };
   });
   await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
@@ -255,6 +585,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
           maxHealth: number;
           attackRange: number;
           attackAreaRadius: number;
+          specialAbilityLevel: number;
         };
       } | undefined;
     const player = scene?.player;
@@ -267,15 +598,17 @@ test('preserves gold and upgrades across revival, then returns to character sele
       maxHealth: player.maxHealth,
       attackRange: player.attackRange,
       attackAreaRadius: player.attackAreaRadius,
+      specialAbilityLevel: player.specialAbilityLevel,
     };
   })).toEqual({
-    attackDamage: initialStats.attackDamage + 6,
-    attackSpeed: initialStats.attackSpeed + 0.08,
-    bonusTargetCount: initialStats.bonusTargetCount + 1,
-    defense: initialStats.defense + 0.8,
-    maxHealth: initialStats.maxHealth + 16,
-    attackRange: initialStats.attackRange + 8,
-    attackAreaRadius: initialStats.attackAreaRadius + 4,
+    attackDamage: initialStats.attackDamage + calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackDamage, 1),
+    attackSpeed: initialStats.attackSpeed + calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackSpeed, 1),
+    bonusTargetCount: initialStats.bonusTargetCount + calculateUpgradeEffect(UPGRADE_DEFINITIONS.targetCount, 1),
+    defense: initialStats.defense + calculateUpgradeEffect(UPGRADE_DEFINITIONS.defense, 1),
+    maxHealth: initialStats.maxHealth + calculateUpgradeEffect(UPGRADE_DEFINITIONS.maxHealth, 1),
+    attackRange: initialStats.attackRange,
+    attackAreaRadius: initialStats.attackAreaRadius,
+    specialAbilityLevel: initialStats.specialAbilityLevel + 1,
   });
 
   const deathState = await page.evaluate(() => {
@@ -283,7 +616,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
     const scene = game?.scene.getScene('GameScene') as unknown as {
       awaitingRevive: boolean;
       handlePlayerDeath: () => void;
-      player: { attackDamage: number; health: number };
+      player: { attackDamage: number; health: number; specialAbilityLevel: number };
       run: { deaths: number; gold: number };
     };
     scene.player.health = 0;
@@ -293,12 +626,14 @@ test('preserves gold and upgrades across revival, then returns to character sele
       attackDamage: scene.player.attackDamage,
       deaths: scene.run.deaths,
       gold: scene.run.gold,
+      specialAbilityLevel: scene.player.specialAbilityLevel,
     };
   });
   expect(deathState.awaitingRevive).toBe(true);
   expect(deathState.attackDamage).toBe(initialStats.attackDamage + 6);
   expect(deathState.deaths).toBe(1);
   expect(deathState.gold).toBeGreaterThan(0);
+  expect(deathState.specialAbilityLevel).toBe(1);
 
   await clickGamePoint(page, 360, 650);
   await expect.poll(() => page.evaluate(() => {
@@ -306,7 +641,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
     const scene = game?.scene.getScene('GameScene') as unknown as {
       awaitingRevive?: boolean;
       invulnerableUntil?: number;
-      player?: { attackDamage: number; health: number; maxHealth: number };
+      player?: { attackDamage: number; health: number; maxHealth: number; specialAbilityLevel: number };
       run?: { deaths: number; gold: number };
     } | undefined;
     if (!scene?.player || !scene.run) return null;
@@ -318,6 +653,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
       health: scene.player.health,
       invulnerable: (scene.invulnerableUntil ?? 0) > 0,
       maxHealth: scene.player.maxHealth,
+      specialAbilityLevel: scene.player.specialAbilityLevel,
     };
   })).toEqual({
     attackDamage: deathState.attackDamage,
@@ -327,6 +663,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
     health: initialStats.maxHealth + 16,
     invulnerable: true,
     maxHealth: initialStats.maxHealth + 16,
+    specialAbilityLevel: 1,
   });
 
   await page.evaluate(() => {
@@ -372,7 +709,7 @@ test('preserves gold and upgrades across revival, then returns to character sele
 test('completes stage 100 once and reports the selected character death count', async ({ page }) => {
   await clickGamePoint(page, 360, 900);
   await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
-  await page.evaluate(() => {
+  await page.evaluate((finalStageDuration) => {
     const game = window.__CENTER_STAND_GAME__;
     const scene = game?.scene.getScene('GameScene') as unknown as {
       run: { deaths: number };
@@ -380,8 +717,8 @@ test('completes stage 100 once and reports the selected character death count', 
     };
     scene.run.deaths = 3;
     scene.stages.currentStage = 100;
-    scene.stages.update(30_000);
-  });
+    scene.stages.update(finalStageDuration);
+  }, getStageDurationMs(100));
   await expect.poll(() => activeSceneKey(page)).toBe('GameOverScene');
   const result = await page.evaluate(() => {
     const game = window.__CENTER_STAND_GAME__;
@@ -396,6 +733,12 @@ test('completes stage 100 once and reports the selected character death count', 
     deaths: 3,
     stage: 100,
   }));
+  const nicknameInput = page.getByTestId('leaderboard-nickname');
+  const leaderboardSubmit = page.getByTestId('leaderboard-submit');
+  await expect(nicknameInput).toBeVisible();
+  await expect(nicknameInput).toBeDisabled();
+  await expect(nicknameInput).toHaveAttribute('maxlength', '5');
+  await expect(leaderboardSubmit).toBeDisabled();
 
   await page.evaluate(() => {
     Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });

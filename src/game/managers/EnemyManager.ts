@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { BASIC_ENEMY } from '../data/EnemyData';
+import { selectEnemyData } from '../data/EnemyData';
 import type { Enemy } from '../entities/Enemy';
 import type { Player } from '../entities/Player';
 import { EnemyPool } from '../pools/EnemyPool';
@@ -29,6 +29,10 @@ export class EnemyManager {
     return this.pool.activeCount;
   }
 
+  get activeCaptainCount(): number {
+    return this.pool.activeCaptainCount;
+  }
+
   update(time: number, delta: number, stageStats: StageStats): void {
     this.spawnAccumulator += delta;
     while (this.spawnAccumulator >= stageStats.spawnInterval && this.activeCount < stageStats.maxActiveEnemies) {
@@ -51,12 +55,14 @@ export class EnemyManager {
         enemy.lastAttackAt = time;
         this.callbacks.onPlayerHit(enemy.attackDamage, enemy.x, enemy.y);
       }
-      if (enemy.fillColor === 0xffffff) enemy.setFillStyle(0xff446c);
+      enemy.restoreVisual();
     }
   }
 
   spawnBurst(count: number, stageStats: StageStats): void {
-    for (let i = 0; i < count; i += 1) this.spawn(stageStats, i);
+    for (let i = 0; i < count; i += 1) {
+      this.spawn(stageStats, i, (i + 0.5) / Math.max(1, count));
+    }
   }
 
   release(enemy: Enemy): void {
@@ -65,9 +71,17 @@ export class EnemyManager {
 
   destroyAll(): void {
     this.pool.releaseAll();
+    this.spawnAccumulator = 0;
   }
 
-  private spawn(stageStats: StageStats, burstIndex = -1): void {
+  clearForStageTransition(delayMs: number): number {
+    const clearedCount = this.activeCount;
+    this.pool.releaseAll();
+    this.spawnAccumulator = -Math.max(0, delayMs);
+    return clearedCount;
+  }
+
+  private spawn(stageStats: StageStats, burstIndex = -1, forcedRoll?: number): void {
     const margin = 45;
     const width = this.scene.scale.width;
     const height = this.scene.scale.height;
@@ -79,10 +93,12 @@ export class EnemyManager {
       { x: -margin, y: Phaser.Math.Between(80, height - 250) },
     ];
     const point = positions[side]!;
+    const enemyData = selectEnemyData(stageStats.stage, forcedRoll ?? Math.random());
     this.pool.acquire(
       point.x,
       point.y,
-      BASIC_ENEMY,
+      enemyData,
+      stageStats.stage,
       stageStats.enemyHealthMultiplier,
       stageStats.enemyDamageMultiplier,
       stageStats.enemySpeedMultiplier,

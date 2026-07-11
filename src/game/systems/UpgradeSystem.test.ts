@@ -1,10 +1,15 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { ARC_OVERCHARGE } from '../data/SpecialAbilityData';
 import type { Player } from '../entities/Player';
-import type { UpgradeId } from '../types/GameTypes';
+import type { SpecialAbilityData, UpgradeId } from '../types/GameTypes';
 import { UpgradeSystem } from './UpgradeSystem';
 
-function createPlayer(efficiencyOverrides: Partial<Record<UpgradeId, number>> = {}): Player {
+function createPlayer(
+  efficiencyOverrides: Partial<Record<UpgradeId, number>> = {},
+  specialAbility: SpecialAbilityData | null = null,
+): Player {
   return {
+    character: { specialAbility },
     attackDamage: 10,
     attackSpeed: 2,
     baseTargetCount: 1,
@@ -14,6 +19,8 @@ function createPlayer(efficiencyOverrides: Partial<Record<UpgradeId, number>> = 
     maxHealth: 100,
     attackRange: 200,
     attackAreaRadius: 40,
+    specialAbilityLevel: 0,
+    applyUpgradeVisual: vi.fn(),
     upgradeEfficiency: {
       attackDamage: 1, attackSpeed: 1, targetCount: 1, defense: 1, maxHealth: 1, specialAbility: 1,
       ...efficiencyOverrides,
@@ -37,13 +44,15 @@ describe('UpgradeSystem', () => {
     }
 
     expect(player.attackDamage).toBe(16);
-    expect(player.attackSpeed).toBeCloseTo(2.08);
+    expect(player.attackSpeed).toBeCloseTo(2.09);
     expect(player.bonusTargetCount).toBe(1);
     expect(player.defense).toBeCloseTo(3.8);
     expect(player.maxHealth).toBe(116);
     expect(player.health).toBe(96);
     expect(player.attackRange).toBe(208);
     expect(player.attackAreaRadius).toBe(44);
+    expect(upgrades.totalLevels).toBe(6);
+    expect(player.applyUpgradeVisual).toHaveBeenLastCalledWith(6);
   });
 
   it('does not change stats or level when gold is insufficient', () => {
@@ -68,6 +77,18 @@ describe('UpgradeSystem', () => {
     expect(earlyCost).toBe(scalingCost);
     expect(earlyPlayer.attackDamage).toBeCloseTo(14.8);
     expect(scalingPlayer.attackDamage).toBeCloseTo(18.1);
+  });
+
+  it('routes the Arc Ranger special upgrade into overcharge without changing range stats', () => {
+    const player = createPlayer({ specialAbility: 1.25 }, ARC_OVERCHARGE);
+    const upgrades = new UpgradeSystem(player);
+
+    expect(upgrades.getEffectLabel('specialAbility')).toContain('아크 과충전');
+    expect(upgrades.purchase('specialAbility', 100)).toEqual({ success: true, gold: 55 });
+    expect(player.specialAbilityLevel).toBe(1);
+    expect(player.attackRange).toBe(200);
+    expect(player.attackAreaRadius).toBe(40);
+    expect(upgrades.getEffectLabel('specialAbility')).toContain('×1.63');
   });
 
   it('allows level 98 to 99 and rejects every purchase beyond the cap', () => {

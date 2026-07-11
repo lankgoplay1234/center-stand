@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "benchmark:targeting": "vitest run src/game/systems/TargetingBenchmark.test.ts --reporter verbose",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:endurance": "RUN_ENDURANCE=1 playwright test tests/e2e/performance.spec.ts --project=mobile-chromium"
   },
   "dependencies": {
     "phaser": "^3.90.0"

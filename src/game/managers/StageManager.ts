@@ -1,4 +1,4 @@
-import { STAGE_DURATION_MS, calculateStageStats } from '../data/StageData';
+import { calculateStageStats, getStageDurationMs } from '../data/StageData';
 import type { StageStats } from '../types/GameTypes';
 
 export const FINAL_STAGE = 100;
@@ -24,8 +24,9 @@ export class StageManager {
   update(delta: number): void {
     if (this.completed) return;
     this.elapsedInStage += delta;
-    while (this.elapsedInStage >= STAGE_DURATION_MS) {
-      this.elapsedInStage -= STAGE_DURATION_MS;
+    let currentDuration = getStageDurationMs(this.currentStage);
+    while (this.elapsedInStage >= currentDuration) {
+      this.elapsedInStage -= currentDuration;
       if (this.currentStage >= FINAL_STAGE) {
         this.completed = true;
         this.onCompleted();
@@ -33,6 +34,7 @@ export class StageManager {
       }
       this.currentStage += 1;
       this.onStageChanged(this.currentStage);
+      currentDuration = getStageDurationMs(this.currentStage);
     }
   }
 }

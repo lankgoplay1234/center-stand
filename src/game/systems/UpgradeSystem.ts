@@ -5,6 +5,7 @@ import {
   calculateUpgradeEffect,
   canUpgrade,
 } from '../data/UpgradeData';
+import { calculateBladeFuryDamageMultiplier, calculateOverchargeDamageMultiplier } from '../data/SpecialAbilityData';
 import type { Player } from '../entities/Player';
 import type { UpgradeId, UpgradeState } from '../types/GameTypes';
 
@@ -28,9 +29,28 @@ export class UpgradeSystem {
     return this.player.upgradeEfficiency[id];
   }
 
+  getEffectLabel(id: UpgradeId): string {
+    const state = this.states[id];
+    const efficiency = this.getEfficiency(id);
+    const ability = this.player.character.specialAbility;
+    if (id === 'specialAbility' && ability?.type === 'ARC_OVERCHARGE') {
+      const multiplier = calculateOverchargeDamageMultiplier(ability, state.level, efficiency);
+      return `${ability.name} ${ability.triggerEveryAttacks}번째 공격 ×${multiplier.toFixed(2)}`;
+    }
+    if (id === 'specialAbility' && ability?.type === 'BLADE_FURY') {
+      const multiplier = calculateBladeFuryDamageMultiplier(ability, state.level, efficiency);
+      return `${ability.name} ${ability.triggerEveryAttacks}번째 검격 ×${multiplier.toFixed(2)}`;
+    }
+    return state.definition.effectLabel(state.level, efficiency);
+  }
+
   isMaxLevel(id: UpgradeId): boolean {
     const state = this.states[id];
     return !canUpgrade(state.definition, state.level);
+  }
+
+  get totalLevels(): number {
+    return Object.values(this.states).reduce((sum, state) => sum + state.level, 0);
   }
 
   purchase(id: UpgradeId, gold: number): { success: boolean; gold: number } {
@@ -63,10 +83,16 @@ export class UpgradeSystem {
         this.player.health = Math.min(this.player.maxHealth, this.player.health + effect);
         break;
       case 'specialAbility':
-        this.player.attackRange += effect;
-        this.player.attackAreaRadius += secondaryEffect;
+        if (this.player.character.specialAbility?.type === 'ARC_OVERCHARGE'
+          || this.player.character.specialAbility?.type === 'BLADE_FURY') {
+          this.player.specialAbilityLevel = state.level;
+        } else {
+          this.player.attackRange += effect;
+          this.player.attackAreaRadius += secondaryEffect;
+        }
         break;
     }
+    this.player.applyUpgradeVisual(this.totalLevels);
     return { success: true, gold: nextGold };
   }
 

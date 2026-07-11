@@ -2,13 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { CHARACTERS } from './CharacterData';
 import {
   GROWTH_EFFICIENCY_RANGES,
+  TARGET_RUN_DURATION_MS,
   calculateAverageUpgradeEfficiency,
   calculateBaselineCombatScore,
   calculateProjectedCombatScore,
+  estimateRunDurationMs,
 } from './BalanceData';
 import type { GrowthProfile } from '../types/GameTypes';
 
 describe('character growth balance', () => {
+  it('estimates a typical run at 40 minutes including revival decisions', () => {
+    expect(estimateRunDurationMs()).toBe(TARGET_RUN_DURATION_MS);
+    expect(estimateRunDurationMs(0)).toBe(39 * 60_000);
+  });
+
   it('assigns two characters to each growth profile', () => {
     const counts = new Map<GrowthProfile, number>();
     for (const character of CHARACTERS) {
