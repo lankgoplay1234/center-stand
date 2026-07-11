@@ -1,4 +1,5 @@
 import type { EnemyData, EnemyVisualProfile } from '../types/GameTypes';
+import { getEnemyPixelArt } from './EnemyPixelArtData';
 
 export const BASIC_ENEMY: Readonly<EnemyData> = {
   id: 'void-runner',
@@ -23,19 +24,19 @@ export const CAPTAIN_ENEMY: Readonly<EnemyData> = {
 };
 
 const NORMAL_VISUALS: readonly EnemyVisualProfile[] = [
-  { tier: 1, radius: 18, fillColor: 0xff446c, strokeColor: 0xffafbd, strokeWidth: 3 },
-  { tier: 2, radius: 19, fillColor: 0xf33d78, strokeColor: 0xffb2d0, strokeWidth: 3 },
-  { tier: 3, radius: 20, fillColor: 0xdc358b, strokeColor: 0xf8b4ff, strokeWidth: 4 },
-  { tier: 4, radius: 21, fillColor: 0xc42fa0, strokeColor: 0xeab7ff, strokeWidth: 4 },
-  { tier: 5, radius: 22, fillColor: 0xa92db5, strokeColor: 0xffd0ff, strokeWidth: 5 },
+  { tier: 1, radius: 18, textureKey: getEnemyPixelArt('NORMAL', 1).textureKey, fillColor: 0xff446c, strokeColor: 0xffafbd, strokeWidth: 3 },
+  { tier: 2, radius: 19, textureKey: getEnemyPixelArt('NORMAL', 2).textureKey, fillColor: 0xf33d78, strokeColor: 0xffb2d0, strokeWidth: 3 },
+  { tier: 3, radius: 20, textureKey: getEnemyPixelArt('NORMAL', 3).textureKey, fillColor: 0xdc358b, strokeColor: 0xf8b4ff, strokeWidth: 4 },
+  { tier: 4, radius: 21, textureKey: getEnemyPixelArt('NORMAL', 4).textureKey, fillColor: 0xc42fa0, strokeColor: 0xeab7ff, strokeWidth: 4 },
+  { tier: 5, radius: 22, textureKey: getEnemyPixelArt('NORMAL', 5).textureKey, fillColor: 0xa92db5, strokeColor: 0xffd0ff, strokeWidth: 5 },
 ];
 
 const CAPTAIN_VISUALS: readonly EnemyVisualProfile[] = [
-  { tier: 1, radius: 31, fillColor: 0x8f233f, strokeColor: 0xffd65a, strokeWidth: 6 },
-  { tier: 2, radius: 33, fillColor: 0x8d2050, strokeColor: 0xffdc72, strokeWidth: 7 },
-  { tier: 3, radius: 35, fillColor: 0x84205f, strokeColor: 0xffe28a, strokeWidth: 7 },
-  { tier: 4, radius: 37, fillColor: 0x75216f, strokeColor: 0xffe8a3, strokeWidth: 8 },
-  { tier: 5, radius: 39, fillColor: 0x64227e, strokeColor: 0xffefbd, strokeWidth: 8 },
+  { tier: 1, radius: 31, textureKey: getEnemyPixelArt('CAPTAIN', 1).textureKey, fillColor: 0x8f233f, strokeColor: 0xffd65a, strokeWidth: 6 },
+  { tier: 2, radius: 33, textureKey: getEnemyPixelArt('CAPTAIN', 2).textureKey, fillColor: 0x8d2050, strokeColor: 0xffdc72, strokeWidth: 7 },
+  { tier: 3, radius: 35, textureKey: getEnemyPixelArt('CAPTAIN', 3).textureKey, fillColor: 0x84205f, strokeColor: 0xffe28a, strokeWidth: 7 },
+  { tier: 4, radius: 37, textureKey: getEnemyPixelArt('CAPTAIN', 4).textureKey, fillColor: 0x75216f, strokeColor: 0xffe8a3, strokeWidth: 8 },
+  { tier: 5, radius: 39, textureKey: getEnemyPixelArt('CAPTAIN', 5).textureKey, fillColor: 0x64227e, strokeColor: 0xffefbd, strokeWidth: 8 },
 ];
 
 export function calculateEnemyVisualTier(stage: number): number {

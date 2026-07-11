@@ -574,6 +574,7 @@ test('spawns stronger stage-100 captains with distinct visuals from the existing
           rank: 'NORMAL' | 'CAPTAIN';
           visualTier: number;
           radius: number;
+          texture: { key: string };
           maxHealth: number;
           attackDamage: number;
           goldReward: number;
@@ -602,6 +603,7 @@ test('spawns stronger stage-100 captains with distinct visuals from the existing
       normal: {
         tier: normal.visualTier,
         radius: normal.radius,
+        textureKey: normal.texture.key,
         maxHealth: normal.maxHealth,
         attackDamage: normal.attackDamage,
         goldReward: normal.goldReward,
@@ -609,6 +611,7 @@ test('spawns stronger stage-100 captains with distinct visuals from the existing
       captain: {
         tier: captain.visualTier,
         radius: captain.radius,
+        textureKey: captain.texture.key,
         maxHealth: captain.maxHealth,
         attackDamage: captain.attackDamage,
         goldReward: captain.goldReward,
@@ -622,6 +625,8 @@ test('spawns stronger stage-100 captains with distinct visuals from the existing
   expect(result.normal.tier).toBe(5);
   expect(result.captain.tier).toBe(5);
   expect(result.captain.radius).toBeGreaterThan(result.normal.radius);
+  expect(result.normal.textureKey).toBe('enemy-normal-5');
+  expect(result.captain.textureKey).toBe('enemy-captain-5');
   expect(result.captain.maxHealth).toBeGreaterThanOrEqual(result.normal.maxHealth * 11.9);
   expect(result.captain.attackDamage).toBeGreaterThanOrEqual(result.normal.attackDamage * 9.9);
   expect(result.captain.goldReward).toBe(result.normal.goldReward * 18);

@@ -96,6 +96,7 @@ export interface EnemyData {
 export interface EnemyVisualProfile {
   tier: number;
   radius: number;
+  textureKey: string;
   fillColor: number;
   strokeColor: number;
   strokeWidth: number;

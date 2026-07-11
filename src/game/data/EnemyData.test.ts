@@ -17,6 +17,7 @@ describe('enemy stage progression', () => {
     expect(final.radius).toBeGreaterThan(first.radius);
     expect(final.strokeWidth).toBeGreaterThan(first.strokeWidth);
     expect(final.fillColor).not.toBe(first.fillColor);
+    expect(final.textureKey).not.toBe(first.textureKey);
   });
 
   it('makes captain visuals larger and more heavily outlined at every tier', () => {
@@ -26,6 +27,7 @@ describe('enemy stage progression', () => {
       expect(captain.radius).toBeGreaterThan(normal.radius);
       expect(captain.strokeWidth).toBeGreaterThan(normal.strokeWidth);
       expect(captain.strokeColor).not.toBe(normal.strokeColor);
+      expect(captain.textureKey).not.toBe(normal.textureKey);
     }
   });
 

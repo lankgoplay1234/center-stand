@@ -4,7 +4,7 @@ import { calculateEffectiveKnockbackForce, calculateKnockbackPosition } from '..
 import { getEnemyVisualProfile } from '../data/EnemyData';
 import type { EnemyData } from '../types/GameTypes';
 
-export class Enemy extends Phaser.GameObjects.Arc {
+export class Enemy extends Phaser.GameObjects.Image {
   readonly poolId: number;
   health = 0;
   maxHealth = 0;
@@ -15,15 +15,14 @@ export class Enemy extends Phaser.GameObjects.Arc {
   contactRange = 0;
   rank: EnemyData['rank'] = 'NORMAL';
   visualTier = 1;
+  radius = 18;
   isAlive = false;
   countsTowardStage = true;
   lastAttackAt = 0;
-  private baseFillColor = 0xff446c;
-
   constructor(scene: Phaser.Scene, poolId: number) {
-    super(scene, 0, 0, 18, 0, 360, false, 0xff446c, 1);
+    super(scene, 0, 0, 'enemy-normal-1');
     this.poolId = poolId;
-    this.setStrokeStyle(3, 0xffafbd, 0.8).setVisible(false).setActive(false).setDepth(4);
+    this.setOrigin(0.5).setVisible(false).setActive(false).setDepth(4);
     scene.add.existing(this);
   }
 
@@ -39,9 +38,10 @@ export class Enemy extends Phaser.GameObjects.Arc {
     const visual = getEnemyVisualProfile(stage, data.rank);
     this.rank = data.rank;
     this.visualTier = visual.tier;
-    this.baseFillColor = visual.fillColor;
-    this.setPosition(x, y).setRadius(visual.radius).setScale(1).setAlpha(1)
-      .setFillStyle(visual.fillColor).setStrokeStyle(visual.strokeWidth, visual.strokeColor, 0.95)
+    this.radius = visual.radius;
+    this.setTexture(visual.textureKey).setDisplaySize(visual.radius * 2, visual.radius * 2);
+    this.clearTint();
+    this.setPosition(x, y).setScale(1).setAlpha(1)
       .setVisible(true).setActive(true);
     this.maxHealth = Math.round(data.health * healthMultiplier);
     this.health = this.maxHealth;
@@ -57,11 +57,12 @@ export class Enemy extends Phaser.GameObjects.Arc {
 
   deactivate(): void {
     this.isAlive = false;
+    this.clearTint();
     this.setActive(false).setVisible(false);
   }
 
   restoreVisual(): void {
-    if (this.fillColor === 0xffffff) this.setFillStyle(this.baseFillColor);
+    if (this.isTinted) this.clearTint();
   }
 
   takeDamage(damage: number): DamageResult {
@@ -73,7 +74,7 @@ export class Enemy extends Phaser.GameObjects.Arc {
       this.isAlive = false;
       return { appliedDamage, died: true };
     }
-    if (appliedDamage > 0) this.setFillStyle(0xffffff);
+    if (appliedDamage > 0) this.setTintFill(0xffffff);
     return { appliedDamage, died: false };
   }
 
