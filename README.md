@@ -40,9 +40,12 @@ npm run benchmark:targeting
 
 ## GitHub 작업 흐름
 
-- 기능 작업은 별도 브랜치에서 진행합니다.
+- 작업 시작 전 `git fetch origin`으로 원격 상태를 갱신합니다.
+- 기능 작업은 최신 `origin/main`에서 만든 `agent/<작업명>` 브랜치에서 진행합니다.
+- 검사가 끝난 변경은 작업 브랜치에만 push하고 draft pull request로 검토를 요청합니다.
 - pull request에서는 타입 검사, 린트, 단위 테스트, 빌드를 자동 실행합니다.
 - `main`에 반영된 변경은 동일 검사를 다시 통과한 뒤 GitHub Pages에 배포됩니다.
+- 강제 push와 `main` 직접 커밋은 하지 않습니다.
 - `.env`와 비밀키는 커밋하지 않습니다.
 
 ## AI 에이전트 문서

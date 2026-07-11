@@ -18,6 +18,14 @@
 12. 완료 후 `PROJECT_STATUS.md`와 `CHANGELOG.md`를 갱신한다.
 13. main 브랜치에 직접 대규모 변경하지 않는 워크플로를 전제로 하며, 작업 브랜치와 작은 커밋을 선호한다.
 
+## Git 작업 흐름
+
+1. 작업 전 `git fetch origin`으로 원격 상태를 확인한다.
+2. 최신 `origin/main`을 기준으로 `agent/<작업명>` 브랜치를 만든다.
+3. 작업 파일만 명시적으로 stage하고 검사 성공 후 작은 커밋으로 기록한다.
+4. 작업 브랜치를 push한 뒤 draft pull request를 생성한다.
+5. 사용자 승인 없이 강제 push, 이력 재작성, `main` 직접 병합을 하지 않는다.
+
 ## 작업 흐름
 
 1. `TASKS.md`에서 상태가 `READY`인 작업 하나를 선택한다.

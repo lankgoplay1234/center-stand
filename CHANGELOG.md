@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.16.0 - 2026-07-12
+
+### Added
+
+- GitHub CLI 사용자 경로 설치와 `lankgoplay1234` 계정 인증
+- 최신 원격 `main`을 추적하는 `agent/git-history-sync` 작업 브랜치
+- 기존 독립 로컬 이력을 보존하는 `backup/codex-deploy-setup-20260712` 백업 브랜치
+- fetch, 작업 브랜치, draft pull request 중심의 Git 작업 지침
+
+### Changed
+
+- 최초 웹 업로드와 달랐던 로컬 기준 이력을 원격 `main` 기반으로 안전하게 전환
+- 다음 작업 우선순위를 고유 특수 능력과 모바일 장시간 성능 측정 중심으로 갱신
+
+### Verified
+
+- 강제 push와 기존 브랜치 삭제 없이 원격 `main` 추적 상태 확인
+- TypeScript 타입 검사, ESLint, Vitest 64개 테스트, Vite 프로덕션 빌드 통과
+
 ## 0.15.0 - 2026-07-11
 
 ### Added

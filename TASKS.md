@@ -197,3 +197,36 @@
 - 완료 조건: 최소 2개 변형 적이 데이터 기반으로 생성된다.
 - 관련 파일: `EnemyData.ts`, `EnemyManager.ts`, `StageData.ts`
 - 테스트 방법: `npm run test && npm run build`
+
+## GAME-007
+
+- ID: GAME-007
+- 작업명: 캐릭터별 고유 특수 능력 설계
+- 우선순위: MEDIUM
+- 상태: BACKLOG
+- 설명: 현재 공통 사거리·효과 범위 증가로 동작하는 특수 강화를 캐릭터별 고유 능력으로 확장할 수 있도록 데이터와 실행 계약을 설계한다. 한 번에 여섯 능력을 모두 구현하지 않고 캐릭터 1종의 수직 기능 단위부터 진행한다.
+- 완료 조건: 특수 능력 데이터 계약, 발동 조건, 업그레이드 반영 규칙이 정의되고 기존 여섯 공격 전략과 공존하며, 미설정 캐릭터는 현재 동작을 유지한다.
+- 관련 파일: `CharacterData.ts`, `GameTypes.ts`, `UpgradeSystem.ts`, `strategies/`, 향후 `abilities/`
+- 테스트 방법: 능력 선택·업그레이드 반영 단위 테스트, 기존 공격 전략 회귀 테스트, Playwright 전투 검수
+
+## PERF-002
+
+- ID: PERF-002
+- 작업명: 실제 모바일 장시간 전투 성능 측정
+- 우선순위: MEDIUM
+- 상태: BACKLOG
+- 설명: 100마리 이상 전투와 장시간 스테이지 진행에서 모바일 FPS, 활성 객체 수, 메모리 증가, 발열 체감을 측정하고 성능 기준을 문서화한다.
+- 완료 조건: 대표 모바일 환경의 10분 이상 측정 결과와 재현 절차가 기록되고, 병목이 발견되면 기능 제거 없이 후속 최적화 작업으로 분리된다.
+- 관련 파일: `docs/PERFORMANCE.md`, `GameScene.ts`, `EnemyManager.ts`, `EffectsManager.ts`, `tests/e2e/`
+- 테스트 방법: 실제 모바일 브라우저 수동 측정, 100 적 개발 테스트, Playwright 장시간 스모크 테스트
+
+## GIT-001
+
+- ID: GIT-001
+- 작업명: 로컬·원격 Git 이력과 PR 작업 흐름 정리
+- 우선순위: HIGH
+- 상태: REVIEW
+- 설명: 최초 웹 업로드로 서로 달라진 로컬 작업 브랜치와 원격 `main` 이력을 안전하게 정리하고, 이후 변경을 별도 브랜치와 pull request로 올릴 수 있는 인증·동기화 절차를 확립한다.
+- 완료 조건: 사용자 변경을 잃지 않고 로컬이 원격 기준 이력을 추적하며, 새 작업 브랜치 push와 draft pull request 생성 절차가 검증된다. 강제 push와 대규모 이력 재작성은 사용자 승인 없이 수행하지 않는다.
+- 관련 파일: `.git/` 설정, `README.md`, `AGENTS.md`
+- 테스트 방법: `git status`, 원격 추적 상태, 테스트 브랜치 push 및 draft pull request 확인
