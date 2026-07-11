@@ -23,6 +23,7 @@
 - `ENEMY-002` 5단계 외형·대장 배율·출현율·기존 풀 재사용 완료 조건 최종 검수
 - `FX-003` 누적 업그레이드 6단계 외형·고정 장식·런 상태 완료 조건 최종 검수
 - `ABILITY-002` 격노의 검무 발동 주기·빈 공격·중복 방지·특수 강화 완료 조건 최종 검수
+- `BALANCE-001` 세 성장 유형·캐릭터별 효율·구간 성장·부활 유지 완료 조건 최종 검수
 
 ### Verified
 
@@ -44,6 +45,7 @@
 - EnemyData·DeathBalanceSimulation 8개 테스트와 desktop/mobile stage-100 대장 풀 검사 2개 통과
 - CharacterVisualData·UpgradeSystem 8개 테스트와 desktop/mobile 400회 외형 흐름 2개 통과
 - SpecialAbilitySystem·CharacterData·UpgradeSystem 17개 테스트와 desktop/mobile 격노의 검무 2개 통과
+- BalanceData·RunBalanceSimulation·DeathBalanceSimulation 13개 테스트와 desktop/mobile 성장 흐름 4개 통과
 
 ## 0.26.0 - 2026-07-12
 
