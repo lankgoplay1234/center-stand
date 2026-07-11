@@ -16,7 +16,7 @@
 - ID: GAME-005
 - 작업명: 추가 캐릭터와 공격 전략 — 2단계
 - 우선순위: HIGH
-- 상태: REVIEW
+- 상태: DONE
 - 설명: 전략별 선택 가능한 캐릭터 데이터를 추가하고 AREA_MAGIC, PIERCING, CHAIN을 단계적으로 구현한다.
 - 완료 조건: 캐릭터 선택 화면에서 전략별 캐릭터를 선택할 수 있고 각 전략의 단위·브라우저 테스트가 통과한다.
 - 관련 파일: `CharacterData.ts`, `CharacterSelectScene.ts`, `strategies/`
