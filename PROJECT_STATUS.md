@@ -78,6 +78,7 @@
 
 ## 최근 테스트 결과
 
+- 2026-07-12 `BALANCE-003` 최종 검수: 399/400회·비용·능력치 15개 단위 테스트와 desktop/mobile 400회 성장·부활 유지 4개 통과, `DONE` 전환
 - 2026-07-12 `BALANCE-002` 검수: StageData·BalanceData·StageManager 13개 테스트와 desktop/mobile 시간 가속 완주 2개 통과. 실제 40분 플레이 표본이 없어 `BLOCKED` 전환
 - 2026-07-12 `STAGE-003` 최종 검수: 단계 경계 3개 단위 테스트와 desktop/mobile 100적·투사체 무보상 정리·800ms 생성 지연 2개 통과, `DONE` 전환
 - 2026-07-12 `DEPLOY-001` 최종 검수: `.env` 제외·Draft PR·Actions 품질 성공·Pages 배포 성공 이력·공개 주소 HTTP 200 확인, `DONE` 전환

@@ -17,6 +17,7 @@
 - `DEPLOY-001` 비밀값 제외·Draft PR·Actions 품질·GitHub Pages 공개 접속 완료 조건 최종 검수
 - `STAGE-003` 단계 경계 잔존 적·투사체 무보상 정리와 생성 지연 완료 조건 최종 검수
 - `BALANCE-002` 자동 40분 시간표와 100단계 단일 완료 검수; 실제 40분 수동 플레이 표본은 미확보로 차단 기록
+- `BALANCE-003` 여섯 캐릭터 399/400회 완주 경계·골드·처리량·생존 완료 조건 최종 검수
 
 ### Verified
 
@@ -32,6 +33,7 @@
 - GitHub Actions 품질 검사와 Pages 배포 성공 이력, 공개 게임 HTTP 200 확인
 - StageManager 3개 테스트와 desktop/mobile 100적 단계 전환 정리 2개 통과
 - StageData·BalanceData·StageManager 13개 테스트와 desktop/mobile 시간 가속 완주 2개 통과
+- RunBalanceSimulation·UpgradeData·UpgradeSystem 15개 테스트와 desktop/mobile 400회 성장·부활 유지 4개 통과
 
 ## 0.26.0 - 2026-07-12
 
