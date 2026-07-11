@@ -44,6 +44,8 @@
 - `FX-002` 여섯 캐릭터 고유 모션·공격 방향·고정 효과 풀 완료 조건 최종 검수
 - `RANK-002` UI·클라이언트 자동 검수 완료; 실제 API 주소와 서버 발급 proof 미배포로 차단 기록
 - `GAME-004` 일반 적·대장 적 데이터와 단계 출현·기존 풀 재사용 완료 조건 최종 검수
+- 전체 대기열 `DONE 24`, `BLOCKED 6`, `REVIEW/BACKLOG 0` 상태 감사
+- `PERF-003`은 기존 두 차례 최적화 시도와 10분 측정 실패, 실기기 GPU 프로파일 부재로 차단 유지
 
 ### Verified
 
@@ -76,6 +78,8 @@
 - 랭킹 서비스·API 9개 테스트와 desktop/mobile 완주 닉네임 입력 안전 상태 2개 통과
 - 텔레그램 무설정 skip·보고 본문·비밀값 비노출 모의 HTTP 테스트 3개 통과
 - EnemyData 5개 테스트와 desktop/mobile 대장 생성 2개 통과
+- 최종 typecheck·lint·Vitest 23개 파일/109개·build 통과
+- 최종 Playwright desktop/mobile 22개 통과, 전용 endurance 2개 의도적 건너뜀
 
 ## 0.26.0 - 2026-07-12
 
