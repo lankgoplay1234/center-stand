@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { getCharacterById } from '../data/CharacterData';
 import { LeaderboardService, LeaderboardServiceError, validateLeaderboardNickname } from '../services/LeaderboardService';
+import { formatLeaderboardEntry, formatLeaderboardTime } from '../services/LeaderboardPresentation';
 import { shareGameResult } from '../services/ResultShareService';
 import type { GameResult } from '../types/GameTypes';
 
@@ -31,7 +32,7 @@ export class GameOverScene extends Phaser.Scene {
       fontFamily: 'Arial Black, sans-serif', fontSize: '34px', color: '#ffffff',
     }).setOrigin(0.5);
     this.add.text(360, 365,
-      `총 사망 횟수       ${this.result.deaths}\n완주 시간           ${this.formatTime(this.result.survivalSeconds)}\n총 처치 수          ${this.result.kills}\n획득 골드           ${this.result.earnedGold}\n최고 기록           ${this.formatTime(this.result.bestSeconds)}`,
+      `총 사망 횟수       ${this.result.deaths}\n완주 시간           ${formatLeaderboardTime(this.result.survivalSeconds)}\n총 처치 수          ${this.result.kills}\n획득 골드           ${this.result.earnedGold}\n최고 기록           ${formatLeaderboardTime(this.result.bestSeconds)}`,
       { fontFamily: 'Arial, sans-serif', fontSize: '25px', color: '#b9cce0', lineSpacing: 22, align: 'left' },
     ).setOrigin(0.5, 0);
 
@@ -156,7 +157,7 @@ export class GameOverScene extends Phaser.Scene {
       const entries = await this.leaderboard.list();
       this.leaderboardEntries.setText(entries.length === 0 ? '아직 등록된 완주 기록이 없습니다' : entries.map((entry) => {
         const characterName = getCharacterById(entry.characterId).name;
-        return `${entry.rank}. ${entry.nickname} · ${characterName} · 사망 ${entry.deaths}회 · ${this.formatTime(entry.completionTimeSeconds)}`;
+        return formatLeaderboardEntry(entry, characterName);
       }).join('\n'));
       return true;
     } catch (error) {
@@ -166,9 +167,4 @@ export class GameOverScene extends Phaser.Scene {
     }
   }
 
-  private formatTime(totalSeconds: number): string {
-    const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
-    const seconds = Math.floor(totalSeconds % 60).toString().padStart(2, '0');
-    return `${minutes}:${seconds}`;
-  }
 }
