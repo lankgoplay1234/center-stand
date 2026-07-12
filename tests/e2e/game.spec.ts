@@ -73,6 +73,7 @@ test('selects all six characters and enters combat', async ({ page }) => {
   for (const chance of ['0.0%', '5.0%', '7.0%', '10.0%', '20.0%']) {
     expect(criticalLabels.some((label) => label.includes(`CRIT ${chance}`))).toBe(true);
   }
+  expect(criticalLabels).toContain('HP 300  ATK 14  SPD 1.45\nRNG 60  CRIT 7.0%');
   expect(characterCardTexts.some((text) => text.startsWith('추천:'))).toBe(false);
 
   for (const card of CHARACTER_CARDS) {

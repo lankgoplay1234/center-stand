@@ -12,10 +12,19 @@ const PREVIOUS_BASE_RANGES: Readonly<Record<string, number>> = {
   'storm-conductor': 340,
 };
 
+const EXPECTED_BASE_RANGES: Readonly<Record<string, number>> = {
+  'arc-ranger': 200,
+  'blade-warden': 80,
+  'bastion-gunner': 60,
+  'rune-mage': 155,
+  'needle-striker': 240,
+  'storm-conductor': 170,
+};
+
 describe('attack range progression', () => {
   it('starts at base range and reaches the declared maximum at level 99', () => {
     for (const character of CHARACTERS) {
-      expect(character.attackRange, character.name).toBe(PREVIOUS_BASE_RANGES[character.id]! / 2);
+      expect(character.attackRange, character.name).toBe(EXPECTED_BASE_RANGES[character.id]);
       expect(calculateAttackRangeAtLevel(character.attackRange, character.maxAttackRange, 0)).toBe(character.attackRange);
       expect(calculateAttackRangeAtLevel(character.attackRange, character.maxAttackRange, MAX_UPGRADE_LEVEL))
         .toBe(character.maxAttackRange);
