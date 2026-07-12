@@ -36,6 +36,8 @@ export class GameScene extends Phaser.Scene {
   private combat!: CombatSystem;
   private ui!: UIManager;
   private gameEnded = false;
+  private backgroundShakeLayer!: Phaser.GameObjects.Container;
+  private enemyShakeLayer!: Phaser.GameObjects.Container;
   private arenaBackground!: Phaser.GameObjects.Image;
   private attackRangeIndicator!: Phaser.GameObjects.Arc;
   private currentThemeKey = '';
@@ -64,6 +66,8 @@ export class GameScene extends Phaser.Scene {
     this.tweens.timeScale = 1;
     this.run = { gold: 0, earnedGold: 0, kills: 0, deaths: 0, elapsedSeconds: 0 };
     this.cameras.main.setBackgroundColor('#090d1a');
+    this.backgroundShakeLayer = this.add.container(0, 0).setDepth(-3);
+    this.enemyShakeLayer = this.add.container(0, 0).setDepth(4);
     this.createArena();
     this.player = new Player(this, 360, 595, getCharacterById(data.characterId ?? 'arc-ranger')).setDepth(10);
     this.criticalChance = calculatePlayerCriticalChance(this.player.character.baseCriticalChance, 0);
@@ -76,7 +80,7 @@ export class GameScene extends Phaser.Scene {
     );
     this.enemies = new EnemyManager(this, this.player, {
       onPlayerHit: (damage, x, y) => this.handlePlayerHit(damage, x, y),
-    });
+    }, this.enemyShakeLayer);
     this.projectiles = new ProjectileManager(this, (enemy, damage) => this.handleEnemyHit(enemy, damage));
     this.upgrades = new UpgradeSystem(this.player);
     this.mobClear = new MobClearSystem();
@@ -145,12 +149,13 @@ export class GameScene extends Phaser.Scene {
     this.currentThemeKey = initialTheme.textureKey;
     this.arenaBackground = this.add.image(360, 500, initialTheme.textureKey)
       .setDisplaySize(720, 1000).setDepth(-3);
-    this.add.rectangle(360, 500, 720, 1000, 0x050914, 0.3).setDepth(-2);
+    const shade = this.add.rectangle(360, 500, 720, 1000, 0x050914, 0.3).setDepth(-2);
     const graphics = this.add.graphics().setDepth(-1);
     graphics.fillStyle(0x07101b, 0.12).fillRect(0, 0, 720, 1000);
     graphics.lineStyle(1, 0x29415a, 0.24);
     for (let x = 0; x <= 720; x += 60) graphics.lineBetween(x, 100, x, 1000);
     for (let y = 100; y <= 1000; y += 60) graphics.lineBetween(0, y, 720, y);
+    this.backgroundShakeLayer.add([this.arenaBackground, shade, graphics]);
   }
 
   private createAttackRangeIndicator(): void {
@@ -188,7 +193,7 @@ export class GameScene extends Phaser.Scene {
     this.effects.showExplosion(x, y);
     const countsTowardStage = enemy.countsTowardStage;
     this.enemies.release(enemy);
-    this.cameras.main.shake(55, 0.0014);
+    this.shakeWorld(55, 0.0014);
     if (countsTowardStage) this.stages.recordKills(1);
   }
 
@@ -197,7 +202,7 @@ export class GameScene extends Phaser.Scene {
     const applied = this.player.takeDamage(rawDamage);
     this.effects.showDamage(this.player.x, this.player.y - 42, applied, '#ff6b83');
     this.effects.showHit(x, y);
-    this.cameras.main.shake(75, 0.0035);
+    this.shakeWorld(75, 0.0035);
     if (this.player.health <= 0) this.handlePlayerDeath();
   }
 
@@ -318,7 +323,7 @@ export class GameScene extends Phaser.Scene {
     this.stages.recordKills(result.stageKills);
     this.effects.showStageClear(this.player.x, this.player.y);
     this.cameras.main.flash(180, 255, 75, 105, false);
-    this.cameras.main.shake(180, 0.006);
+    this.shakeWorld(180, 0.006);
   }
 
   private readonly handleGameplayShortcut = (event: KeyboardEvent): void => {
@@ -361,6 +366,8 @@ export class GameScene extends Phaser.Scene {
     const previous = this.arenaBackground;
     const next = this.add.image(360, 500, theme.textureKey).setDisplaySize(720, 1000)
       .setDepth(-3).setAlpha(0);
+    this.backgroundShakeLayer.add(next);
+    this.backgroundShakeLayer.sort('depth');
     this.arenaBackground = next;
     this.currentThemeKey = theme.textureKey;
     this.tweens.add({ targets: next, alpha: 1, duration: 650, ease: 'Sine.easeOut' });
@@ -369,6 +376,26 @@ export class GameScene extends Phaser.Scene {
       onComplete: () => previous.destroy(),
     });
     this.cameras.main.flash(120, (theme.accentColor >> 16) & 0xff, (theme.accentColor >> 8) & 0xff, theme.accentColor & 0xff, false);
+  }
+
+  private shakeWorld(duration: number, intensity: number): void {
+    const targets = [this.backgroundShakeLayer, this.enemyShakeLayer];
+    const xOffset = Math.max(1, Math.round(this.scale.width * intensity));
+    const yOffset = Math.max(1, Math.round(this.scale.height * intensity));
+    this.tweens.killTweensOf(targets);
+    for (const layer of targets) layer.setPosition(0, 0);
+    this.tweens.add({
+      targets,
+      x: { from: -xOffset, to: xOffset },
+      y: { from: yOffset, to: -yOffset },
+      duration: Math.max(1, duration / 4),
+      yoyo: true,
+      repeat: 1,
+      ease: 'Sine.easeInOut',
+      onComplete: () => {
+        for (const layer of targets) layer.setPosition(0, 0);
+      },
+    });
   }
 
   private completeRun(): void {

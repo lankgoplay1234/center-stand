@@ -96,6 +96,62 @@ test('selects all six characters and enters combat', async ({ page }) => {
   expect(runtimeErrors).toEqual([]);
 });
 
+test('shakes only the background and enemy layers while gameplay UI stays fixed', async ({ page }) => {
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+
+  const duringShake = await page.evaluate(async () => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      backgroundShakeLayer: { x: number; y: number };
+      enemyShakeLayer: { x: number; y: number };
+      player: { x: number; y: number };
+      ui: {
+        healthText: { x: number; y: number };
+        buttons: Map<string, { container: { x: number; y: number } }>;
+      };
+      cameras: { main: { shakeEffect: { isRunning: boolean } } };
+      shakeWorld: (duration: number, intensity: number) => void;
+    } | undefined;
+    if (!scene) throw new Error('GameScene unavailable');
+    const button = scene.ui.buttons.get('attackDamage')?.container;
+    if (!button) throw new Error('Attack upgrade button unavailable');
+    const fixedBefore = {
+      player: { x: scene.player.x, y: scene.player.y },
+      health: { x: scene.ui.healthText.x, y: scene.ui.healthText.y },
+      button: { x: button.x, y: button.y },
+    };
+    scene.shakeWorld(240, 0.01);
+    await new Promise((resolve) => window.setTimeout(resolve, 45));
+    return {
+      fixedBefore,
+      fixedDuring: {
+        player: { x: scene.player.x, y: scene.player.y },
+        health: { x: scene.ui.healthText.x, y: scene.ui.healthText.y },
+        button: { x: button.x, y: button.y },
+      },
+      background: { x: scene.backgroundShakeLayer.x, y: scene.backgroundShakeLayer.y },
+      enemies: { x: scene.enemyShakeLayer.x, y: scene.enemyShakeLayer.y },
+      cameraShakeRunning: scene.cameras.main.shakeEffect.isRunning,
+    };
+  });
+
+  expect(duringShake.background).toEqual(duringShake.enemies);
+  expect(Math.abs(duringShake.background.x) + Math.abs(duringShake.background.y)).toBeGreaterThan(0);
+  expect(duringShake.fixedDuring).toEqual(duringShake.fixedBefore);
+  expect(duringShake.cameraShakeRunning).toBe(false);
+
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      backgroundShakeLayer?: { x: number; y: number };
+      enemyShakeLayer?: { x: number; y: number };
+    } | undefined;
+    return {
+      background: [scene?.backgroundShakeLayer?.x, scene?.backgroundShakeLayer?.y],
+      enemies: [scene?.enemyShakeLayer?.x, scene?.enemyShakeLayer?.y],
+    };
+  })).toEqual({ background: [0, 0], enemies: [0, 0] });
+});
+
 test('pauses combat, continues the same run, and returns home', async ({ page }) => {
   await clickGamePoint(page, 360, 900);
   await expect.poll(() => activeSceneKey(page)).toBe('GameScene');

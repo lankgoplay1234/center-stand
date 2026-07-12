@@ -8,6 +8,7 @@
 - 원거리 반동·근접 돌진·마법 부유 등 캐릭터 공격 역할과 연동된 스프라이트 동작
 - 고속 연속 공격에서도 현재 성장 단계의 기준 크기로 정규화되는 중첩 안전 스프라이트 모션
 - 일반 피해 팝업과 금색 CRIT 문구·폭발·파동을 결합한 캐릭터별 기본 0~20%·공격가능범위 강화당 0.2%p·1.75배 치명타 피드백
+- 적 처치·플레이어 피격·모든 몹 제거 시 배경과 몬스터만 흔들리고 플레이어·투사체·이펙트·상단 HUD·하단 강화 UI는 고정되는 전투 흔들림
 - 캐릭터 선택 카드와 공격가능범위 강화 버튼의 캐릭터별 현재 치명타 확률 표시
 - 전투 중 상단 버튼·ESC로 여는 일시정지 메뉴, 동일 런 계속 진행과 캐릭터 선택 홈 복귀
 - 스테이지·적·공격·투사체·플레이 시간을 함께 전환하는 `속도 ×1`/`속도 ×2` 토글과 새 런 1배속 초기화
@@ -136,6 +137,8 @@
 
 ## 최근 테스트 결과
 
+- 2026-07-13 `FX-004`: main 카메라 전체 흔들림을 배경·몬스터 전용 컨테이너 흔들림으로 교체. 중첩 시작 시 원점 정규화와 종료 후 원점 복원을 적용하고 플레이어·투사체·이펙트·HUD·강화 버튼을 고정. typecheck·lint·Vitest 37개 파일/165개·build 성공, Playwright desktop/mobile 42개 성공·endurance 2개 의도적 분리
+
 - 2026-07-13 `STAGE-004`: 선택 카드 추천 문구 제거, 생성량 10→100마리/초·목표 처치 50→300·대장 확률 0→35% 선형 성장, 적 공격력·방어력 단계당 +1과 실제 방어 피해 적용. typecheck·lint·Vitest 37개 파일/165개·build 성공, Playwright desktop/mobile 40개 성공·endurance 2개 의도적 분리
 
 - 2026-07-13 `INPUT-001`: Q/W/E/A/S/D 강화·모든 몹 제거와 F 사망 부활 PC 단축키, 버튼 키 안내, 사망 중 강화 허용·E 차단, 재시작 확인 창 F 차단 구현. typecheck·lint·Vitest 37개 파일/162개·build 성공, Playwright desktop/mobile 40개 성공·endurance 2개 의도적 분리
@@ -240,7 +243,7 @@
 
 - PASS — Vite production build 생성 완료
 - PASS — Vitest 37개 파일·165개 테스트 통과
-- PASS — Playwright desktop/mobile 40개 통과, 10분 endurance 2개 의도적 분리
+- PASS — Playwright desktop/mobile 42개 통과, 10분 endurance 2개 의도적 분리
 - PASS — GitHub Actions 품질 검사와 GitHub Pages 배포 완료
 - 공개 저장소: https://github.com/lankgoplay1234/center-stand
 - 공개 게임: https://lankgoplay1234.github.io/center-stand/
