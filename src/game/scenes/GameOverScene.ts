@@ -14,6 +14,15 @@ export class GameOverScene extends Phaser.Scene {
   private leaderboardStatus!: Phaser.GameObjects.Text;
   private leaderboardEntries!: Phaser.GameObjects.Text;
 
+  private captureCompletionScreen(): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      this.game.renderer.snapshot((snapshot) => {
+        if (snapshot instanceof HTMLImageElement) resolve(snapshot);
+        else reject(new Error('완주 화면 이미지 캡처에 실패했습니다.'));
+      }, 'image/png', 1);
+    });
+  }
+
   constructor() {
     super('GameOverScene');
   }
@@ -48,9 +57,11 @@ export class GameOverScene extends Phaser.Scene {
       shareStatus.setText('결과 이미지 생성 중...');
       this.tweens.add({ targets: [shareBg, shareText], scale: 0.96, duration: 80, yoyo: true });
       try {
-        const outcome = await shareGameResult(this.result);
+        const snapshot = await this.captureCompletionScreen();
+        const outcome = await shareGameResult(this.result, snapshot);
         shareStatus.setText(outcome === 'shared' ? '공유를 완료했습니다'
-          : outcome === 'downloaded' ? '결과 이미지를 저장했습니다' : '공유를 취소했습니다');
+          : outcome === 'downloaded' ? '완주 화면 PNG를 저장했습니다'
+            : outcome === 'previewed' ? '이미지를 길게 눌러 사진에 저장하세요' : '공유를 취소했습니다');
       } catch {
         shareStatus.setText('이미지를 만들지 못했습니다. 다시 시도해 주세요');
       } finally {

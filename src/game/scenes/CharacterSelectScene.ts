@@ -6,6 +6,7 @@ import type { AttackType, CharacterData } from '../types/GameTypes';
 import { formatCriticalChance } from '../data/CriticalHitData';
 import { LeaderboardService, LeaderboardServiceError } from '../services/LeaderboardService';
 import { formatLeaderboardEntry } from '../services/LeaderboardPresentation';
+import { formatSingleDecimalStat, formatWholeStat } from '../data/StatPrecisionData';
 
 const ATTACK_LABELS: Readonly<Record<AttackType, string>> = {
   SINGLE_TARGET: '원거리 · 정밀 사격',
@@ -106,7 +107,7 @@ export class CharacterSelectScene extends Phaser.Scene {
       fontFamily: 'Arial, sans-serif', fontSize: '13px', color: '#aabbd0', wordWrap: { width: 264 }, lineSpacing: 2,
     }).setOrigin(0, 0);
     const stats = this.add.text(-132, 45,
-      `HP ${character.maxHealth}  ATK ${character.attackDamage}  SPD ${character.attackSpeed}\nRNG ${character.attackRange}  CRIT ${formatCriticalChance(character.baseCriticalChance)}`,
+      `HP ${formatWholeStat(character.maxHealth)}  ATK ${formatWholeStat(character.attackDamage)}  SPD ${formatSingleDecimalStat(character.attackSpeed)}\nRNG ${formatWholeStat(character.attackRange)}  CRIT ${formatCriticalChance(character.baseCriticalChance)}`,
       { fontFamily: 'Arial, sans-serif', fontSize: '12px', color: '#d6e5f2', lineSpacing: 2 },
     ).setOrigin(0, 0);
     const card = this.add.container(x, y, [background, portraitAura, portrait, name, role, description, stats]);

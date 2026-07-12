@@ -74,7 +74,7 @@ test('selects all six characters and enters combat', async ({ page }) => {
   for (const chance of ['0.0%', '5.0%', '7.0%', '10.0%', '20.0%']) {
     expect(criticalLabels.some((label) => label.includes(`CRIT ${chance}`))).toBe(true);
   }
-  expect(criticalLabels).toContain('HP 300  ATK 14  SPD 1.45\nRNG 60  CRIT 7.0%');
+  expect(criticalLabels).toContain('HP 140  ATK 14  SPD 1.5\nRNG 60  CRIT 7.0%');
   expect(characterCardTexts.some((text) => text.startsWith('추천:'))).toBe(false);
 
   for (const card of CHARACTER_CARDS) {
@@ -420,7 +420,7 @@ test('shows integer health and locks every-mob clear after ten uses', async ({ p
     };
   });
 
-  expect(result.healthText).toBe('HP  124 / 457');
+  expect(result.healthText).toBe('HP  123 / 457');
   expect(result.state).toEqual({ currentCost: 307_200, usageCount: 10, maxUses: 10, isMaxed: true });
   expect(result.mobClearText).toContain('사용 10/10회');
   expect(result.mobClearText).toContain('사용 완료');
@@ -863,8 +863,8 @@ test('spawns stronger stage-100 captains with distinct visuals from the existing
   expect(result.normal.defense).toBe(99);
   expect(result.captain.attackDamage).toBeGreaterThan(result.normal.attackDamage);
   expect(result.captain.defense).toBeGreaterThan(result.normal.defense);
-  expect(result.normal.goldReward).toBe(20);
-  expect(result.captain.goldReward).toBe(200);
+  expect(result.normal.goldReward).toBe(5);
+  expect(result.captain.goldReward).toBe(50);
 });
 
 test('locks a level 99 upgrade without spending gold', async ({ page }) => {
@@ -987,6 +987,7 @@ test('plays upgrade feedback only for successful unmuted purchases', async ({ pa
     const game = window.__CENTER_STAND_GAME__;
     const scene = game?.scene.getScene('GameScene') as unknown as {
       audio: { state: { upgradeEffectCount: number } };
+      cameras: { main: { flashEffect: { alpha: number } } };
       children: { list: Array<{ text?: string }> };
       purchaseUpgrade: (id: string) => void;
       run: { gold: number };
@@ -1001,14 +1002,22 @@ test('plays upgrade feedback only for successful unmuted purchases', async ({ pa
     return {
       countAfterSuccess,
       countAfterFailedPurchase: scene.audio.state.upgradeEffectCount,
+      flashAlpha: scene.cameras.main.flashEffect.alpha,
       hasVisualNotice,
     };
   });
   expect(successState).toEqual({
     countAfterSuccess: 1,
     countAfterFailedPurchase: 1,
+    flashAlpha: 0.2,
     hasVisualNotice: true,
   });
+  await expect.poll(() => page.evaluate(() => {
+    const game = window.__CENTER_STAND_GAME__;
+    const scene = game?.scene.getScene('GameScene') as unknown as
+      { cameras?: { main: { flashEffect: { alpha: number } } } } | undefined;
+    return scene?.cameras?.main.flashEffect.alpha ?? 0;
+  })).toBe(1);
 
   await clickGamePoint(page, 642, 116);
   const mutedState = await page.evaluate(() => {
@@ -1523,6 +1532,21 @@ test('completes stage 100 once and reports the selected character death count', 
   await clickGamePoint(page, 360, 660);
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toContain('아크-레인저-3deaths.png');
+
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, 'userAgent', { configurable: true, value: 'Mozilla/5.0 KAKAOTALK 11.4.2' });
+  });
+  await clickGamePoint(page, 360, 660);
+  const preview = page.locator('[data-testid="completion-image-preview"]');
+  const completionImage = page.locator('[data-testid="completion-image"]');
+  await expect(preview).toBeVisible();
+  await expect(completionImage).toHaveAttribute('alt', 'CENTER STAND 완주 화면');
+  await expect.poll(() => completionImage.evaluate((image) => ({
+    width: (image as HTMLImageElement).naturalWidth,
+    height: (image as HTMLImageElement).naturalHeight,
+  }))).toEqual({ width: 720, height: 1280 });
+  await page.locator('[data-testid="completion-image-close"]').click();
+  await expect(preview).toBeHidden();
 
   await clickGamePoint(page, 360, 790);
   await expect.poll(() => activeSceneKey(page)).toBe('CharacterSelectScene');

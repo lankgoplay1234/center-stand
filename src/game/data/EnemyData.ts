@@ -9,7 +9,7 @@ export const BASIC_ENEMY: Readonly<EnemyData> = {
   defense: 0,
   moveSpeed: 66,
   attackInterval: 850,
-  goldRewardPerStage: 0.2,
+  goldRewardPerStage: 0.05,
   contactRange: 44,
 };
 
@@ -21,7 +21,7 @@ export const CAPTAIN_ENEMY: Readonly<EnemyData> = {
   defense: 10,
   moveSpeed: BASIC_ENEMY.moveSpeed * 0.82,
   attackInterval: 1_200,
-  goldRewardPerStage: 2,
+  goldRewardPerStage: 0.5,
   contactRange: 58,
 };
 

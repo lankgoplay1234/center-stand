@@ -41,15 +41,16 @@ describe('enemy stage progression', () => {
 
   it('rounds stage-scaled normal and captain rewards up to whole gold', () => {
     expect(calculateEnemyGoldReward(1, BASIC_ENEMY)).toBe(1);
-    expect(calculateEnemyGoldReward(5, BASIC_ENEMY)).toBe(1);
-    expect(calculateEnemyGoldReward(6, BASIC_ENEMY)).toBe(2);
-    expect(calculateEnemyGoldReward(10, BASIC_ENEMY)).toBe(2);
-    expect(calculateEnemyGoldReward(100, BASIC_ENEMY)).toBe(20);
-    expect(calculateEnemyGoldReward(1, CAPTAIN_ENEMY)).toBe(2);
-    expect(calculateEnemyGoldReward(10, CAPTAIN_ENEMY)).toBe(20);
-    expect(calculateEnemyGoldReward(100, CAPTAIN_ENEMY)).toBe(200);
+    expect(calculateEnemyGoldReward(20, BASIC_ENEMY)).toBe(1);
+    expect(calculateEnemyGoldReward(21, BASIC_ENEMY)).toBe(2);
+    expect(calculateEnemyGoldReward(100, BASIC_ENEMY)).toBe(5);
+    expect(calculateEnemyGoldReward(1, CAPTAIN_ENEMY)).toBe(1);
+    expect(calculateEnemyGoldReward(2, CAPTAIN_ENEMY)).toBe(1);
+    expect(calculateEnemyGoldReward(3, CAPTAIN_ENEMY)).toBe(2);
+    expect(calculateEnemyGoldReward(10, CAPTAIN_ENEMY)).toBe(5);
+    expect(calculateEnemyGoldReward(100, CAPTAIN_ENEMY)).toBe(50);
     expect(calculateEnemyGoldReward(0, BASIC_ENEMY)).toBe(1);
-    expect(calculateEnemyGoldReward(Number.NaN, CAPTAIN_ENEMY)).toBe(2);
+    expect(calculateEnemyGoldReward(Number.NaN, CAPTAIN_ENEMY)).toBe(1);
   });
 
   it('increases captain chance linearly from zero to 35 percent', () => {

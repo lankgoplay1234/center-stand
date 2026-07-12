@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { getCharacterById } from '../data/CharacterData';
+import { UPGRADE_FLASH_ALPHA } from '../data/FeedbackData';
 import { STAGE_TRANSITION_SPAWN_DELAY_MS } from '../data/StageData';
 import { getStageTheme } from '../data/VisualAssetData';
 import type { Enemy } from '../entities/Enemy';
@@ -305,7 +306,14 @@ export class GameScene extends Phaser.Scene {
       );
     }
     this.refreshUI(!this.awaitingRevive);
-    this.cameras.main.flash(65, 30, 150, 170, false);
+    const camera = this.cameras.main;
+    if (!camera.flashEffect.isRunning) {
+      camera.flashEffect.alpha = UPGRADE_FLASH_ALPHA;
+      camera.once(Phaser.Cameras.Scene2D.Events.FLASH_COMPLETE, () => {
+        camera.flashEffect.alpha = 1;
+      });
+      camera.flash(65, 30, 150, 170, false);
+    }
   }
 
   private purchaseMobClear(): void {

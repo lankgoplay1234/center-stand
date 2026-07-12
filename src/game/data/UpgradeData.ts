@@ -1,5 +1,6 @@
 import type { UpgradeDefinition, UpgradeId } from '../types/GameTypes';
 import { CRITICAL_CHANCE_PER_ATTACK_RANGE_LEVEL } from './CriticalHitData';
+import { roundStat } from './StatPrecisionData';
 
 function formatValue(value: number): string {
   return Number(value.toFixed(2)).toString();
@@ -86,7 +87,7 @@ export function calculateUpgradeCost(definition: UpgradeDefinition, level: numbe
 export function calculateUpgradeEffect(definition: UpgradeDefinition, level: number, efficiency = 1): number {
   const safeLevel = Math.max(0, Math.floor(level));
   const curvedLevel = definition.effectCurve === 'SQRT' ? Math.ceil(Math.sqrt(safeLevel)) : safeLevel;
-  return curvedLevel * definition.effectPerLevel * efficiency;
+  return roundStat(curvedLevel * definition.effectPerLevel * efficiency);
 }
 
 export function calculateUpgradedStat(
@@ -96,9 +97,9 @@ export function calculateUpgradedStat(
   efficiency = 1,
 ): number {
   const effect = calculateUpgradeEffect(definition, level, efficiency);
-  return definition.effectMode === 'BASE_PERCENT'
+  return roundStat(definition.effectMode === 'BASE_PERCENT'
     ? baseValue * (1 + effect)
-    : baseValue + effect;
+    : baseValue + effect);
 }
 
 export function calculateSecondaryUpgradeEffect(definition: UpgradeDefinition, level: number, efficiency = 1): number {

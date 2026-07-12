@@ -3,6 +3,7 @@ import { getCharacterVisualTier } from '../data/CharacterVisualData';
 import { getCharacterVisualAsset } from '../data/VisualAssetData';
 import { calculateTotalTargetCount } from '../systems/TargetingSystem';
 import type { CharacterData, UpgradeId } from '../types/GameTypes';
+import { roundStat } from '../data/StatPrecisionData';
 
 export class Player extends Phaser.GameObjects.Container {
   readonly character: CharacterData;
@@ -32,17 +33,17 @@ export class Player extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, x: number, y: number, character: CharacterData) {
     super(scene, x, y);
     this.character = character;
-    this.health = character.maxHealth;
-    this.maxHealth = character.maxHealth;
-    this.defense = character.defense;
-    this.attackDamage = character.attackDamage;
-    this.attackSpeed = character.attackSpeed;
-    this.attackRange = character.attackRange;
+    this.health = roundStat(character.maxHealth);
+    this.maxHealth = roundStat(character.maxHealth);
+    this.defense = roundStat(character.defense);
+    this.attackDamage = roundStat(character.attackDamage);
+    this.attackSpeed = roundStat(character.attackSpeed);
+    this.attackRange = roundStat(character.attackRange);
     this.attackArcDegrees = character.attackArcDegrees;
-    this.attackAreaRadius = character.attackAreaRadius;
+    this.attackAreaRadius = roundStat(character.attackAreaRadius);
     this.baseTargetCount = character.baseTargetCount;
-    this.projectileSpeed = character.projectileSpeed;
-    this.knockbackForce = character.knockbackForce;
+    this.projectileSpeed = roundStat(character.projectileSpeed);
+    this.knockbackForce = roundStat(character.knockbackForce);
     this.upgradeEfficiency = character.upgradeEfficiency;
 
     const { primaryColor, accentColor } = character.attackMotion;
@@ -144,7 +145,7 @@ export class Player extends Phaser.GameObjects.Container {
 
   takeDamage(rawDamage: number): number {
     const applied = Math.max(1, rawDamage - this.defense);
-    this.health = Math.max(0, this.health - applied);
+    this.health = roundStat(Math.max(0, this.health - applied));
     this.scene.tweens.killTweensOf(this.core);
     this.core.setFillStyle(0xff5d7a);
     this.scene.tweens.add({

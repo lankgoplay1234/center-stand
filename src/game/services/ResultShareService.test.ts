@@ -3,6 +3,7 @@ import type { GameResult } from '../types/GameTypes';
 import {
   createResultShareCard,
   deliverResultImage,
+  isKakaoTalkBrowser,
   RESULT_IMAGE_HEIGHT,
   RESULT_IMAGE_WIDTH,
   type ResultShareAdapter,
@@ -15,9 +16,11 @@ const result: GameResult = {
 
 function createAdapter(canShare: boolean): ResultShareAdapter {
   return {
+    prefersImagePreview: vi.fn(() => false),
     canShare: vi.fn(() => canShare),
     share: vi.fn(async () => undefined),
     download: vi.fn(),
+    preview: vi.fn(),
   };
 }
 
@@ -45,6 +48,18 @@ describe('ResultShareService', () => {
     await expect(deliverResultImage(file, adapter)).resolves.toBe('shared');
     expect(adapter.share).toHaveBeenCalledOnce();
     expect(adapter.download).not.toHaveBeenCalled();
+  });
+
+  it('opens an image-save preview before Web Share in KakaoTalk', async () => {
+    const adapter = createAdapter(true);
+    vi.mocked(adapter.prefersImagePreview).mockReturnValue(true);
+    const file = { name: 'result.png' } as File;
+    await expect(deliverResultImage(file, adapter)).resolves.toBe('previewed');
+    expect(adapter.preview).toHaveBeenCalledWith(file);
+    expect(adapter.share).not.toHaveBeenCalled();
+    expect(adapter.download).not.toHaveBeenCalled();
+    expect(isKakaoTalkBrowser('Mozilla/5.0 KAKAOTALK 11.4.2')).toBe(true);
+    expect(isKakaoTalkBrowser('Mozilla/5.0 Mobile Safari')).toBe(false);
   });
 
   it('downloads the image when file sharing is unavailable', async () => {

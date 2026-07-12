@@ -1,4 +1,5 @@
 import { MAX_UPGRADE_LEVEL } from './UpgradeData';
+import { roundStat } from './StatPrecisionData';
 
 export function calculateAttackRangeAtLevel(
   baseRange: number,
@@ -10,9 +11,9 @@ export function calculateAttackRangeAtLevel(
   const progress = safeLevel / MAX_UPGRADE_LEVEL;
   const safeEfficiency = Math.max(0.01, efficiency);
   const weightedProgress = progress ** (1 / safeEfficiency);
-  return baseRange + (maxRange - baseRange) * weightedProgress;
+  return roundStat(baseRange + (maxRange - baseRange) * weightedProgress);
 }
 
 export function calculateAttackRangeGrowthPerLevel(baseRange: number, maxRange: number): number {
-  return (maxRange - baseRange) / MAX_UPGRADE_LEVEL;
+  return roundStat((maxRange - baseRange) / MAX_UPGRADE_LEVEL);
 }

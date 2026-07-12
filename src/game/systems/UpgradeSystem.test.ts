@@ -86,7 +86,7 @@ describe('UpgradeSystem', () => {
 
     expect(earlyCost).toBe(scalingCost);
     expect(earlyPlayer.attackDamage).toBeCloseTo(12);
-    expect(scalingPlayer.attackDamage).toBeCloseTo(13.375);
+    expect(scalingPlayer.attackDamage).toBeCloseTo(13.38);
   });
 
   it('recomputes percentage upgrades from immutable base stats without cumulative drift', () => {

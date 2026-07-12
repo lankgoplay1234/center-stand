@@ -54,7 +54,7 @@ export const ROLE_COMPLETION_ALLOCATIONS: Readonly<Record<string, UpgradeAllocat
   'blade-warden': { attackDamage: 65, attackSpeed: 70, defense: 85, maxHealth: 95, attackRange: 85 },
   'bastion-gunner': { attackDamage: 70, attackSpeed: 75, defense: 95, maxHealth: 90, attackRange: 70 },
   'rune-mage': { attackDamage: 80, attackSpeed: 99, defense: 75, maxHealth: 75, attackRange: 71 },
-  'needle-striker': { attackDamage: 50, attackSpeed: 99, defense: 85, maxHealth: 80, attackRange: 86 },
+  'needle-striker': { attackDamage: 50, attackSpeed: 99, defense: 85, maxHealth: 92, attackRange: 74 },
   'storm-conductor': { attackDamage: 85, attackSpeed: 90, defense: 75, maxHealth: 70, attackRange: 80 },
 };
 
