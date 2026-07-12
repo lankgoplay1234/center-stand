@@ -268,6 +268,7 @@ export class GameScene extends Phaser.Scene {
 
   private revive(): void {
     this.invulnerableUntil = revivePlayer(this.player, this.simulationTime);
+    this.enemies.separateFromPlayerForRevive();
     this.awaitingRevive = false;
     this.ui.hideDeathOptions();
     this.tweens.killTweensOf(this.player);

@@ -1404,6 +1404,96 @@ test('preserves gold and upgrades across revival, then returns to character sele
   expect(runtimeErrors).toEqual([]);
 });
 
+test('spreads touching enemies on every repeated revival and resumes damage', async ({ page }) => {
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+  const result = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      awaitingRevive: boolean;
+      criticalChance: number;
+      invulnerableUntil: number;
+      simulationTime: number;
+      player: {
+        x: number; y: number; health: number; maxHealth: number; defense: number; knockbackForce: number;
+      };
+      run: { gold: number; kills: number; deaths: number };
+      stages: { stats: unknown };
+      enemies: {
+        activeCount: number;
+        activeEnemies: Array<{
+          poolId: number; x: number; y: number; health: number; maxHealth: number; defense: number;
+          isAlive: boolean; lastAttackAt: number; setPosition: (x: number, y: number) => void;
+        }>;
+        spawnBurst: (count: number, stats: unknown) => void;
+        update: (time: number, delta: number, stats: unknown, spawnBudget: number) => void;
+      };
+      combat: { update: (time: number) => void };
+      projectiles: { update: (delta: number) => void };
+      handlePlayerDeath: () => void;
+      revive: () => void;
+    };
+    scene.enemies.spawnBurst(8, scene.stages.stats);
+    const targets = scene.enemies.activeEnemies.slice(0, 6);
+    const initialCount = scene.enemies.activeCount;
+    const initialGold = scene.run.gold;
+    const initialKills = scene.run.kills;
+    let minimumDistance = Number.POSITIVE_INFINITY;
+    let minimumUniquePositions = Number.POSITIVE_INFINITY;
+    for (let reviveCount = 0; reviveCount < 10; reviveCount += 1) {
+      for (const target of targets) target.setPosition(scene.player.x, scene.player.y);
+      scene.player.health = 0;
+      scene.handlePlayerDeath();
+      scene.revive();
+      const positions = new Set<string>();
+      for (const target of targets) {
+        minimumDistance = Math.min(minimumDistance, Math.hypot(target.x - scene.player.x, target.y - scene.player.y));
+        positions.add(`${target.x.toFixed(3)},${target.y.toFixed(3)}`);
+      }
+      minimumUniquePositions = Math.min(minimumUniquePositions, positions.size);
+    }
+
+    const target = targets[0]!;
+    target.health = 1_000;
+    target.maxHealth = 1_000;
+    target.defense = 0;
+    target.setPosition(scene.player.x, scene.player.y);
+    scene.player.knockbackForce = 0;
+    scene.criticalChance = 0;
+    scene.combat.update(10_000_000);
+    scene.projectiles.update(16);
+    const outgoingDamage = 1_000 - target.health;
+
+    scene.player.maxHealth = 1_000;
+    scene.player.health = 1_000;
+    scene.player.defense = 0;
+    scene.simulationTime = scene.invulnerableUntil + 2_000;
+    target.lastAttackAt = 0;
+    scene.enemies.update(scene.simulationTime, 16, scene.stages.stats, 0);
+    return {
+      activeCountPreserved: scene.enemies.activeCount === initialCount,
+      awaitingRevive: scene.awaitingRevive,
+      deaths: scene.run.deaths,
+      goldPreserved: scene.run.gold === initialGold,
+      incomingDamage: 1_000 - scene.player.health,
+      killsPreserved: scene.run.kills === initialKills,
+      minimumDistance,
+      minimumUniquePositions,
+      outgoingDamage,
+    };
+  });
+  expect(result).toEqual(expect.objectContaining({
+    activeCountPreserved: true,
+    awaitingRevive: false,
+    deaths: 10,
+    goldPreserved: true,
+    killsPreserved: true,
+    minimumUniquePositions: 6,
+  }));
+  expect(result.minimumDistance).toBeGreaterThanOrEqual(279.9);
+  expect(result.outgoingDamage).toBeGreaterThan(0);
+  expect(result.incomingDamage).toBeGreaterThan(0);
+});
+
 test('recommends an efficient upgrade after five deaths in one stage and resets next stage', async ({ page }) => {
   await clickGamePoint(page, 360, 900);
   await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
