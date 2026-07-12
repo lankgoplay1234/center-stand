@@ -60,18 +60,20 @@ test('selects all six characters and enters combat', async ({ page }) => {
   const runtimeErrors: string[] = [];
   page.on('pageerror', (error) => runtimeErrors.push(error.message));
 
-  const criticalLabels = await page.evaluate(() => {
+  const characterCardTexts = await page.evaluate(() => {
     const scene = window.__CENTER_STAND_GAME__?.scene.getScene('CharacterSelectScene') as unknown as
       { children: { list: Array<{ text?: unknown; list?: Array<{ text?: unknown }> }> } } | undefined;
     return scene?.children.list
       .flatMap((child) => child.list ?? [child])
       .map((child) => child.text)
-      .filter((text): text is string => typeof text === 'string')
-      .filter((text) => text.includes('CRIT')) ?? [];
+      .filter((text): text is string => typeof text === 'string') ?? [];
   });
+  const criticalLabels = characterCardTexts.filter((text) => text.includes('CRIT'));
   expect(criticalLabels).toHaveLength(6);
-  expect(criticalLabels.filter((label) => label.includes('CRIT 0.0%'))).toHaveLength(3);
-  expect(criticalLabels.filter((label) => label.includes('CRIT 20.0%'))).toHaveLength(3);
+  for (const chance of ['0.0%', '5.0%', '7.0%', '10.0%', '20.0%']) {
+    expect(criticalLabels.some((label) => label.includes(`CRIT ${chance}`))).toBe(true);
+  }
+  expect(characterCardTexts).toContain('추천: 공격력 → 공격 속도');
 
   for (const card of CHARACTER_CARDS) {
     await clickGamePoint(page, card.x, card.y);

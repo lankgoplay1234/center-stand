@@ -54,9 +54,9 @@ describe('character data', () => {
     expect(Object.fromEntries(CHARACTERS.map((character) => [character.id, character.baseCriticalChance]))).toEqual({
       'arc-ranger': 0.2,
       'blade-warden': 0,
-      'bastion-gunner': 0.2,
-      'rune-mage': 0.2,
-      'needle-striker': 0,
+      'bastion-gunner': 0.07,
+      'rune-mage': 0.1,
+      'needle-striker': 0.05,
       'storm-conductor': 0,
     });
     for (const character of CHARACTERS) {
@@ -94,6 +94,9 @@ describe('character data', () => {
       'needle-striker': 'attackDamage',
       'storm-conductor': 'attackSpeed',
     });
+    expect(CHARACTERS.find((character) => character.id === 'arc-ranger')?.upgradeFocus).toEqual(
+      expect.objectContaining({ primary: 'attackDamage', secondary: 'attackSpeed' }),
+    );
     for (const character of CHARACTERS) {
       expect(character.upgradeFocus.primary).not.toBe(character.upgradeFocus.secondary);
       expect(character.upgradeEfficiency[character.upgradeFocus.primary]).toBe(
