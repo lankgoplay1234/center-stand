@@ -22,6 +22,7 @@ import { recommendUpgrade } from '../systems/UpgradeRecommendationSystem';
 import { StageDeathTracker } from '../systems/StageDeathTracker';
 import type { RunStats, UpgradeId } from '../types/GameTypes';
 import { calculatePlayerCriticalChance } from '../data/CriticalHitData';
+import { getGameplayShortcut } from '../data/KeyboardShortcutData';
 
 export class GameScene extends Phaser.Scene {
   private player!: Player;
@@ -98,7 +99,12 @@ export class GameScene extends Phaser.Scene {
     this.input.once('pointerdown', () => void this.audio.unlock());
     this.input.keyboard?.once('keydown', () => void this.audio.unlock());
     this.input.keyboard?.on('keydown-ESC', () => this.togglePause());
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.audio.destroy());
+    const keyboard = this.input.keyboard;
+    keyboard?.on('keydown', this.handleGameplayShortcut);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      keyboard?.off('keydown', this.handleGameplayShortcut);
+      this.audio.destroy();
+    });
   }
 
   update(_time: number, delta: number): void {
@@ -314,6 +320,25 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.flash(180, 255, 75, 105, false);
     this.cameras.main.shake(180, 0.006);
   }
+
+  private readonly handleGameplayShortcut = (event: KeyboardEvent): void => {
+    if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+    const target = event.target as HTMLElement | null;
+    const tagName = target?.tagName?.toUpperCase();
+    if (tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT' || target?.isContentEditable) return;
+    const action = getGameplayShortcut(event.code);
+    if (!action || this.gameEnded || this.isPaused || this.ui.isRestartConfirmationVisible) return;
+    event.preventDefault();
+    if (action.type === 'UPGRADE') {
+      this.purchaseUpgrade(action.upgradeId);
+      return;
+    }
+    if (action.type === 'MOB_CLEAR') {
+      this.purchaseMobClear();
+      return;
+    }
+    if (this.awaitingRevive) this.revive();
+  };
 
   private runStressTest(): void {
     const missing = Math.max(0, 100 - this.enemies.activeCount);

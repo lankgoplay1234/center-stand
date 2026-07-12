@@ -317,6 +317,120 @@ test('shows integer health and locks every-mob clear after ten uses', async ({ p
   expect(result.callbackCalls).toBe(0);
 });
 
+test('uses Q W E A S D upgrades and F revival keyboard shortcuts', async ({ page }) => {
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as
+      { enemies?: { activeCount: number } } | undefined;
+    return scene?.enemies?.activeCount ?? 0;
+  })).toBeGreaterThan(0);
+
+  const labels = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      run: { gold: number };
+      runStressTest: () => void;
+      ui: {
+        buttons: Map<string, { text: { text: string } }>;
+        mobClearButton: { text: { text: string } };
+      };
+    };
+    scene.run.gold = 1_000_000;
+    scene.runStressTest();
+    return {
+      upgrades: Object.fromEntries([...scene.ui.buttons].map(([id, button]) => [id, button.text.text])),
+      mobClear: scene.ui.mobClearButton.text.text,
+    };
+  });
+  expect(labels.upgrades.attackDamage).toContain('[Q]');
+  expect(labels.upgrades.attackSpeed).toContain('[W]');
+  expect(labels.upgrades.defense).toContain('[A]');
+  expect(labels.upgrades.maxHealth).toContain('[S]');
+  expect(labels.upgrades.attackRange).toContain('[D]');
+  expect(labels.mobClear).toContain('[E]');
+
+  for (const key of ['q', 'w', 'a', 's', 'd']) await page.keyboard.press(key);
+  const upgraded = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      criticalChance: number;
+      run: { gold: number };
+      upgrades: { getState: (id: string) => { level: number } };
+    };
+    return {
+      levels: Object.fromEntries(['attackDamage', 'attackSpeed', 'defense', 'maxHealth', 'attackRange']
+        .map((id) => [id, scene.upgrades.getState(id).level])),
+      criticalChance: scene.criticalChance,
+      gold: scene.run.gold,
+    };
+  });
+  expect(upgraded.levels).toEqual({
+    attackDamage: 1, attackSpeed: 1, defense: 1, maxHealth: 1, attackRange: 1,
+  });
+  expect(upgraded.criticalChance).toBeCloseTo(0.202);
+  expect(upgraded.gold).toBeLessThan(1_000_000);
+
+  await page.keyboard.press('e');
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      mobClear: { state: { usageCount: number } };
+    };
+    return scene.mobClear.state.usageCount;
+  })).toBe(1);
+
+  const death = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      handlePlayerDeath: () => void;
+      player: { health: number };
+      ui: { deathOverlay: { list: Array<{ text?: string }> } | null };
+    };
+    scene.player.health = 0;
+    scene.handlePlayerDeath();
+    return scene.ui.deathOverlay?.list.flatMap((entry) => entry.text ? [entry.text] : []).join('\n') ?? '';
+  });
+  expect(death).toContain('부활하기  [F]');
+
+  await page.keyboard.press('q');
+  await page.keyboard.press('e');
+  const whileDead = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      awaitingRevive: boolean;
+      mobClear: { state: { usageCount: number } };
+      upgrades: { getState: (id: string) => { level: number } };
+    };
+    return {
+      awaitingRevive: scene.awaitingRevive,
+      attackDamageLevel: scene.upgrades.getState('attackDamage').level,
+      mobClearUses: scene.mobClear.state.usageCount,
+    };
+  });
+  expect(whileDead).toEqual({ awaitingRevive: true, attackDamageLevel: 2, mobClearUses: 1 });
+
+  await clickGamePoint(page, 360, 760);
+  await page.keyboard.press('f');
+  expect(await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      awaitingRevive: boolean;
+      ui: { isRestartConfirmationVisible: boolean };
+    };
+    return { awaitingRevive: scene.awaitingRevive, confirmation: scene.ui.isRestartConfirmationVisible };
+  })).toEqual({ awaitingRevive: true, confirmation: true });
+
+  await clickGamePoint(page, 235, 670);
+  await page.keyboard.press('f');
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      awaitingRevive: boolean;
+      player: { health: number; maxHealth: number };
+      ui: { deathOverlay: unknown };
+    };
+    return {
+      awaitingRevive: scene.awaitingRevive,
+      fullHealth: scene.player.health === scene.player.maxHealth,
+      deathOverlayClosed: scene.ui.deathOverlay === null,
+    };
+  })).toEqual({ awaitingRevive: false, fullHealth: true, deathOverlayClosed: true });
+});
+
 test('renders the real attack range and grows the same indicator with the range upgrade', async ({ page }) => {
   await clickGamePoint(page, 360, 900);
   await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
