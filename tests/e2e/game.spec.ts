@@ -3,6 +3,7 @@ import { getStageKillTarget, STAGE_TRANSITION_SPAWN_DELAY_MS } from '../../src/g
 import { calculateAttackRangeAtLevel } from '../../src/game/data/AttackRangeData';
 import { UPGRADE_DEFINITIONS, UPGRADE_ORDER, calculateUpgradeEffect } from '../../src/game/data/UpgradeData';
 import { KNOCKBACK_DISTANCE_MULTIPLIER } from '../../src/game/systems/KnockbackSystem';
+import { LOCAL_LEADERBOARD_STORAGE_KEY } from '../../src/game/services/LeaderboardService';
 
 const GAME_WIDTH = 720;
 const GAME_HEIGHT = 1280;
@@ -1383,21 +1384,26 @@ test('recommends an efficient upgrade after five deaths in one stage and resets 
 test('completes stage 100 once and reports the selected character death count', async ({ page }) => {
   await clickGamePoint(page, 360, 900);
   await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
-  await page.evaluate((finalStageTarget) => {
+  await page.evaluate(({ finalStageTarget, storageKey }) => {
     const game = window.__CENTER_STAND_GAME__;
     const scene = game?.scene.getScene('GameScene') as unknown as {
-      run: { deaths: number };
+      run: { deaths: number; elapsedSeconds: number };
       stages: { currentStage: number; recordKills: (count: number) => void };
     };
     scene.run.deaths = 3;
+    scene.run.elapsedSeconds = 1_234;
+    localStorage.setItem(storageKey, JSON.stringify([{
+      id: 'other-entry', nickname: '다른이', characterId: 'rune-mage', deaths: 2,
+      completionTimeSeconds: 1_500, runId: 'other_run_1234567890123456', completedAt: 1_000,
+    }]));
     scene.stages.currentStage = 100;
     scene.stages.recordKills(finalStageTarget);
-  }, getStageKillTarget(100));
+  }, { finalStageTarget: getStageKillTarget(100), storageKey: LOCAL_LEADERBOARD_STORAGE_KEY });
   await expect.poll(() => activeSceneKey(page)).toBe('GameOverScene');
   const result = await page.evaluate(() => {
     const game = window.__CENTER_STAND_GAME__;
     const scene = game?.scene.getScene('GameOverScene') as unknown as {
-      result: { characterId: string; completed: boolean; deaths: number; stage: number };
+      result: { characterId: string; completed: boolean; deaths: number; survivalSeconds: number; stage: number };
     };
     return scene.result;
   });
@@ -1405,14 +1411,23 @@ test('completes stage 100 once and reports the selected character death count', 
     characterId: 'arc-ranger',
     completed: true,
     deaths: 3,
+    survivalSeconds: 1_234,
     stage: 100,
   }));
   const nicknameInput = page.getByTestId('leaderboard-nickname');
   const leaderboardSubmit = page.getByTestId('leaderboard-submit');
+  const leaderboardRefresh = page.getByTestId('leaderboard-refresh');
   await expect(nicknameInput).toBeVisible();
   await expect(nicknameInput).toBeEnabled();
   await expect(nicknameInput).toHaveAttribute('maxlength', '5');
   await expect(leaderboardSubmit).toBeEnabled();
+  await expect(leaderboardRefresh).toBeEnabled();
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameOverScene') as unknown as {
+      leaderboardEntries: { text: string };
+    };
+    return scene.leaderboardEntries.text;
+  })).toContain('1. 다른이 · 룬 메이지 · 사망 2회 · 25:00');
   await nicknameInput.fill('용사');
   await leaderboardSubmit.click();
   await expect.poll(() => page.evaluate(() => {
@@ -1423,8 +1438,21 @@ test('completes stage 100 once and reports the selected character death count', 
     return { status: scene.leaderboardStatus.text, entries: scene.leaderboardEntries.text };
   })).toEqual({
     status: '내 기록이 등록되었습니다',
-    entries: expect.stringContaining('1. 용사 · 아크 레인저 · 3회'),
+    entries: expect.stringContaining('2. 용사 · 아크 레인저 · 사망 3회 · 20:34'),
   });
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameOverScene') as unknown as {
+      leaderboardEntries: { text: string };
+    };
+    return scene.leaderboardEntries.text;
+  })).toContain('1. 다른이 · 룬 메이지 · 사망 2회 · 25:00');
+  await leaderboardRefresh.click();
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameOverScene') as unknown as {
+      leaderboardStatus: { text: string };
+    };
+    return scene.leaderboardStatus.text;
+  })).toBe('최신 완주 기록을 불러왔습니다');
   await expect(leaderboardSubmit).toBeEnabled();
 
   await page.evaluate(() => {

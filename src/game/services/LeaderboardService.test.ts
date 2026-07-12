@@ -36,7 +36,8 @@ describe('LeaderboardService', () => {
     await expect(service.submit(result, ' 용사 ')).resolves.toEqual(entry);
     const request = fetcher.mock.calls[0];
     expect(JSON.parse(request?.[1]?.body as string)).toEqual(expect.objectContaining({
-      nickname: '용사', completionTimeSeconds: 2_400, verificationToken: 'proof_1234567890123456',
+      nickname: '용사', characterId: 'arc-ranger', deaths: 3, completionTimeSeconds: 2_400,
+      verificationToken: 'proof_1234567890123456',
     }));
     await expect(service.list()).resolves.toHaveLength(10);
   });
@@ -49,12 +50,15 @@ describe('LeaderboardService', () => {
     };
     const local = new LeaderboardService('', vi.fn(), storage, () => 1_000);
     await expect(local.submit(result, '용사')).resolves.toEqual(expect.objectContaining({
-      nickname: '용사', deaths: 3, rank: 1,
+      nickname: '용사', characterId: 'arc-ranger', deaths: 3, completionTimeSeconds: 2_400, rank: 1,
     }));
     expect(values.get(LOCAL_LEADERBOARD_STORAGE_KEY)).toContain('용사');
     const reloaded = new LeaderboardService('', vi.fn(), storage, () => 2_000);
+    await reloaded.submit({ ...result, characterId: 'rune-mage', deaths: 2, survivalSeconds: 2_700,
+      leaderboardRunId: 'run_2234567890123456' }, '다른이');
     await expect(reloaded.list()).resolves.toEqual([
-      expect.objectContaining({ nickname: '용사', characterId: 'arc-ranger', rank: 1 }),
+      expect.objectContaining({ nickname: '다른이', characterId: 'rune-mage', deaths: 2, completionTimeSeconds: 2_700, rank: 1 }),
+      expect.objectContaining({ nickname: '용사', characterId: 'arc-ranger', deaths: 3, completionTimeSeconds: 2_400, rank: 2 }),
     ]);
   });
 
