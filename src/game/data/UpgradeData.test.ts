@@ -5,6 +5,8 @@ import {
   UPGRADE_ORDER,
   calculateTotalUpgradeCost,
   calculateUpgradeCost,
+  calculateUpgradeEffect,
+  calculateUpgradedStat,
   canUpgrade,
 } from './UpgradeData';
 
@@ -58,5 +60,28 @@ describe('upgrade cost', () => {
     expect(UPGRADE_DEFINITIONS.attackRange.name).toBe('공격가능범위');
     expect(UPGRADE_DEFINITIONS.attackRange.effectLabel(1)).toContain('치명타 +0.2%');
     expect(UPGRADE_DEFINITIONS).not.toHaveProperty('specialAbility');
+  });
+
+  it('defines four combat stats as base-percentage upgrades', () => {
+    expect(UPGRADE_DEFINITIONS.attackDamage.effectMode).toBe('BASE_PERCENT');
+    expect(UPGRADE_DEFINITIONS.attackSpeed.effectMode).toBe('BASE_PERCENT');
+    expect(UPGRADE_DEFINITIONS.defense.effectMode).toBe('BASE_PERCENT');
+    expect(UPGRADE_DEFINITIONS.maxHealth.effectMode).toBe('BASE_PERCENT');
+    expect(UPGRADE_DEFINITIONS.attackRange.effectMode).toBe('FLAT');
+  });
+
+  it('applies character efficiency to a percentage of the immutable base stat', () => {
+    const damage = UPGRADE_DEFINITIONS.attackDamage;
+    expect(calculateUpgradeEffect(damage, 1)).toBeCloseTo(0.25);
+    expect(calculateUpgradedStat(20, damage, 1)).toBeCloseTo(25);
+    expect(calculateUpgradedStat(20, damage, 1, 1.4)).toBeCloseTo(27);
+    expect(calculateUpgradedStat(20, damage, 99)).toBeCloseTo(515);
+  });
+
+  it('preserves base-stat ratios at equal levels and efficiency', () => {
+    const definition = UPGRADE_DEFINITIONS.maxHealth;
+    const lowBase = calculateUpgradedStat(100, definition, 99, 1.2);
+    const highBase = calculateUpgradedStat(300, definition, 99, 1.2);
+    expect(highBase / lowBase).toBeCloseTo(3);
   });
 });

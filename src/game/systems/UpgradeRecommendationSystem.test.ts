@@ -29,12 +29,12 @@ describe('UpgradeRecommendationSystem', () => {
 
   it('switches to role-aware survival recovery after repeated deaths', () => {
     const expected = {
-      'arc-ranger': 'defense',
+      'arc-ranger': 'maxHealth',
       'blade-warden': 'maxHealth',
-      'bastion-gunner': 'maxHealth',
-      'rune-mage': 'defense',
-      'needle-striker': 'defense',
-      'storm-conductor': 'defense',
+      'bastion-gunner': 'defense',
+      'rune-mage': 'maxHealth',
+      'needle-striker': 'maxHealth',
+      'storm-conductor': 'maxHealth',
     } as const;
     for (const character of CHARACTERS) {
       const recommendation = recommendUpgrade(character, MID_RUN_LEVELS, 50, 100_000);

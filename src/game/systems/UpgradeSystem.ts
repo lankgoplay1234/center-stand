@@ -1,7 +1,7 @@
 import {
   UPGRADE_DEFINITIONS,
   calculateUpgradeCost,
-  calculateUpgradeEffect,
+  calculateUpgradedStat,
   canUpgrade,
 } from '../data/UpgradeData';
 import { calculateAttackRangeAtLevel } from '../data/AttackRangeData';
@@ -62,25 +62,48 @@ export class UpgradeSystem {
     if (gold < state.currentCost || !canUpgrade(state.definition, state.level)) return { success: false, gold };
     const nextGold = gold - state.currentCost;
     const efficiency = this.getEfficiency(id);
-    const currentEffect = calculateUpgradeEffect(state.definition, state.level, efficiency);
     state.level += 1;
-    const effect = calculateUpgradeEffect(state.definition, state.level, efficiency) - currentEffect;
     state.currentCost = calculateUpgradeCost(state.definition, state.level);
 
     switch (id) {
       case 'attackDamage':
-        this.player.attackDamage += effect;
+        this.player.attackDamage = calculateUpgradedStat(
+          this.player.character.attackDamage,
+          state.definition,
+          state.level,
+          efficiency,
+        );
         break;
       case 'attackSpeed':
-        this.player.attackSpeed += effect;
+        this.player.attackSpeed = calculateUpgradedStat(
+          this.player.character.attackSpeed,
+          state.definition,
+          state.level,
+          efficiency,
+        );
         break;
       case 'defense':
-        this.player.defense += effect;
+        this.player.defense = calculateUpgradedStat(
+          this.player.character.defense,
+          state.definition,
+          state.level,
+          efficiency,
+        );
         break;
-      case 'maxHealth':
-        this.player.maxHealth += effect;
-        this.player.health = Math.min(this.player.maxHealth, this.player.health + effect);
+      case 'maxHealth': {
+        const previousMaxHealth = this.player.maxHealth;
+        this.player.maxHealth = calculateUpgradedStat(
+          this.player.character.maxHealth,
+          state.definition,
+          state.level,
+          efficiency,
+        );
+        this.player.health = Math.min(
+          this.player.maxHealth,
+          this.player.health + this.player.maxHealth - previousMaxHealth,
+        );
         break;
+      }
       case 'attackRange':
         this.player.attackRange = calculateAttackRangeAtLevel(
           this.player.character.attackRange,

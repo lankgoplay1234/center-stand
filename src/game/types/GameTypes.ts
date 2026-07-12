@@ -8,6 +8,7 @@ export type AttackType =
 
 export type GrowthProfile = 'EARLY' | 'STEADY' | 'SCALING';
 export type UpgradeEffectCurve = 'LINEAR' | 'SQRT';
+export type UpgradeEffectMode = 'FLAT' | 'BASE_PERCENT';
 export type AttackMotionStyle =
   | 'ARC_SHOT'
   | 'BLADE_SWEEP'
@@ -116,6 +117,7 @@ export interface UpgradeDefinition {
   baseCost: number;
   costGrowth: number;
   effectPerLevel: number;
+  effectMode: UpgradeEffectMode;
   secondaryEffectPerLevel?: number;
   effectCurve?: UpgradeEffectCurve;
   maxLevel: number | null;

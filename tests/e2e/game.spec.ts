@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { getStageKillTarget, STAGE_TRANSITION_SPAWN_DELAY_MS } from '../../src/game/data/StageData';
 import { calculateAttackRangeAtLevel } from '../../src/game/data/AttackRangeData';
-import { UPGRADE_DEFINITIONS, UPGRADE_ORDER, calculateUpgradeEffect } from '../../src/game/data/UpgradeData';
+import { UPGRADE_DEFINITIONS, UPGRADE_ORDER, calculateUpgradedStat } from '../../src/game/data/UpgradeData';
 import { KNOCKBACK_DISTANCE_MULTIPLIER } from '../../src/game/systems/KnockbackSystem';
 import { LOCAL_LEADERBOARD_STORAGE_KEY } from '../../src/game/services/LeaderboardService';
 
@@ -1253,15 +1253,19 @@ test('preserves gold and upgrades across revival, then returns to character sele
       specialAbilityLevel: player.specialAbilityLevel,
     };
   })).toEqual({
-    attackDamage: initialStats.attackDamage
-      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackDamage, 1, initialStats.efficiency.attackDamage),
-    attackSpeed: initialStats.attackSpeed
-      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackSpeed, 1, initialStats.efficiency.attackSpeed),
+    attackDamage: calculateUpgradedStat(
+      initialStats.attackDamage, UPGRADE_DEFINITIONS.attackDamage, 1, initialStats.efficiency.attackDamage,
+    ),
+    attackSpeed: calculateUpgradedStat(
+      initialStats.attackSpeed, UPGRADE_DEFINITIONS.attackSpeed, 1, initialStats.efficiency.attackSpeed,
+    ),
     bonusTargetCount: initialStats.bonusTargetCount,
-    defense: initialStats.defense
-      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.defense, 1, initialStats.efficiency.defense),
-    maxHealth: initialStats.maxHealth
-      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.maxHealth, 1, initialStats.efficiency.maxHealth),
+    defense: calculateUpgradedStat(
+      initialStats.defense, UPGRADE_DEFINITIONS.defense, 1, initialStats.efficiency.defense,
+    ),
+    maxHealth: calculateUpgradedStat(
+      initialStats.maxHealth, UPGRADE_DEFINITIONS.maxHealth, 1, initialStats.efficiency.maxHealth,
+    ),
     attackRange: calculateAttackRangeAtLevel(
       initialStats.attackRange,
       initialStats.maxAttackRange,
@@ -1291,10 +1295,9 @@ test('preserves gold and upgrades across revival, then returns to character sele
     };
   });
   expect(deathState.awaitingRevive).toBe(true);
-  expect(deathState.attackDamage).toBe(
-    initialStats.attackDamage
-      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackDamage, 1, initialStats.efficiency.attackDamage),
-  );
+  expect(deathState.attackDamage).toBe(calculateUpgradedStat(
+    initialStats.attackDamage, UPGRADE_DEFINITIONS.attackDamage, 1, initialStats.efficiency.attackDamage,
+  ));
   expect(deathState.deaths).toBe(1);
   expect(deathState.gold).toBeGreaterThan(0);
   expect(deathState.specialAbilityLevel).toBe(1);
@@ -1335,11 +1338,13 @@ test('preserves gold and upgrades across revival, then returns to character sele
     ),
     awaitingRevive: false,
     deaths: 1,
-    health: initialStats.maxHealth
-      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.maxHealth, 1, initialStats.efficiency.maxHealth),
+    health: calculateUpgradedStat(
+      initialStats.maxHealth, UPGRADE_DEFINITIONS.maxHealth, 1, initialStats.efficiency.maxHealth,
+    ),
     invulnerable: true,
-    maxHealth: initialStats.maxHealth
-      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.maxHealth, 1, initialStats.efficiency.maxHealth),
+    maxHealth: calculateUpgradedStat(
+      initialStats.maxHealth, UPGRADE_DEFINITIONS.maxHealth, 1, initialStats.efficiency.maxHealth,
+    ),
     specialAbilityLevel: 1,
   });
   const revivedGold = await page.evaluate(() => {
