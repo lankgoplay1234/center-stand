@@ -4,6 +4,7 @@ import type { Enemy } from '../entities/Enemy';
 import type { Player } from '../entities/Player';
 import { EnemyPool } from '../pools/EnemyPool';
 import type { StageStats } from '../types/GameTypes';
+import { separateEnemiesForRevive } from '../systems/ReviveEnemySeparationSystem';
 
 export interface EnemyManagerCallbacks {
   onPlayerHit: (damage: number, x: number, y: number) => void;
@@ -96,6 +97,21 @@ export class EnemyManager {
     this.pool.releaseAll();
     this.spawnAccumulator = -Math.max(0, delayMs);
     return clearedCount;
+  }
+
+  separateFromPlayerForRevive(): number {
+    const margin = 60;
+    return separateEnemiesForRevive(
+      this.activeEnemies,
+      this.player.x,
+      this.player.y,
+      {
+        minX: -margin,
+        maxX: this.scene.scale.width + margin,
+        minY: -margin,
+        maxY: this.scene.scale.height + margin,
+      },
+    );
   }
 
   private spawn(stageStats: StageStats, burstIndex = -1, forcedRoll?: number, countsTowardStage = true): void {
