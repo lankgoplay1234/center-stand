@@ -98,6 +98,60 @@ test('selects all six characters and enters combat', async ({ page }) => {
   expect(runtimeErrors).toEqual([]);
 });
 
+test('shows and refreshes completion TOP 10 below character selection', async ({ page }) => {
+  const firstRecords = [{
+    id: 'entry-arc', nickname: '아크왕', characterId: 'arc-ranger', deaths: 3,
+    completionTimeSeconds: 1_234, runId: 'run_arc_1234567890123456', completedAt: 2_000,
+  }];
+  await page.evaluate(({ storageKey, records }) => {
+    localStorage.setItem(storageKey, JSON.stringify(records));
+  }, { storageKey: LOCAL_LEADERBOARD_STORAGE_KEY, records: firstRecords });
+  await page.reload();
+  await expect(page.locator('canvas')).toBeVisible({ timeout: COLD_START_TIMEOUT_MS });
+  await expect.poll(() => activeSceneKey(page)).toBe('CharacterSelectScene');
+
+  const refresh = page.getByTestId('character-select-leaderboard-refresh');
+  await expect(refresh).toBeVisible();
+  await expect(refresh).toBeEnabled();
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('CharacterSelectScene') as unknown as {
+      leaderboardEntries: { text: string };
+      leaderboardStatus: { text: string };
+    };
+    return { entries: scene.leaderboardEntries.text, status: scene.leaderboardStatus.text };
+  })).toEqual({
+    entries: '1. 아크왕 · 아크 레인저 · 사망 3회 · 20:34',
+    status: '이 브라우저의 로컬 완주 기록',
+  });
+
+  await page.evaluate(({ storageKey, records }) => {
+    localStorage.setItem(storageKey, JSON.stringify(records));
+  }, {
+    storageKey: LOCAL_LEADERBOARD_STORAGE_KEY,
+    records: [
+      ...firstRecords,
+      {
+        id: 'entry-rune', nickname: '룬왕', characterId: 'rune-mage', deaths: 1,
+        completionTimeSeconds: 1_500, runId: 'run_rune_1234567890123456', completedAt: 3_000,
+      },
+    ],
+  });
+  await refresh.click();
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('CharacterSelectScene') as unknown as {
+      leaderboardEntries: { text: string };
+      leaderboardStatus: { text: string };
+    };
+    return { entries: scene.leaderboardEntries.text, status: scene.leaderboardStatus.text };
+  })).toEqual({
+    entries: '1. 룬왕 · 룬 메이지 · 사망 1회 · 25:00\n2. 아크왕 · 아크 레인저 · 사망 3회 · 20:34',
+    status: '이 브라우저의 최신 로컬 기록',
+  });
+
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+});
+
 test('shakes only the background and enemy layers while gameplay UI stays fixed', async ({ page }) => {
   await clickGamePoint(page, 360, 900);
   await expect.poll(() => activeSceneKey(page)).toBe('GameScene');

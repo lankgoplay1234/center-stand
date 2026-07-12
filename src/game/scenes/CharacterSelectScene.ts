@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
 import { GROWTH_PROFILE_LABELS } from '../data/BalanceData';
-import { CHARACTERS } from '../data/CharacterData';
+import { CHARACTERS, getCharacterById } from '../data/CharacterData';
 import { getCharacterVisualAsset } from '../data/VisualAssetData';
 import type { AttackType, CharacterData } from '../types/GameTypes';
 import { formatCriticalChance } from '../data/CriticalHitData';
+import { LeaderboardService, LeaderboardServiceError } from '../services/LeaderboardService';
+import { formatLeaderboardEntry } from '../services/LeaderboardPresentation';
 
 const ATTACK_LABELS: Readonly<Record<AttackType, string>> = {
   SINGLE_TARGET: '원거리 · 정밀 사격',
@@ -27,6 +29,9 @@ export class CharacterSelectScene extends Phaser.Scene {
   private selectedCharacter!: CharacterData;
   private readonly cardBackgrounds = new Map<string, Phaser.GameObjects.Rectangle>();
   private selectedText!: Phaser.GameObjects.Text;
+  private leaderboard!: LeaderboardService;
+  private leaderboardEntries!: Phaser.GameObjects.Text;
+  private leaderboardStatus!: Phaser.GameObjects.Text;
 
   constructor() {
     super('CharacterSelectScene');
@@ -80,6 +85,7 @@ export class CharacterSelectScene extends Phaser.Scene {
       fontFamily: 'Arial, sans-serif', fontSize: '16px', color: '#64748b',
     }).setOrigin(0.5);
     this.updateSelection();
+    this.createLeaderboardPanel();
   }
 
   private createCharacterCard(character: CharacterData, x: number, y: number): void {
@@ -125,5 +131,56 @@ export class CharacterSelectScene extends Phaser.Scene {
     this.selectedText.setText(
       `선택: ${this.selectedCharacter.name} · ${GROWTH_PROFILE_LABELS[this.selectedCharacter.growthProfile]}`,
     );
+  }
+
+  private createLeaderboardPanel(): void {
+    this.leaderboard = new LeaderboardService(import.meta.env.VITE_LEADERBOARD_API_URL ?? '');
+    this.add.rectangle(360, 1135, 680, 250, 0x080b16, 0.9)
+      .setStrokeStyle(2, 0x33446c, 0.9);
+    this.add.text(360, 1020, '완주 랭킹 TOP 10 · 사망 횟수 우선', {
+      fontFamily: 'Arial Black, sans-serif', fontSize: '19px', color: '#fff08a',
+    }).setOrigin(0.5);
+
+    const refresh = document.createElement('button');
+    refresh.type = 'button';
+    refresh.textContent = '새로고침';
+    refresh.dataset.testid = 'character-select-leaderboard-refresh';
+    refresh.style.cssText = 'width:92px;height:34px;border:2px solid #49708b;border-radius:7px;background:#17263a;color:#d9f5ff;font:800 13px Arial;cursor:pointer;';
+    this.add.dom(625, 1020, refresh).setDepth(30);
+    refresh.addEventListener('click', () => void this.reloadLeaderboard(refresh));
+
+    this.leaderboardEntries = this.add.text(360, 1050, '', {
+      fontFamily: 'Arial, sans-serif', fontSize: '13px', color: '#c5d7e7', align: 'left', lineSpacing: 2,
+    }).setOrigin(0.5, 0);
+    this.leaderboardStatus = this.add.text(360, 1250,
+      this.leaderboard.isConfigured ? '전체 사용자 완주 기록' : '이 브라우저의 로컬 완주 기록', {
+        fontFamily: 'Arial, sans-serif', fontSize: '13px', color: '#7897aa',
+      }).setOrigin(0.5);
+    void this.refreshLeaderboard();
+  }
+
+  private async reloadLeaderboard(refresh: HTMLButtonElement): Promise<void> {
+    refresh.disabled = true;
+    this.leaderboardStatus.setText('최신 완주 기록을 불러오는 중...');
+    const loaded = await this.refreshLeaderboard();
+    if (loaded) {
+      this.leaderboardStatus.setText(
+        this.leaderboard.isConfigured ? '전체 사용자 최신 기록' : '이 브라우저의 최신 로컬 기록',
+      );
+    }
+    refresh.disabled = false;
+  }
+
+  private async refreshLeaderboard(): Promise<boolean> {
+    try {
+      const entries = await this.leaderboard.list();
+      this.leaderboardEntries.setText(entries.length === 0 ? '아직 등록된 완주 기록이 없습니다' : entries.map((entry) =>
+        formatLeaderboardEntry(entry, getCharacterById(entry.characterId).name)).join('\n'));
+      return true;
+    } catch (error) {
+      const message = error instanceof LeaderboardServiceError ? error.message : '랭킹을 불러오지 못했습니다';
+      this.leaderboardEntries.setText(`${message} · 캐릭터 선택에는 영향이 없습니다`);
+      return false;
+    }
   }
 }

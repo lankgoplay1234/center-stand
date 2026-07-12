@@ -85,6 +85,7 @@
 - 제공자 중립 익명 완주 랭킹 API, 저장소·완주 검증·속도 제한 계약과 상위 10위 정렬
 - 1~5자 닉네임·캐릭터·기록 범위·중복 runId 검증 및 테스트용 메모리 저장소
 - 완주 화면 닉네임 입력·업로드 상태·닉네임/캐릭터/사망 횟수/완주 시간 상위 10위 표시와 최신 기록 새로고침 UI
+- 캐릭터 선택 화면 하단의 동일 완주 TOP 10, 원격/로컬 상태 안내와 최신 기록 새로고침
 - 서버 미설정 시에도 성공 저장되는 브라우저 localStorage TOP 10 랭킹
 - CORS·요청 제한·JSON 파일 영속화를 지원하는 실행형 익명 랭킹 HTTP 서버
 - 완주 시 생성되는 프로토타입 runId·검증 토큰과 원격 API 전송 경로
@@ -136,6 +137,8 @@
 - 몬스터는 10개 공유 픽셀 텍스처로 교체됐으며 별도 이미지 파일 용량은 없다. 다종 몬스터와 프레임 애니메이션은 후속 디자인 작업이다.
 
 ## 최근 테스트 결과
+
+- 2026-07-13 `RANK-004`: 캐릭터 선택 화면 하단에 순위·닉네임·캐릭터·사망 횟수·완주 시간 TOP 10과 새로고침 추가. 완주 화면과 공통 행/시간 포맷을 사용하고 로컬 초기 조회·새 기록 정렬·전투 진입 desktop/mobile 4개 성공. typecheck·lint·Vitest 38개 파일/168개·build 성공
 
 - 2026-07-13 `ECON-001`: 고정 11/198G를 일반 `ceil(0.2×단계)`·대장 `ceil(2×단계)`로 교체. 1/5/6/10/100단계 올림, 직접 처치·모든 몹 제거·예상 런 골드 729,196G 공통 계산과 공격 전용 21.79~49.85분·사망 목표 재보정. typecheck·lint·Vitest 및 build, 관련 desktop/mobile 회귀 검증
 
@@ -248,8 +251,8 @@
 ## 현재 빌드 상태
 
 - PASS — Vite production build 생성 완료
-- PASS — Vitest 37개 파일·165개 테스트 통과
-- PASS — Playwright desktop/mobile 42개 통과, 10분 endurance 2개 의도적 분리
+- PASS — Vitest 38개 파일·168개 테스트 통과
+- PASS — 신규 TOP 10·기존 선택 desktop/mobile 4개 통과, 전체 핵심 44개와 10분 endurance 2개 시나리오 구성
 - PASS — GitHub Actions 품질 검사와 GitHub Pages 배포 완료
 - 공개 저장소: https://github.com/lankgoplay1234/center-stand
 - 공개 게임: https://lankgoplay1234.github.io/center-stand/
