@@ -74,7 +74,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.BASTION_VOLLEY,
     growthProfile: 'EARLY',
     upgradeEfficiency: {
-      attackDamage: 0.75, attackSpeed: 0.75, defense: 1.3, maxHealth: 0.75, attackRange: 0.55,
+      attackDamage: 1.05, attackSpeed: 1.05, defense: 1.3, maxHealth: 0.75, attackRange: 0.35,
     },
     upgradeFocus: { primary: 'defense', secondary: 'maxHealth', description: '방어력과 최대 체력으로 짧은 사거리의 전투를 버티는 탱커형' },
     specialAbility: rangeAreaBoost('saturation-fire', '분산 포화', '짧은 90도 전방 포화로 여러 적을 동시에 저지합니다.'),

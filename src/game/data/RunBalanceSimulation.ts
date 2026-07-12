@@ -12,7 +12,7 @@ import {
   UPGRADE_DEFINITIONS,
   UPGRADE_ORDER,
   calculateTotalUpgradeCost,
-  calculateUpgradeEffect,
+  calculateUpgradedStat,
 } from './UpgradeData';
 import {
   calculateExpectedCriticalDamageMultiplier,
@@ -167,22 +167,22 @@ export function simulateStageCombat(
   stage: number,
 ): StageCombatSnapshot {
   const stageStats = calculateStageStats(stage);
-  const damage = character.attackDamage + calculateUpgradeEffect(
+  const damage = calculateUpgradedStat(character.attackDamage,
     UPGRADE_DEFINITIONS.attackDamage,
     allocation.attackDamage,
     character.upgradeEfficiency.attackDamage,
   );
-  const attackSpeed = character.attackSpeed + calculateUpgradeEffect(
+  const attackSpeed = calculateUpgradedStat(character.attackSpeed,
     UPGRADE_DEFINITIONS.attackSpeed,
     allocation.attackSpeed,
     character.upgradeEfficiency.attackSpeed,
   );
-  const defense = character.defense + calculateUpgradeEffect(
+  const defense = calculateUpgradedStat(character.defense,
     UPGRADE_DEFINITIONS.defense,
     allocation.defense,
     character.upgradeEfficiency.defense,
   );
-  const maxHealth = character.maxHealth + calculateUpgradeEffect(
+  const maxHealth = calculateUpgradedStat(character.maxHealth,
     UPGRADE_DEFINITIONS.maxHealth,
     allocation.maxHealth,
     character.upgradeEfficiency.maxHealth,
