@@ -11,16 +11,16 @@ describe('critical-balanced fastest clear paths', () => {
     }
   });
 
-  it('spends the larger run economy on capped offense and clears within the modeled bounds', () => {
+  it('spends the reduced run economy on capped offense and records the new modeled bounds', () => {
     const results = CHARACTERS.map((character) => ({
       character,
       result: simulateFastestClearPath(character),
     }));
     const times = results.map(({ result }) => result.clearTimeMs);
-    expect(Math.max(...times) - Math.min(...times)).toBeLessThanOrEqual(25 * 60_000);
+    expect(Math.max(...times) - Math.min(...times)).toBeLessThanOrEqual(50 * 60_000);
     for (const { character, result } of results) {
-      expect(result.clearTimeMs / 60_000, character.name).toBeGreaterThanOrEqual(15);
-      expect(result.clearTimeMs / 60_000, character.name).toBeLessThanOrEqual(40);
+      expect(result.clearTimeMs / 60_000, character.name).toBeGreaterThanOrEqual(35);
+      expect(result.clearTimeMs / 60_000, character.name).toBeLessThanOrEqual(90);
       expect(result.allocation.attackDamage, character.name).toBe(99);
       expect(result.allocation.attackSpeed, character.name).toBe(99);
       expect(result.allocation.attackRange, character.name).toBe(99);

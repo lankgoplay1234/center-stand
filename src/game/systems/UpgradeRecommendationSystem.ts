@@ -4,7 +4,7 @@ import {
   UPGRADE_DEFINITIONS,
   UPGRADE_ORDER,
   calculateUpgradeCost,
-  calculateUpgradeEffect,
+  calculateUpgradedStat,
   calculateTotalUpgradeCost,
   canUpgrade,
 } from '../data/UpgradeData';
@@ -73,12 +73,12 @@ function nextAllocation(levels: UpgradeAllocation, id: UpgradeId): UpgradeAlloca
 }
 
 function estimateContinuousOffense(character: CharacterData, levels: UpgradeAllocation): number {
-  const damage = character.attackDamage + calculateUpgradeEffect(
+  const damage = calculateUpgradedStat(character.attackDamage,
     UPGRADE_DEFINITIONS.attackDamage,
     levels.attackDamage,
     character.upgradeEfficiency.attackDamage,
   );
-  const speed = character.attackSpeed + calculateUpgradeEffect(
+  const speed = calculateUpgradedStat(character.attackSpeed,
     UPGRADE_DEFINITIONS.attackSpeed,
     levels.attackSpeed,
     character.upgradeEfficiency.attackSpeed,

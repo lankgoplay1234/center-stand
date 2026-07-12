@@ -11,6 +11,7 @@ import type { GameSpeed } from '../systems/GameSpeedSystem';
 import type { UpgradeSystem } from '../systems/UpgradeSystem';
 import type { MobClearState } from '../systems/MobClearSystem';
 import type { RunStats, UpgradeId } from '../types/GameTypes';
+import { formatWholeStat } from '../data/StatPrecisionData';
 
 interface UpgradeButton {
   container: Phaser.GameObjects.Container;
@@ -116,7 +117,7 @@ export class UIManager {
     stageTarget = 0,
     mobClearEnabled = true,
   ): void {
-    this.healthText.setText(`HP  ${Math.ceil(player.health)} / ${Math.ceil(player.maxHealth)}`);
+    this.healthText.setText(`HP  ${formatWholeStat(player.health)} / ${formatWholeStat(player.maxHealth)}`);
     this.healthText.setColor(player.health / player.maxHealth < 0.3 ? '#ff6b83' : '#bff7ff');
     this.goldText.setText(`GOLD  ${run.gold}`);
     this.stageText.setText(stageTarget > 0 ? `STAGE ${stage} · ${stageKills}/${stageTarget}` : `STAGE  ${stage}`);

@@ -10,6 +10,7 @@ import {
   estimateWallClockRunMs,
 } from './BalanceData';
 import type { GrowthProfile } from '../types/GameTypes';
+import { UPGRADE_DEFINITIONS, calculateUpgradedStat } from './UpgradeData';
 
 describe('character growth balance', () => {
   it('keeps clear time variable and halves wall time at double speed', () => {
@@ -54,5 +55,21 @@ describe('character growth balance', () => {
       expect(averageGrowth('SCALING', level)).toBeGreaterThan(averageGrowth('STEADY', level));
       expect(averageGrowth('STEADY', level)).toBeGreaterThan(averageGrowth('EARLY', level));
     }
+  });
+
+  it('keeps character base-stat identities distinct at level 99', () => {
+    const finalValues = (id: 'attackDamage' | 'attackSpeed' | 'defense' | 'maxHealth') =>
+      CHARACTERS.map((character) => calculateUpgradedStat(
+        character[id],
+        UPGRADE_DEFINITIONS[id],
+        99,
+        character.upgradeEfficiency[id],
+      ));
+    const spread = (values: readonly number[]): number => Math.max(...values) / Math.min(...values);
+
+    expect(spread(finalValues('attackDamage'))).toBeGreaterThan(2);
+    expect(spread(finalValues('attackSpeed'))).toBeGreaterThan(3);
+    expect(spread(finalValues('defense'))).toBeGreaterThan(10);
+    expect(spread(finalValues('maxHealth'))).toBeGreaterThan(3);
   });
 });

@@ -22,10 +22,20 @@ export interface DeathSimulationSummary {
   finalUpgradeLevels: number;
 }
 
+export type DeathStageBand = 'EARLY' | 'MIDDLE' | 'LATE';
+
+export interface StageBandDeathProfile {
+  early: number;
+  middle: number;
+  late: number;
+  total: number;
+  peakBand: DeathStageBand;
+}
+
 export const TARGET_AVERAGE_DEATHS = 50;
-export const MIN_TARGET_DEATHS = 40;
-export const MAX_TARGET_DEATHS = 60;
-export const MAX_CHARACTER_DEATH_SPREAD = 12;
+export const MIN_TARGET_DEATHS = 47;
+export const MAX_TARGET_DEATHS = 53;
+export const MAX_CHARACTER_DEATH_SPREAD = 2;
 export const DEFAULT_DEATH_SIMULATION_SAMPLES = 24;
 
 const CONTACTING_ENEMY_SHARE = 0.0037;
@@ -34,11 +44,11 @@ const MAX_CLEAR_PRESSURE = 2.5;
 
 const ROLE_EXPOSURE: Readonly<Record<AttackType, number>> = {
   SINGLE_TARGET: 0.37,
-  MULTI_TARGET: 1.02,
-  AREA_MELEE: 0.35,
-  AREA_MAGIC: 1.01,
-  PIERCING: 1.06,
-  CHAIN: 1.7,
+  MULTI_TARGET: 1.22,
+  AREA_MELEE: 0.74,
+  AREA_MAGIC: 0.36,
+  PIERCING: 0.65,
+  CHAIN: 0.75,
 };
 
 function emptyAllocation(): Record<UpgradeId, number> {
@@ -110,6 +120,58 @@ function calculateExposureMultiplier(character: CharacterData, allocation: Upgra
   return rangeExposure * knockbackMitigation * ROLE_EXPOSURE[character.attackType];
 }
 
+export function estimateStageDeaths(
+  character: CharacterData,
+  allocation: UpgradeAllocation,
+  stage: number,
+  stageVariance = 1,
+): number {
+  const stageStats = calculateStageStats(stage);
+  const combat = simulateStageCombat(character, allocation, stage);
+  const exposureMultiplier = calculateExposureMultiplier(character, allocation);
+  const captainChance = calculateCaptainSpawnChance(stage);
+  const clearPressure = Math.min(
+    MAX_CLEAR_PRESSURE,
+    Math.max(MIN_CLEAR_PRESSURE, 1 / Math.max(0.01, combat.lateStageClearRatio)),
+  );
+  const contactingEnemies = stageStats.maxActiveEnemies
+    * CONTACTING_ENEMY_SHARE
+    * clearPressure
+    * exposureMultiplier
+    * Math.max(0, stageVariance);
+  const normalDamagePerHit = Math.max(1, combat.enemyDamage - combat.defense);
+  const captainDamage = CAPTAIN_ENEMY.attackDamage + stageStats.enemyAttackBonus;
+  const captainDamagePerHit = Math.max(1, captainDamage - combat.defense);
+  const weightedDamagePerSecond = (1 - captainChance)
+    * normalDamagePerHit * 1_000 / BASIC_ENEMY.attackInterval
+    + captainChance * captainDamagePerHit * 1_000 / CAPTAIN_ENEMY.attackInterval;
+  const incomingDamagePerSecond = contactingEnemies * weightedDamagePerSecond;
+  if (incomingDamagePerSecond <= 0) return 0;
+  const vulnerableLifetimeSeconds = combat.maxHealth / incomingDamagePerSecond;
+  const lifeCycleSeconds = vulnerableLifetimeSeconds + REVIVE_INVULNERABILITY_MS / 1_000;
+  return estimateStageClearTimeMs(character, allocation, stage) / 1_000 / lifeCycleSeconds;
+}
+
+export function calculateStageBandDeathProfile(
+  character: CharacterData,
+  stageAllocations: readonly UpgradeAllocation[],
+): StageBandDeathProfile {
+  let early = 0;
+  let middle = 0;
+  let late = 0;
+  for (let stage = 1; stage <= 100; stage += 1) {
+    const deaths = estimateStageDeaths(character, stageAllocations[stage - 1]!, stage);
+    if (stage <= 33) early += deaths;
+    else if (stage <= 66) middle += deaths;
+    else late += deaths;
+  }
+  const bands: readonly [DeathStageBand, number][] = [
+    ['EARLY', early], ['MIDDLE', middle], ['LATE', late],
+  ];
+  const peakBand = [...bands].sort((left, right) => right[1] - left[1])[0]![0];
+  return { early, middle, late, total: early + middle + late, peakBand };
+}
+
 export function simulateRunDeaths(
   character: CharacterData,
   seed = 1,
@@ -119,32 +181,9 @@ export function simulateRunDeaths(
   let expectedDeaths = 0;
 
   for (let stage = 1; stage <= 100; stage += 1) {
-    const stageStats = calculateStageStats(stage);
     const allocation = stageAllocations[stage - 1]!;
-    const combat = simulateStageCombat(character, allocation, stage);
-    const exposureMultiplier = calculateExposureMultiplier(character, allocation);
-    const captainChance = calculateCaptainSpawnChance(stage);
-    const clearPressure = Math.min(
-      MAX_CLEAR_PRESSURE,
-      Math.max(MIN_CLEAR_PRESSURE, 1 / Math.max(0.01, combat.lateStageClearRatio)),
-    );
     const stageVariance = 0.9 + random() * 0.2;
-    const contactingEnemies = stageStats.maxActiveEnemies
-      * CONTACTING_ENEMY_SHARE
-      * clearPressure
-      * exposureMultiplier
-      * stageVariance;
-    const normalDamagePerHit = Math.max(1, combat.enemyDamage - combat.defense);
-    const captainDamage = CAPTAIN_ENEMY.attackDamage + stageStats.enemyAttackBonus;
-    const captainDamagePerHit = Math.max(1, captainDamage - combat.defense);
-    const weightedDamagePerSecond = (1 - captainChance)
-      * normalDamagePerHit * 1_000 / BASIC_ENEMY.attackInterval
-      + captainChance * captainDamagePerHit * 1_000 / CAPTAIN_ENEMY.attackInterval;
-    const incomingDamagePerSecond = contactingEnemies * weightedDamagePerSecond;
-    if (incomingDamagePerSecond <= 0) continue;
-    const vulnerableLifetimeSeconds = combat.maxHealth / incomingDamagePerSecond;
-    const lifeCycleSeconds = vulnerableLifetimeSeconds + REVIVE_INVULNERABILITY_MS / 1_000;
-    expectedDeaths += estimateStageClearTimeMs(character, allocation, stage) / 1_000 / lifeCycleSeconds;
+    expectedDeaths += estimateStageDeaths(character, allocation, stage, stageVariance);
   }
 
   return Math.round(expectedDeaths);

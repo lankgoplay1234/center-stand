@@ -2,13 +2,14 @@ import { UPGRADE_ORDER } from './UpgradeData';
 import type { CharacterData } from '../types/GameTypes';
 import { ARC_OVERCHARGE, BLADE_FURY, rangeAreaBoost, validateSpecialAbilityData } from './SpecialAbilityData';
 import { ATTACK_MOTIONS, validateAttackMotionData } from './AttackMotionData';
+import { roundStat } from './StatPrecisionData';
 
 export const CHARACTERS: readonly CharacterData[] = [
   {
     id: 'arc-ranger',
     name: '아크 레인저',
     description: '가장 가까운 적에게 에너지 탄환을 자동 발사합니다.',
-    maxHealth: 175,
+    maxHealth: 78,
     defense: 2,
     attackDamage: 28,
     attackSpeed: 2,
@@ -33,7 +34,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     id: 'blade-warden',
     name: '블레이드 워든',
     description: '주변을 휩쓰는 검격으로 가까운 모든 적을 공격합니다.',
-    maxHealth: 230,
+    maxHealth: 114,
     defense: 5,
     attackDamage: 32,
     attackSpeed: 1.2,
@@ -58,7 +59,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     id: 'bastion-gunner',
     name: '바스티온',
     description: '높은 체력과 방어력으로 버티며 여러 적을 동시에 사격합니다.',
-    maxHealth: 300,
+    maxHealth: 140,
     defense: 10,
     attackDamage: 14,
     attackSpeed: 1.45,
@@ -74,7 +75,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackMotion: ATTACK_MOTIONS.BASTION_VOLLEY,
     growthProfile: 'EARLY',
     upgradeEfficiency: {
-      attackDamage: 0.75, attackSpeed: 0.75, defense: 1.3, maxHealth: 0.75, attackRange: 0.55,
+      attackDamage: 1.05, attackSpeed: 1.05, defense: 1.3, maxHealth: 0.75, attackRange: 0.35,
     },
     upgradeFocus: { primary: 'defense', secondary: 'maxHealth', description: '방어력과 최대 체력으로 짧은 사거리의 전투를 버티는 탱커형' },
     specialAbility: rangeAreaBoost('saturation-fire', '분산 포화', '짧은 90도 전방 포화로 여러 적을 동시에 저지합니다.'),
@@ -83,7 +84,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     id: 'rune-mage',
     name: '룬 메이지',
     description: '가장 가까운 적의 위치에 폭발하는 원형 마법을 시전합니다.',
-    maxHealth: 145,
+    maxHealth: 96,
     defense: 1,
     attackDamage: 20,
     attackSpeed: 1,
@@ -108,7 +109,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     id: 'needle-striker',
     name: '니들 스트라이커',
     description: '빠른 관통 광선으로 일직선상의 적들을 꿰뚫습니다.',
-    maxHealth: 160,
+    maxHealth: 54,
     defense: 2,
     attackDamage: 12,
     attackSpeed: 3.8,
@@ -133,7 +134,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     id: 'storm-conductor',
     name: '스톰 컨덕터',
     description: '가까운 적 사이를 뛰어다니는 번개로 연쇄 피해를 줍니다.',
-    maxHealth: 170,
+    maxHealth: 106,
     defense: 2,
     attackDamage: 17,
     attackSpeed: 1.4,
@@ -183,6 +184,21 @@ export function validateCharacterData(character: CharacterData): string[] {
   }
   if (character.projectileSpeed <= 0) errors.push('projectileSpeed must be positive');
   if (character.knockbackForce < 0) errors.push('knockbackForce cannot be negative');
+  const precisionStats = {
+    maxHealth: character.maxHealth,
+    defense: character.defense,
+    attackDamage: character.attackDamage,
+    attackSpeed: character.attackSpeed,
+    baseCriticalChance: character.baseCriticalChance,
+    attackRange: character.attackRange,
+    maxAttackRange: character.maxAttackRange,
+    attackAreaRadius: character.attackAreaRadius,
+    projectileSpeed: character.projectileSpeed,
+    knockbackForce: character.knockbackForce,
+  };
+  for (const [id, value] of Object.entries(precisionStats)) {
+    if (Math.abs(roundStat(value) - value) > Number.EPSILON) errors.push(`${id} must use at most three decimal places`);
+  }
   errors.push(...validateAttackMotionData(character.attackMotion));
   errors.push(...validateSpecialAbilityData(character.specialAbility));
   if (character.specialAbility?.type === 'ARC_OVERCHARGE' && character.attackType !== 'SINGLE_TARGET') {
@@ -194,6 +210,9 @@ export function validateCharacterData(character: CharacterData): string[] {
   for (const id of UPGRADE_ORDER) {
     const efficiency = character.upgradeEfficiency[id];
     if (!Number.isFinite(efficiency) || efficiency <= 0) errors.push(`upgradeEfficiency.${id} must be positive`);
+    if (Math.abs(roundStat(efficiency) - efficiency) > Number.EPSILON) {
+      errors.push(`upgradeEfficiency.${id} must use at most three decimal places`);
+    }
   }
   if (character.upgradeFocus.primary === character.upgradeFocus.secondary) {
     errors.push('upgradeFocus primary and secondary must be different');

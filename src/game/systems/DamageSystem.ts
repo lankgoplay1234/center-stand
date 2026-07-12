@@ -6,11 +6,12 @@ export interface DamageResult {
 export function calculateAppliedDamage(currentHealth: number, requestedDamage: number): number {
   const safeHealth = Math.max(0, currentHealth);
   const safeDamage = Math.max(0, requestedDamage);
-  return Math.min(safeHealth, safeDamage);
+  return roundStat(Math.min(safeHealth, safeDamage));
 }
 
 export function calculateDamageAfterDefense(requestedDamage: number, defense: number): number {
   const safeDamage = Math.max(0, requestedDamage);
   if (safeDamage === 0) return 0;
-  return Math.max(1, safeDamage - Math.max(0, defense));
+  return roundStat(Math.max(1, safeDamage - Math.max(0, defense)));
 }
+import { roundStat } from '../data/StatPrecisionData';

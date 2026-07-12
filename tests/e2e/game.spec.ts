@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { getStageKillTarget, STAGE_TRANSITION_SPAWN_DELAY_MS } from '../../src/game/data/StageData';
 import { calculateAttackRangeAtLevel } from '../../src/game/data/AttackRangeData';
-import { UPGRADE_DEFINITIONS, UPGRADE_ORDER, calculateUpgradeEffect } from '../../src/game/data/UpgradeData';
+import { UPGRADE_DEFINITIONS, UPGRADE_ORDER, calculateUpgradedStat } from '../../src/game/data/UpgradeData';
 import { KNOCKBACK_DISTANCE_MULTIPLIER } from '../../src/game/systems/KnockbackSystem';
 import { LOCAL_LEADERBOARD_STORAGE_KEY } from '../../src/game/services/LeaderboardService';
 
@@ -74,7 +74,7 @@ test('selects all six characters and enters combat', async ({ page }) => {
   for (const chance of ['0.0%', '5.0%', '7.0%', '10.0%', '20.0%']) {
     expect(criticalLabels.some((label) => label.includes(`CRIT ${chance}`))).toBe(true);
   }
-  expect(criticalLabels).toContain('HP 300  ATK 14  SPD 1.45\nRNG 60  CRIT 7.0%');
+  expect(criticalLabels).toContain('HP 140  ATK 14  SPD 1.5\nRNG 60  CRIT 7.0%');
   expect(characterCardTexts.some((text) => text.startsWith('추천:'))).toBe(false);
 
   for (const card of CHARACTER_CARDS) {
@@ -96,6 +96,60 @@ test('selects all six characters and enters combat', async ({ page }) => {
     return scene?.enemies?.activeCount ?? 0;
   })).toBeGreaterThan(0);
   expect(runtimeErrors).toEqual([]);
+});
+
+test('shows and refreshes completion TOP 10 below character selection', async ({ page }) => {
+  const firstRecords = [{
+    id: 'entry-arc', nickname: '아크왕', characterId: 'arc-ranger', deaths: 3,
+    completionTimeSeconds: 1_234, runId: 'run_arc_1234567890123456', completedAt: 2_000,
+  }];
+  await page.evaluate(({ storageKey, records }) => {
+    localStorage.setItem(storageKey, JSON.stringify(records));
+  }, { storageKey: LOCAL_LEADERBOARD_STORAGE_KEY, records: firstRecords });
+  await page.reload();
+  await expect(page.locator('canvas')).toBeVisible({ timeout: COLD_START_TIMEOUT_MS });
+  await expect.poll(() => activeSceneKey(page)).toBe('CharacterSelectScene');
+
+  const refresh = page.getByTestId('character-select-leaderboard-refresh');
+  await expect(refresh).toBeVisible();
+  await expect(refresh).toBeEnabled();
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('CharacterSelectScene') as unknown as {
+      leaderboardEntries: { text: string };
+      leaderboardStatus: { text: string };
+    };
+    return { entries: scene.leaderboardEntries.text, status: scene.leaderboardStatus.text };
+  })).toEqual({
+    entries: '1. 아크왕 · 아크 레인저 · 사망 3회 · 20:34',
+    status: '이 브라우저의 로컬 완주 기록',
+  });
+
+  await page.evaluate(({ storageKey, records }) => {
+    localStorage.setItem(storageKey, JSON.stringify(records));
+  }, {
+    storageKey: LOCAL_LEADERBOARD_STORAGE_KEY,
+    records: [
+      ...firstRecords,
+      {
+        id: 'entry-rune', nickname: '룬왕', characterId: 'rune-mage', deaths: 1,
+        completionTimeSeconds: 1_500, runId: 'run_rune_1234567890123456', completedAt: 3_000,
+      },
+    ],
+  });
+  await refresh.click();
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('CharacterSelectScene') as unknown as {
+      leaderboardEntries: { text: string };
+      leaderboardStatus: { text: string };
+    };
+    return { entries: scene.leaderboardEntries.text, status: scene.leaderboardStatus.text };
+  })).toEqual({
+    entries: '1. 룬왕 · 룬 메이지 · 사망 1회 · 25:00\n2. 아크왕 · 아크 레인저 · 사망 3회 · 20:34',
+    status: '이 브라우저의 최신 로컬 기록',
+  });
+
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
 });
 
 test('shakes only the background and enemy layers while gameplay UI stays fixed', async ({ page }) => {
@@ -366,7 +420,7 @@ test('shows integer health and locks every-mob clear after ten uses', async ({ p
     };
   });
 
-  expect(result.healthText).toBe('HP  124 / 457');
+  expect(result.healthText).toBe('HP  123 / 457');
   expect(result.state).toEqual({ currentCost: 307_200, usageCount: 10, maxUses: 10, isMaxed: true });
   expect(result.mobClearText).toContain('사용 10/10회');
   expect(result.mobClearText).toContain('사용 완료');
@@ -809,7 +863,8 @@ test('spawns stronger stage-100 captains with distinct visuals from the existing
   expect(result.normal.defense).toBe(99);
   expect(result.captain.attackDamage).toBeGreaterThan(result.normal.attackDamage);
   expect(result.captain.defense).toBeGreaterThan(result.normal.defense);
-  expect(result.captain.goldReward).toBe(result.normal.goldReward * 18);
+  expect(result.normal.goldReward).toBe(5);
+  expect(result.captain.goldReward).toBe(50);
 });
 
 test('locks a level 99 upgrade without spending gold', async ({ page }) => {
@@ -932,6 +987,7 @@ test('plays upgrade feedback only for successful unmuted purchases', async ({ pa
     const game = window.__CENTER_STAND_GAME__;
     const scene = game?.scene.getScene('GameScene') as unknown as {
       audio: { state: { upgradeEffectCount: number } };
+      cameras: { main: { flashEffect: { alpha: number } } };
       children: { list: Array<{ text?: string }> };
       purchaseUpgrade: (id: string) => void;
       run: { gold: number };
@@ -946,14 +1002,22 @@ test('plays upgrade feedback only for successful unmuted purchases', async ({ pa
     return {
       countAfterSuccess,
       countAfterFailedPurchase: scene.audio.state.upgradeEffectCount,
+      flashAlpha: scene.cameras.main.flashEffect.alpha,
       hasVisualNotice,
     };
   });
   expect(successState).toEqual({
     countAfterSuccess: 1,
     countAfterFailedPurchase: 1,
+    flashAlpha: 0.2,
     hasVisualNotice: true,
   });
+  await expect.poll(() => page.evaluate(() => {
+    const game = window.__CENTER_STAND_GAME__;
+    const scene = game?.scene.getScene('GameScene') as unknown as
+      { cameras?: { main: { flashEffect: { alpha: number } } } } | undefined;
+    return scene?.cameras?.main.flashEffect.alpha ?? 0;
+  })).toBe(1);
 
   await clickGamePoint(page, 642, 116);
   const mutedState = await page.evaluate(() => {
@@ -1198,15 +1262,19 @@ test('preserves gold and upgrades across revival, then returns to character sele
       specialAbilityLevel: player.specialAbilityLevel,
     };
   })).toEqual({
-    attackDamage: initialStats.attackDamage
-      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackDamage, 1, initialStats.efficiency.attackDamage),
-    attackSpeed: initialStats.attackSpeed
-      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackSpeed, 1, initialStats.efficiency.attackSpeed),
+    attackDamage: calculateUpgradedStat(
+      initialStats.attackDamage, UPGRADE_DEFINITIONS.attackDamage, 1, initialStats.efficiency.attackDamage,
+    ),
+    attackSpeed: calculateUpgradedStat(
+      initialStats.attackSpeed, UPGRADE_DEFINITIONS.attackSpeed, 1, initialStats.efficiency.attackSpeed,
+    ),
     bonusTargetCount: initialStats.bonusTargetCount,
-    defense: initialStats.defense
-      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.defense, 1, initialStats.efficiency.defense),
-    maxHealth: initialStats.maxHealth
-      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.maxHealth, 1, initialStats.efficiency.maxHealth),
+    defense: calculateUpgradedStat(
+      initialStats.defense, UPGRADE_DEFINITIONS.defense, 1, initialStats.efficiency.defense,
+    ),
+    maxHealth: calculateUpgradedStat(
+      initialStats.maxHealth, UPGRADE_DEFINITIONS.maxHealth, 1, initialStats.efficiency.maxHealth,
+    ),
     attackRange: calculateAttackRangeAtLevel(
       initialStats.attackRange,
       initialStats.maxAttackRange,
@@ -1236,10 +1304,9 @@ test('preserves gold and upgrades across revival, then returns to character sele
     };
   });
   expect(deathState.awaitingRevive).toBe(true);
-  expect(deathState.attackDamage).toBe(
-    initialStats.attackDamage
-      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackDamage, 1, initialStats.efficiency.attackDamage),
-  );
+  expect(deathState.attackDamage).toBe(calculateUpgradedStat(
+    initialStats.attackDamage, UPGRADE_DEFINITIONS.attackDamage, 1, initialStats.efficiency.attackDamage,
+  ));
   expect(deathState.deaths).toBe(1);
   expect(deathState.gold).toBeGreaterThan(0);
   expect(deathState.specialAbilityLevel).toBe(1);
@@ -1280,11 +1347,13 @@ test('preserves gold and upgrades across revival, then returns to character sele
     ),
     awaitingRevive: false,
     deaths: 1,
-    health: initialStats.maxHealth
-      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.maxHealth, 1, initialStats.efficiency.maxHealth),
+    health: calculateUpgradedStat(
+      initialStats.maxHealth, UPGRADE_DEFINITIONS.maxHealth, 1, initialStats.efficiency.maxHealth,
+    ),
     invulnerable: true,
-    maxHealth: initialStats.maxHealth
-      + calculateUpgradeEffect(UPGRADE_DEFINITIONS.maxHealth, 1, initialStats.efficiency.maxHealth),
+    maxHealth: calculateUpgradedStat(
+      initialStats.maxHealth, UPGRADE_DEFINITIONS.maxHealth, 1, initialStats.efficiency.maxHealth,
+    ),
     specialAbilityLevel: 1,
   });
   const revivedGold = await page.evaluate(() => {
@@ -1463,6 +1532,21 @@ test('completes stage 100 once and reports the selected character death count', 
   await clickGamePoint(page, 360, 660);
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toContain('아크-레인저-3deaths.png');
+
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, 'userAgent', { configurable: true, value: 'Mozilla/5.0 KAKAOTALK 11.4.2' });
+  });
+  await clickGamePoint(page, 360, 660);
+  const preview = page.locator('[data-testid="completion-image-preview"]');
+  const completionImage = page.locator('[data-testid="completion-image"]');
+  await expect(preview).toBeVisible();
+  await expect(completionImage).toHaveAttribute('alt', 'CENTER STAND 완주 화면');
+  await expect.poll(() => completionImage.evaluate((image) => ({
+    width: (image as HTMLImageElement).naturalWidth,
+    height: (image as HTMLImageElement).naturalHeight,
+  }))).toEqual({ width: 720, height: 1280 });
+  await page.locator('[data-testid="completion-image-close"]').click();
+  await expect(preview).toBeHidden();
 
   await clickGamePoint(page, 360, 790);
   await expect.poll(() => activeSceneKey(page)).toBe('CharacterSelectScene');

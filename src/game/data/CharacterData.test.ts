@@ -48,6 +48,19 @@ describe('character data', () => {
     expect(validateCharacterData(character)).toContain('baseTargetCount must be a positive integer');
     expect(validateCharacterData(character)).toContain('knockbackForce cannot be negative');
     expect(validateCharacterData(character)).toContain('upgradeEfficiency.attackDamage must be positive');
+    expect(validateCharacterData({ ...CHARACTERS[0]!, attackSpeed: 1.2345 }))
+      .toContain('attackSpeed must use at most three decimal places');
+  });
+
+  it('uses minimum-death balanced base health values', () => {
+    expect(Object.fromEntries(CHARACTERS.map((character) => [character.id, character.maxHealth]))).toEqual({
+      'arc-ranger': 78,
+      'blade-warden': 114,
+      'bastion-gunner': 140,
+      'rune-mage': 96,
+      'needle-striker': 54,
+      'storm-conductor': 106,
+    });
   });
 
   it('uses bounded role-pair critical chances from the fastest-clear analysis', () => {

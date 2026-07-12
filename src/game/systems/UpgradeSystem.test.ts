@@ -10,7 +10,16 @@ function createPlayer(
   specialAbility: SpecialAbilityData | null = null,
 ): Player {
   return {
-    character: { specialAbility, attackRange: 200, maxAttackRange: 300, baseCriticalChance: 0.08 },
+    character: {
+      specialAbility,
+      attackDamage: 10,
+      attackSpeed: 2,
+      defense: 3,
+      maxHealth: 100,
+      attackRange: 200,
+      maxAttackRange: 300,
+      baseCriticalChance: 0.08,
+    },
     attackDamage: 10,
     attackSpeed: 2,
     baseTargetCount: 1,
@@ -44,12 +53,12 @@ describe('UpgradeSystem', () => {
       expect(upgrades.getState(id).level).toBe(1);
     }
 
-    expect(player.attackDamage).toBe(16);
-    expect(player.attackSpeed).toBeCloseTo(2.09);
+    expect(player.attackDamage).toBe(12.5);
+    expect(player.attackSpeed).toBeCloseTo(2.12);
     expect(player.bonusTargetCount).toBe(0);
-    expect(player.defense).toBeCloseTo(3.8);
-    expect(player.maxHealth).toBe(116);
-    expect(player.health).toBe(96);
+    expect(player.defense).toBeCloseTo(3.15);
+    expect(player.maxHealth).toBe(120);
+    expect(player.health).toBe(100);
     expect(player.attackRange).toBeCloseTo(201.01, 2);
     expect(player.attackAreaRadius).toBe(40);
     expect(upgrades.totalLevels).toBe(5);
@@ -76,8 +85,20 @@ describe('UpgradeSystem', () => {
     scaling.purchase('attackDamage', 100);
 
     expect(earlyCost).toBe(scalingCost);
-    expect(earlyPlayer.attackDamage).toBeCloseTo(14.8);
-    expect(scalingPlayer.attackDamage).toBeCloseTo(18.1);
+    expect(earlyPlayer.attackDamage).toBeCloseTo(12);
+    expect(scalingPlayer.attackDamage).toBeCloseTo(13.38);
+  });
+
+  it('recomputes percentage upgrades from immutable base stats without cumulative drift', () => {
+    const player = createPlayer({ attackDamage: 1.4 });
+    const upgrades = new UpgradeSystem(player);
+
+    for (let level = 0; level < 10; level += 1) {
+      expect(upgrades.purchase('attackDamage', 10_000).success).toBe(true);
+    }
+
+    expect(player.attackDamage).toBeCloseTo(45);
+    expect(upgrades.getEffectLabel('attackDamage')).toBe('기본 공격력 +350%');
   });
 
   it('grows Arc Ranger range while preserving overcharge level progression', () => {

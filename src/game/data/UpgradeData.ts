@@ -1,8 +1,13 @@
 import type { UpgradeDefinition, UpgradeId } from '../types/GameTypes';
 import { CRITICAL_CHANCE_PER_ATTACK_RANGE_LEVEL } from './CriticalHitData';
+import { roundStat } from './StatPrecisionData';
 
 function formatValue(value: number): string {
   return Number(value.toFixed(2)).toString();
+}
+
+function formatPercent(value: number): string {
+  return `${formatValue(value * 100)}%`;
 }
 
 export const UPGRADE_ORDER: readonly UpgradeId[] = [
@@ -21,36 +26,40 @@ export const UPGRADE_DEFINITIONS: Readonly<Record<UpgradeId, UpgradeDefinition>>
     name: '공격력',
     baseCost: 20,
     costGrowth: 1.045,
-    effectPerLevel: 6,
+    effectPerLevel: 0.25,
+    effectMode: 'BASE_PERCENT',
     maxLevel: MAX_UPGRADE_LEVEL,
-    effectLabel: (level, efficiency = 1) => `+${formatValue(calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackDamage, level, efficiency))} 피해`,
+    effectLabel: (level, efficiency = 1) => `기본 공격력 +${formatPercent(calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackDamage, level, efficiency))}`,
   },
   attackSpeed: {
     id: 'attackSpeed',
     name: '공격 속도',
     baseCost: 22,
     costGrowth: 1.04,
-    effectPerLevel: 0.09,
+    effectPerLevel: 0.06,
+    effectMode: 'BASE_PERCENT',
     maxLevel: MAX_UPGRADE_LEVEL,
-    effectLabel: (level, efficiency = 1) => `+${calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackSpeed, level, efficiency).toFixed(2)} 공격/초`,
+    effectLabel: (level, efficiency = 1) => `기본 공격 속도 +${formatPercent(calculateUpgradeEffect(UPGRADE_DEFINITIONS.attackSpeed, level, efficiency))}`,
   },
   defense: {
     id: 'defense',
     name: '방어력',
     baseCost: 28,
     costGrowth: 1.04,
-    effectPerLevel: 0.8,
+    effectPerLevel: 0.05,
+    effectMode: 'BASE_PERCENT',
     maxLevel: MAX_UPGRADE_LEVEL,
-    effectLabel: (level, efficiency = 1) => `+${formatValue(calculateUpgradeEffect(UPGRADE_DEFINITIONS.defense, level, efficiency))} 방어`,
+    effectLabel: (level, efficiency = 1) => `기본 방어력 +${formatPercent(calculateUpgradeEffect(UPGRADE_DEFINITIONS.defense, level, efficiency))}`,
   },
   maxHealth: {
     id: 'maxHealth',
     name: '최대 체력',
     baseCost: 32,
     costGrowth: 1.04,
-    effectPerLevel: 16,
+    effectPerLevel: 0.2,
+    effectMode: 'BASE_PERCENT',
     maxLevel: MAX_UPGRADE_LEVEL,
-    effectLabel: (level, efficiency = 1) => `+${formatValue(calculateUpgradeEffect(UPGRADE_DEFINITIONS.maxHealth, level, efficiency))} HP`,
+    effectLabel: (level, efficiency = 1) => `기본 최대 체력 +${formatPercent(calculateUpgradeEffect(UPGRADE_DEFINITIONS.maxHealth, level, efficiency))}`,
   },
   attackRange: {
     id: 'attackRange',
@@ -58,6 +67,7 @@ export const UPGRADE_DEFINITIONS: Readonly<Record<UpgradeId, UpgradeDefinition>>
     baseCost: 39,
     costGrowth: 1.04,
     effectPerLevel: 1,
+    effectMode: 'FLAT',
     maxLevel: MAX_UPGRADE_LEVEL,
     effectLabel: (level) => {
       const safeLevel = Math.max(0, Math.floor(level));
@@ -77,7 +87,19 @@ export function calculateUpgradeCost(definition: UpgradeDefinition, level: numbe
 export function calculateUpgradeEffect(definition: UpgradeDefinition, level: number, efficiency = 1): number {
   const safeLevel = Math.max(0, Math.floor(level));
   const curvedLevel = definition.effectCurve === 'SQRT' ? Math.ceil(Math.sqrt(safeLevel)) : safeLevel;
-  return curvedLevel * definition.effectPerLevel * efficiency;
+  return roundStat(curvedLevel * definition.effectPerLevel * efficiency);
+}
+
+export function calculateUpgradedStat(
+  baseValue: number,
+  definition: UpgradeDefinition,
+  level: number,
+  efficiency = 1,
+): number {
+  const effect = calculateUpgradeEffect(definition, level, efficiency);
+  return roundStat(definition.effectMode === 'BASE_PERCENT'
+    ? baseValue * (1 + effect)
+    : baseValue + effect);
 }
 
 export function calculateSecondaryUpgradeEffect(definition: UpgradeDefinition, level: number, efficiency = 1): number {

@@ -9,11 +9,16 @@ import {
   getPreCompletionAllocation,
   getRoleCompletionAllocation,
   estimateRunClearTimeMs,
+  estimateRunGold,
   simulateCompletionReadiness,
   simulateStageCombat,
 } from './RunBalanceSimulation';
 
 describe('400-upgrade completion balance', () => {
+  it('estimates the reduced stage-scaled monster reward budget', () => {
+    expect(estimateRunGold()).toBe(188_110);
+  });
+
   it('defines character-specific allocations on the 399 and 400 boundaries', () => {
     const signatures = new Set<string>();
     for (const character of CHARACTERS) {

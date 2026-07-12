@@ -1,5 +1,10 @@
 import type { CharacterData, UpgradeId } from '../types/GameTypes';
-import { BASIC_ENEMY, CAPTAIN_ENEMY, calculateCaptainSpawnChance } from './EnemyData';
+import {
+  BASIC_ENEMY,
+  CAPTAIN_ENEMY,
+  calculateCaptainSpawnChance,
+  calculateEnemyGoldReward,
+} from './EnemyData';
 import { calculateOverchargeDamageMultiplier } from './SpecialAbilityData';
 import { calculateStageStats, getStageKillTarget } from './StageData';
 import {
@@ -7,7 +12,7 @@ import {
   UPGRADE_DEFINITIONS,
   UPGRADE_ORDER,
   calculateTotalUpgradeCost,
-  calculateUpgradeEffect,
+  calculateUpgradedStat,
 } from './UpgradeData';
 import {
   calculateExpectedCriticalDamageMultiplier,
@@ -49,7 +54,7 @@ export const ROLE_COMPLETION_ALLOCATIONS: Readonly<Record<string, UpgradeAllocat
   'blade-warden': { attackDamage: 65, attackSpeed: 70, defense: 85, maxHealth: 95, attackRange: 85 },
   'bastion-gunner': { attackDamage: 70, attackSpeed: 75, defense: 95, maxHealth: 90, attackRange: 70 },
   'rune-mage': { attackDamage: 80, attackSpeed: 99, defense: 75, maxHealth: 75, attackRange: 71 },
-  'needle-striker': { attackDamage: 50, attackSpeed: 99, defense: 85, maxHealth: 80, attackRange: 86 },
+  'needle-striker': { attackDamage: 50, attackSpeed: 99, defense: 85, maxHealth: 92, attackRange: 74 },
   'storm-conductor': { attackDamage: 85, attackSpeed: 90, defense: 75, maxHealth: 70, attackRange: 80 },
 };
 
@@ -99,8 +104,9 @@ export function estimateRunGold(killRatio = EXPECTED_RUN_KILL_RATIO): number {
 
 export function estimateStageGold(stage: number): number {
   const captainChance = calculateCaptainSpawnChance(stage);
-  const expectedReward = BASIC_ENEMY.goldReward
-    + captainChance * (CAPTAIN_ENEMY.goldReward - BASIC_ENEMY.goldReward);
+  const normalReward = calculateEnemyGoldReward(stage, BASIC_ENEMY);
+  const captainReward = calculateEnemyGoldReward(stage, CAPTAIN_ENEMY);
+  const expectedReward = normalReward + captainChance * (captainReward - normalReward);
   return Math.floor(getStageKillTarget(stage) * expectedReward);
 }
 
@@ -161,22 +167,22 @@ export function simulateStageCombat(
   stage: number,
 ): StageCombatSnapshot {
   const stageStats = calculateStageStats(stage);
-  const damage = character.attackDamage + calculateUpgradeEffect(
+  const damage = calculateUpgradedStat(character.attackDamage,
     UPGRADE_DEFINITIONS.attackDamage,
     allocation.attackDamage,
     character.upgradeEfficiency.attackDamage,
   );
-  const attackSpeed = character.attackSpeed + calculateUpgradeEffect(
+  const attackSpeed = calculateUpgradedStat(character.attackSpeed,
     UPGRADE_DEFINITIONS.attackSpeed,
     allocation.attackSpeed,
     character.upgradeEfficiency.attackSpeed,
   );
-  const defense = character.defense + calculateUpgradeEffect(
+  const defense = calculateUpgradedStat(character.defense,
     UPGRADE_DEFINITIONS.defense,
     allocation.defense,
     character.upgradeEfficiency.defense,
   );
-  const maxHealth = character.maxHealth + calculateUpgradeEffect(
+  const maxHealth = calculateUpgradedStat(character.maxHealth,
     UPGRADE_DEFINITIONS.maxHealth,
     allocation.maxHealth,
     character.upgradeEfficiency.maxHealth,

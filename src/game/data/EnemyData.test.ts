@@ -3,6 +3,7 @@ import {
   BASIC_ENEMY,
   CAPTAIN_ENEMY,
   calculateCaptainSpawnChance,
+  calculateEnemyGoldReward,
   calculateEnemyVisualTier,
   getEnemyVisualProfile,
   selectEnemyData,
@@ -34,8 +35,22 @@ describe('enemy stage progression', () => {
   it('defines captains at more than ten times normal health and damage', () => {
     expect(CAPTAIN_ENEMY.health).toBeGreaterThanOrEqual(BASIC_ENEMY.health * 10);
     expect(CAPTAIN_ENEMY.attackDamage).toBeGreaterThanOrEqual(BASIC_ENEMY.attackDamage * 10);
-    expect(CAPTAIN_ENEMY.goldReward).toBeGreaterThan(BASIC_ENEMY.goldReward);
+    expect(CAPTAIN_ENEMY.goldRewardPerStage).toBe(BASIC_ENEMY.goldRewardPerStage * 10);
     expect(CAPTAIN_ENEMY.defense).toBeGreaterThan(BASIC_ENEMY.defense);
+  });
+
+  it('rounds stage-scaled normal and captain rewards up to whole gold', () => {
+    expect(calculateEnemyGoldReward(1, BASIC_ENEMY)).toBe(1);
+    expect(calculateEnemyGoldReward(20, BASIC_ENEMY)).toBe(1);
+    expect(calculateEnemyGoldReward(21, BASIC_ENEMY)).toBe(2);
+    expect(calculateEnemyGoldReward(100, BASIC_ENEMY)).toBe(5);
+    expect(calculateEnemyGoldReward(1, CAPTAIN_ENEMY)).toBe(1);
+    expect(calculateEnemyGoldReward(2, CAPTAIN_ENEMY)).toBe(1);
+    expect(calculateEnemyGoldReward(3, CAPTAIN_ENEMY)).toBe(2);
+    expect(calculateEnemyGoldReward(10, CAPTAIN_ENEMY)).toBe(5);
+    expect(calculateEnemyGoldReward(100, CAPTAIN_ENEMY)).toBe(50);
+    expect(calculateEnemyGoldReward(0, BASIC_ENEMY)).toBe(1);
+    expect(calculateEnemyGoldReward(Number.NaN, CAPTAIN_ENEMY)).toBe(1);
   });
 
   it('increases captain chance linearly from zero to 35 percent', () => {

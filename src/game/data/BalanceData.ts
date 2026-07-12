@@ -1,5 +1,5 @@
 import type { CharacterData, GrowthProfile } from '../types/GameTypes';
-import { UPGRADE_DEFINITIONS, UPGRADE_ORDER, calculateUpgradeEffect } from './UpgradeData';
+import { UPGRADE_DEFINITIONS, UPGRADE_ORDER, calculateUpgradedStat } from './UpgradeData';
 
 export const FAST_CLEAR_REFERENCE_MS = 20 * 60_000;
 export const LONG_CLEAR_REFERENCE_MS = 60 * 60_000;
@@ -39,12 +39,12 @@ export function calculateBaselineCombatScore(character: CharacterData): number {
 }
 
 export function calculateProjectedCombatScore(character: CharacterData, upgradeLevel: number): number {
-  const effect = (id: keyof CharacterData['upgradeEfficiency']): number =>
-    calculateUpgradeEffect(UPGRADE_DEFINITIONS[id], upgradeLevel, character.upgradeEfficiency[id]);
-  const damage = character.attackDamage + effect('attackDamage');
-  const speed = character.attackSpeed + effect('attackSpeed');
+  const upgraded = (id: 'attackDamage' | 'attackSpeed' | 'defense' | 'maxHealth', baseValue: number): number =>
+    calculateUpgradedStat(baseValue, UPGRADE_DEFINITIONS[id], upgradeLevel, character.upgradeEfficiency[id]);
+  const damage = upgraded('attackDamage', character.attackDamage);
+  const speed = upgraded('attackSpeed', character.attackSpeed);
   const targets = character.baseTargetCount;
-  const health = character.maxHealth + effect('maxHealth');
-  const defense = character.defense + effect('defense');
+  const health = upgraded('maxHealth', character.maxHealth);
+  const defense = upgraded('defense', character.defense);
   return damage * speed * Math.sqrt(targets) + health * 0.08 + defense * 3;
 }

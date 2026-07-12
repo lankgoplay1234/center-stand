@@ -1,4 +1,5 @@
 import type { AttackMotionStyle } from '../types/GameTypes';
+import { MASTER_AUDIO_GAIN } from '../data/FeedbackData';
 
 export interface AudioBackend {
   resume(): Promise<void>;
@@ -32,7 +33,7 @@ class WebAudioBackend implements AudioBackend {
     this.context = AudioContextConstructor ? new AudioContextConstructor() : null;
     this.master = this.context?.createGain() ?? null;
     if (this.context && this.master) {
-      this.master.gain.value = 0.16;
+      this.master.gain.value = MASTER_AUDIO_GAIN;
       this.master.connect(this.context.destination);
     }
   }
@@ -58,7 +59,7 @@ class WebAudioBackend implements AudioBackend {
 
   setMuted(muted: boolean): void {
     if (!this.context || !this.master) return;
-    this.master.gain.setTargetAtTime(muted ? 0 : 0.16, this.context.currentTime, 0.025);
+    this.master.gain.setTargetAtTime(muted ? 0 : MASTER_AUDIO_GAIN, this.context.currentTime, 0.025);
   }
 
   playUpgradeSuccess(): void {
