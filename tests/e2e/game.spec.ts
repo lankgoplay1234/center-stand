@@ -3,6 +3,7 @@ import { getStageKillTarget, STAGE_TRANSITION_SPAWN_DELAY_MS } from '../../src/g
 import { calculateAttackRangeAtLevel } from '../../src/game/data/AttackRangeData';
 import { UPGRADE_DEFINITIONS, UPGRADE_ORDER, calculateUpgradeEffect } from '../../src/game/data/UpgradeData';
 import { KNOCKBACK_DISTANCE_MULTIPLIER } from '../../src/game/systems/KnockbackSystem';
+import { LOCAL_LEADERBOARD_STORAGE_KEY } from '../../src/game/services/LeaderboardService';
 
 const GAME_WIDTH = 720;
 const GAME_HEIGHT = 1280;
@@ -73,7 +74,8 @@ test('selects all six characters and enters combat', async ({ page }) => {
   for (const chance of ['0.0%', '5.0%', '7.0%', '10.0%', '20.0%']) {
     expect(criticalLabels.some((label) => label.includes(`CRIT ${chance}`))).toBe(true);
   }
-  expect(characterCardTexts).toContain('추천: 공격력 → 공격 속도');
+  expect(criticalLabels).toContain('HP 300  ATK 14  SPD 1.45\nRNG 60  CRIT 7.0%');
+  expect(characterCardTexts.some((text) => text.startsWith('추천:'))).toBe(false);
 
   for (const card of CHARACTER_CARDS) {
     await clickGamePoint(page, card.x, card.y);
@@ -94,6 +96,62 @@ test('selects all six characters and enters combat', async ({ page }) => {
     return scene?.enemies?.activeCount ?? 0;
   })).toBeGreaterThan(0);
   expect(runtimeErrors).toEqual([]);
+});
+
+test('shakes only the background and enemy layers while gameplay UI stays fixed', async ({ page }) => {
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+
+  const duringShake = await page.evaluate(async () => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      backgroundShakeLayer: { x: number; y: number };
+      enemyShakeLayer: { x: number; y: number };
+      player: { x: number; y: number };
+      ui: {
+        healthText: { x: number; y: number };
+        buttons: Map<string, { container: { x: number; y: number } }>;
+      };
+      cameras: { main: { shakeEffect: { isRunning: boolean } } };
+      shakeWorld: (duration: number, intensity: number) => void;
+    } | undefined;
+    if (!scene) throw new Error('GameScene unavailable');
+    const button = scene.ui.buttons.get('attackDamage')?.container;
+    if (!button) throw new Error('Attack upgrade button unavailable');
+    const fixedBefore = {
+      player: { x: scene.player.x, y: scene.player.y },
+      health: { x: scene.ui.healthText.x, y: scene.ui.healthText.y },
+      button: { x: button.x, y: button.y },
+    };
+    scene.shakeWorld(240, 0.01);
+    await new Promise((resolve) => window.setTimeout(resolve, 45));
+    return {
+      fixedBefore,
+      fixedDuring: {
+        player: { x: scene.player.x, y: scene.player.y },
+        health: { x: scene.ui.healthText.x, y: scene.ui.healthText.y },
+        button: { x: button.x, y: button.y },
+      },
+      background: { x: scene.backgroundShakeLayer.x, y: scene.backgroundShakeLayer.y },
+      enemies: { x: scene.enemyShakeLayer.x, y: scene.enemyShakeLayer.y },
+      cameraShakeRunning: scene.cameras.main.shakeEffect.isRunning,
+    };
+  });
+
+  expect(duringShake.background).toEqual(duringShake.enemies);
+  expect(Math.abs(duringShake.background.x) + Math.abs(duringShake.background.y)).toBeGreaterThan(0);
+  expect(duringShake.fixedDuring).toEqual(duringShake.fixedBefore);
+  expect(duringShake.cameraShakeRunning).toBe(false);
+
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      backgroundShakeLayer?: { x: number; y: number };
+      enemyShakeLayer?: { x: number; y: number };
+    } | undefined;
+    return {
+      background: [scene?.backgroundShakeLayer?.x, scene?.backgroundShakeLayer?.y],
+      enemies: [scene?.enemyShakeLayer?.x, scene?.enemyShakeLayer?.y],
+    };
+  })).toEqual({ background: [0, 0], enemies: [0, 0] });
 });
 
 test('pauses combat, continues the same run, and returns home', async ({ page }) => {
@@ -315,6 +373,120 @@ test('shows integer health and locks every-mob clear after ten uses', async ({ p
   expect(result.mobClearInteractive).toBe(false);
   expect(result.blocked).toBe(false);
   expect(result.callbackCalls).toBe(0);
+});
+
+test('uses Q W E A S D upgrades and F revival keyboard shortcuts', async ({ page }) => {
+  await clickGamePoint(page, 360, 900);
+  await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as
+      { enemies?: { activeCount: number } } | undefined;
+    return scene?.enemies?.activeCount ?? 0;
+  })).toBeGreaterThan(0);
+
+  const labels = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      run: { gold: number };
+      runStressTest: () => void;
+      ui: {
+        buttons: Map<string, { text: { text: string } }>;
+        mobClearButton: { text: { text: string } };
+      };
+    };
+    scene.run.gold = 1_000_000;
+    scene.runStressTest();
+    return {
+      upgrades: Object.fromEntries([...scene.ui.buttons].map(([id, button]) => [id, button.text.text])),
+      mobClear: scene.ui.mobClearButton.text.text,
+    };
+  });
+  expect(labels.upgrades.attackDamage).toContain('[Q]');
+  expect(labels.upgrades.attackSpeed).toContain('[W]');
+  expect(labels.upgrades.defense).toContain('[A]');
+  expect(labels.upgrades.maxHealth).toContain('[S]');
+  expect(labels.upgrades.attackRange).toContain('[D]');
+  expect(labels.mobClear).toContain('[E]');
+
+  for (const key of ['q', 'w', 'a', 's', 'd']) await page.keyboard.press(key);
+  const upgraded = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      criticalChance: number;
+      run: { gold: number };
+      upgrades: { getState: (id: string) => { level: number } };
+    };
+    return {
+      levels: Object.fromEntries(['attackDamage', 'attackSpeed', 'defense', 'maxHealth', 'attackRange']
+        .map((id) => [id, scene.upgrades.getState(id).level])),
+      criticalChance: scene.criticalChance,
+      gold: scene.run.gold,
+    };
+  });
+  expect(upgraded.levels).toEqual({
+    attackDamage: 1, attackSpeed: 1, defense: 1, maxHealth: 1, attackRange: 1,
+  });
+  expect(upgraded.criticalChance).toBeCloseTo(0.202);
+  expect(upgraded.gold).toBeLessThan(1_000_000);
+
+  await page.keyboard.press('e');
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      mobClear: { state: { usageCount: number } };
+    };
+    return scene.mobClear.state.usageCount;
+  })).toBe(1);
+
+  const death = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      handlePlayerDeath: () => void;
+      player: { health: number };
+      ui: { deathOverlay: { list: Array<{ text?: string }> } | null };
+    };
+    scene.player.health = 0;
+    scene.handlePlayerDeath();
+    return scene.ui.deathOverlay?.list.flatMap((entry) => entry.text ? [entry.text] : []).join('\n') ?? '';
+  });
+  expect(death).toContain('부활하기  [F]');
+
+  await page.keyboard.press('q');
+  await page.keyboard.press('e');
+  const whileDead = await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      awaitingRevive: boolean;
+      mobClear: { state: { usageCount: number } };
+      upgrades: { getState: (id: string) => { level: number } };
+    };
+    return {
+      awaitingRevive: scene.awaitingRevive,
+      attackDamageLevel: scene.upgrades.getState('attackDamage').level,
+      mobClearUses: scene.mobClear.state.usageCount,
+    };
+  });
+  expect(whileDead).toEqual({ awaitingRevive: true, attackDamageLevel: 2, mobClearUses: 1 });
+
+  await clickGamePoint(page, 360, 760);
+  await page.keyboard.press('f');
+  expect(await page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      awaitingRevive: boolean;
+      ui: { isRestartConfirmationVisible: boolean };
+    };
+    return { awaitingRevive: scene.awaitingRevive, confirmation: scene.ui.isRestartConfirmationVisible };
+  })).toEqual({ awaitingRevive: true, confirmation: true });
+
+  await clickGamePoint(page, 235, 670);
+  await page.keyboard.press('f');
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameScene') as unknown as {
+      awaitingRevive: boolean;
+      player: { health: number; maxHealth: number };
+      ui: { deathOverlay: unknown };
+    };
+    return {
+      awaitingRevive: scene.awaitingRevive,
+      fullHealth: scene.player.health === scene.player.maxHealth,
+      deathOverlayClosed: scene.ui.deathOverlay === null,
+    };
+  })).toEqual({ awaitingRevive: false, fullHealth: true, deathOverlayClosed: true });
 });
 
 test('renders the real attack range and grows the same indicator with the range upgrade', async ({ page }) => {
@@ -579,6 +751,7 @@ test('spawns stronger stage-100 captains with distinct visuals from the existing
           texture: { key: string };
           maxHealth: number;
           attackDamage: number;
+          defense: number;
           goldReward: number;
         }>;
         destroyAll: () => void;
@@ -608,6 +781,7 @@ test('spawns stronger stage-100 captains with distinct visuals from the existing
         textureKey: normal.texture.key,
         maxHealth: normal.maxHealth,
         attackDamage: normal.attackDamage,
+        defense: normal.defense,
         goldReward: normal.goldReward,
       },
       captain: {
@@ -616,6 +790,7 @@ test('spawns stronger stage-100 captains with distinct visuals from the existing
         textureKey: captain.texture.key,
         maxHealth: captain.maxHealth,
         attackDamage: captain.attackDamage,
+        defense: captain.defense,
         goldReward: captain.goldReward,
       },
     };
@@ -623,14 +798,17 @@ test('spawns stronger stage-100 captains with distinct visuals from the existing
 
   expect(result.stageOneCaptains).toBe(0);
   expect(result.activeCount).toBe(100);
-  expect(result.captainCount).toBe(2);
+  expect(result.captainCount).toBe(35);
   expect(result.normal.tier).toBe(5);
   expect(result.captain.tier).toBe(5);
   expect(result.captain.radius).toBeGreaterThan(result.normal.radius);
   expect(result.normal.textureKey).toBe('enemy-normal-5');
   expect(result.captain.textureKey).toBe('enemy-captain-5');
   expect(result.captain.maxHealth).toBeGreaterThanOrEqual(result.normal.maxHealth * 11.9);
-  expect(result.captain.attackDamage).toBeGreaterThanOrEqual(result.normal.attackDamage * 9.9);
+  expect(result.normal.attackDamage).toBe(108);
+  expect(result.normal.defense).toBe(99);
+  expect(result.captain.attackDamage).toBeGreaterThan(result.normal.attackDamage);
+  expect(result.captain.defense).toBeGreaterThan(result.normal.defense);
   expect(result.captain.goldReward).toBe(result.normal.goldReward * 18);
 });
 
@@ -1206,21 +1384,26 @@ test('recommends an efficient upgrade after five deaths in one stage and resets 
 test('completes stage 100 once and reports the selected character death count', async ({ page }) => {
   await clickGamePoint(page, 360, 900);
   await expect.poll(() => activeSceneKey(page)).toBe('GameScene');
-  await page.evaluate((finalStageTarget) => {
+  await page.evaluate(({ finalStageTarget, storageKey }) => {
     const game = window.__CENTER_STAND_GAME__;
     const scene = game?.scene.getScene('GameScene') as unknown as {
-      run: { deaths: number };
+      run: { deaths: number; elapsedSeconds: number };
       stages: { currentStage: number; recordKills: (count: number) => void };
     };
     scene.run.deaths = 3;
+    scene.run.elapsedSeconds = 1_234;
+    localStorage.setItem(storageKey, JSON.stringify([{
+      id: 'other-entry', nickname: '다른이', characterId: 'rune-mage', deaths: 2,
+      completionTimeSeconds: 1_500, runId: 'other_run_1234567890123456', completedAt: 1_000,
+    }]));
     scene.stages.currentStage = 100;
     scene.stages.recordKills(finalStageTarget);
-  }, getStageKillTarget(100));
+  }, { finalStageTarget: getStageKillTarget(100), storageKey: LOCAL_LEADERBOARD_STORAGE_KEY });
   await expect.poll(() => activeSceneKey(page)).toBe('GameOverScene');
   const result = await page.evaluate(() => {
     const game = window.__CENTER_STAND_GAME__;
     const scene = game?.scene.getScene('GameOverScene') as unknown as {
-      result: { characterId: string; completed: boolean; deaths: number; stage: number };
+      result: { characterId: string; completed: boolean; deaths: number; survivalSeconds: number; stage: number };
     };
     return scene.result;
   });
@@ -1228,14 +1411,23 @@ test('completes stage 100 once and reports the selected character death count', 
     characterId: 'arc-ranger',
     completed: true,
     deaths: 3,
+    survivalSeconds: 1_234,
     stage: 100,
   }));
   const nicknameInput = page.getByTestId('leaderboard-nickname');
   const leaderboardSubmit = page.getByTestId('leaderboard-submit');
+  const leaderboardRefresh = page.getByTestId('leaderboard-refresh');
   await expect(nicknameInput).toBeVisible();
   await expect(nicknameInput).toBeEnabled();
   await expect(nicknameInput).toHaveAttribute('maxlength', '5');
   await expect(leaderboardSubmit).toBeEnabled();
+  await expect(leaderboardRefresh).toBeEnabled();
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameOverScene') as unknown as {
+      leaderboardEntries: { text: string };
+    };
+    return scene.leaderboardEntries.text;
+  })).toContain('1. 다른이 · 룬 메이지 · 사망 2회 · 25:00');
   await nicknameInput.fill('용사');
   await leaderboardSubmit.click();
   await expect.poll(() => page.evaluate(() => {
@@ -1246,8 +1438,21 @@ test('completes stage 100 once and reports the selected character death count', 
     return { status: scene.leaderboardStatus.text, entries: scene.leaderboardEntries.text };
   })).toEqual({
     status: '내 기록이 등록되었습니다',
-    entries: expect.stringContaining('1. 용사 · 아크 레인저 · 3회'),
+    entries: expect.stringContaining('2. 용사 · 아크 레인저 · 사망 3회 · 20:34'),
   });
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameOverScene') as unknown as {
+      leaderboardEntries: { text: string };
+    };
+    return scene.leaderboardEntries.text;
+  })).toContain('1. 다른이 · 룬 메이지 · 사망 2회 · 25:00');
+  await leaderboardRefresh.click();
+  await expect.poll(() => page.evaluate(() => {
+    const scene = window.__CENTER_STAND_GAME__?.scene.getScene('GameOverScene') as unknown as {
+      leaderboardStatus: { text: string };
+    };
+    return scene.leaderboardStatus.text;
+  })).toBe('최신 완주 기록을 불러왔습니다');
   await expect(leaderboardSubmit).toBeEnabled();
 
   await page.evaluate(() => {

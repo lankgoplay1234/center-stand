@@ -17,8 +17,9 @@ export class EnemyManager {
     private readonly scene: Phaser.Scene,
     private readonly player: Player,
     private readonly callbacks: EnemyManagerCallbacks,
+    renderLayer?: Phaser.GameObjects.Container,
   ) {
-    this.pool = new EnemyPool(scene, 120);
+    this.pool = new EnemyPool(scene, 120, renderLayer);
   }
 
   get activeEnemies(): Enemy[] {
@@ -116,7 +117,8 @@ export class EnemyManager {
       enemyData,
       stageStats.stage,
       stageStats.enemyHealthMultiplier,
-      stageStats.enemyDamageMultiplier,
+      stageStats.enemyAttackBonus,
+      stageStats.enemyDefenseBonus,
       stageStats.enemySpeedMultiplier,
     );
     enemy.countsTowardStage = countsTowardStage;

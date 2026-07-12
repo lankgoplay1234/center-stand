@@ -5,8 +5,12 @@ import type { EnemyData } from '../types/GameTypes';
 export class EnemyPool {
   private readonly items: Enemy[] = [];
 
-  constructor(scene: Phaser.Scene, initialSize = 120) {
-    for (let i = 0; i < initialSize; i += 1) this.items.push(new Enemy(scene, i));
+  constructor(
+    scene: Phaser.Scene,
+    initialSize = 120,
+    private readonly renderLayer?: Phaser.GameObjects.Container,
+  ) {
+    for (let i = 0; i < initialSize; i += 1) this.items.push(this.createEnemy(scene));
   }
 
   acquire(
@@ -15,15 +19,16 @@ export class EnemyPool {
     data: EnemyData,
     stage: number,
     healthMultiplier: number,
-    damageMultiplier: number,
+    attackBonus: number,
+    defenseBonus: number,
     speedMultiplier: number,
   ): Enemy {
     let enemy = this.items.find((item) => !item.active);
     if (!enemy) {
-      enemy = new Enemy(this.items[0]?.scene ?? (() => { throw new Error('Enemy pool has no scene'); })(), this.items.length);
+      enemy = this.createEnemy(this.items[0]?.scene ?? (() => { throw new Error('Enemy pool has no scene'); })());
       this.items.push(enemy);
     }
-    enemy.activate(x, y, data, stage, healthMultiplier, damageMultiplier, speedMultiplier);
+    enemy.activate(x, y, data, stage, healthMultiplier, attackBonus, defenseBonus, speedMultiplier);
     return enemy;
   }
 
@@ -47,5 +52,11 @@ export class EnemyPool {
 
   releaseAll(): void {
     for (const item of this.items) item.deactivate();
+  }
+
+  private createEnemy(scene: Phaser.Scene): Enemy {
+    const enemy = new Enemy(scene, this.items.length);
+    this.renderLayer?.add(enemy);
+    return enemy;
   }
 }

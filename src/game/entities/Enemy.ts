@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { calculateAppliedDamage, type DamageResult } from '../systems/DamageSystem';
+import { calculateAppliedDamage, calculateDamageAfterDefense, type DamageResult } from '../systems/DamageSystem';
 import { calculateEffectiveKnockbackForce, calculateKnockbackPosition } from '../systems/KnockbackSystem';
 import { getEnemyVisualProfile } from '../data/EnemyData';
 import type { EnemyData } from '../types/GameTypes';
@@ -9,6 +9,7 @@ export class Enemy extends Phaser.GameObjects.Image {
   health = 0;
   maxHealth = 0;
   attackDamage = 0;
+  defense = 0;
   moveSpeed = 0;
   attackInterval = 0;
   goldReward = 0;
@@ -32,7 +33,8 @@ export class Enemy extends Phaser.GameObjects.Image {
     data: EnemyData,
     stage: number,
     healthMultiplier: number,
-    damageMultiplier: number,
+    attackBonus: number,
+    defenseBonus: number,
     speedMultiplier: number,
   ): void {
     const visual = getEnemyVisualProfile(stage, data.rank);
@@ -45,7 +47,8 @@ export class Enemy extends Phaser.GameObjects.Image {
       .setVisible(true).setActive(true);
     this.maxHealth = Math.round(data.health * healthMultiplier);
     this.health = this.maxHealth;
-    this.attackDamage = Math.round(data.attackDamage * damageMultiplier);
+    this.attackDamage = Math.round(data.attackDamage + attackBonus);
+    this.defense = Math.round(data.defense + defenseBonus);
     this.moveSpeed = data.moveSpeed * speedMultiplier;
     this.attackInterval = data.attackInterval;
     this.goldReward = data.goldReward;
@@ -67,7 +70,10 @@ export class Enemy extends Phaser.GameObjects.Image {
 
   takeDamage(damage: number): DamageResult {
     if (!this.isAlive) return { appliedDamage: 0, died: false };
-    const appliedDamage = calculateAppliedDamage(this.health, damage);
+    const appliedDamage = calculateAppliedDamage(
+      this.health,
+      calculateDamageAfterDefense(damage, this.defense),
+    );
     this.health -= appliedDamage;
     if (this.health <= 0) {
       this.health = 0;

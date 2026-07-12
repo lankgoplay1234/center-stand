@@ -83,10 +83,15 @@ describe('LeaderboardApi', () => {
       expect(response.status).toBe(201);
     }
     const response = await handler(new Request('https://example.test/leaderboard'));
-    const body = await response.json() as { entries: Array<{ deaths: number; rank: number }> };
+    const body = await response.json() as {
+      entries: Array<{ nickname: string; characterId: string; deaths: number; completionTimeSeconds: number; rank: number }>;
+    };
     expect(body.entries).toHaveLength(10);
     expect(body.entries.map((entry) => entry.deaths)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     expect(body.entries.map((entry) => entry.rank)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(body.entries[0]).toEqual(expect.objectContaining({
+      nickname: '용11', characterId: 'arc-ranger', deaths: 1, completionTimeSeconds: 2_411,
+    }));
   });
 
   it('rate limits repeated submissions per forwarded client address', async () => {

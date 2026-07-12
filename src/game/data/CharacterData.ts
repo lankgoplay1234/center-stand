@@ -63,7 +63,7 @@ export const CHARACTERS: readonly CharacterData[] = [
     attackDamage: 14,
     attackSpeed: 1.45,
     baseCriticalChance: 0.07,
-    attackRange: 50,
+    attackRange: 60,
     maxAttackRange: 150,
     attackArcDegrees: 90,
     attackAreaRadius: 24,

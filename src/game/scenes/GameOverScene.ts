@@ -75,25 +75,30 @@ export class GameOverScene extends Phaser.Scene {
 
   private createLeaderboardPanel(): void {
     this.leaderboard = new LeaderboardService(import.meta.env.VITE_LEADERBOARD_API_URL ?? '');
-    this.add.text(360, 910, '완주 랭킹 · 사망 횟수 TOP 10', {
+    this.add.text(360, 910, '완주 랭킹 · 사망 횟수 TOP 10 · 동률 시 시간', {
       fontFamily: 'Arial Black, sans-serif', fontSize: '21px', color: '#fff08a',
     }).setOrigin(0.5);
 
     const form = document.createElement('div');
-    form.style.cssText = 'display:flex;gap:8px;align-items:center;justify-content:center;width:410px;';
+    form.style.cssText = 'display:flex;gap:7px;align-items:center;justify-content:center;width:520px;';
     const input = document.createElement('input');
     input.maxLength = 5;
     input.placeholder = '닉네임 1~5자';
     input.autocomplete = 'off';
     input.setAttribute('aria-label', '랭킹 닉네임');
     input.dataset.testid = 'leaderboard-nickname';
-    input.style.cssText = 'width:230px;height:48px;padding:0 14px;border:2px solid #49708b;border-radius:8px;background:#10192b;color:#fff;font:700 17px Arial;outline:none;';
+    input.style.cssText = 'width:200px;height:48px;padding:0 14px;border:2px solid #49708b;border-radius:8px;background:#10192b;color:#fff;font:700 17px Arial;outline:none;';
     const submit = document.createElement('button');
     submit.type = 'button';
     submit.textContent = '업로드';
     submit.dataset.testid = 'leaderboard-submit';
-    submit.style.cssText = 'width:120px;height:48px;border:0;border-radius:8px;background:#26b8c5;color:#07131d;font:900 17px Arial;cursor:pointer;';
-    form.append(input, submit);
+    submit.style.cssText = 'width:105px;height:48px;border:0;border-radius:8px;background:#26b8c5;color:#07131d;font:900 17px Arial;cursor:pointer;';
+    const refresh = document.createElement('button');
+    refresh.type = 'button';
+    refresh.textContent = '새로고침';
+    refresh.dataset.testid = 'leaderboard-refresh';
+    refresh.style.cssText = 'width:105px;height:48px;border:2px solid #49708b;border-radius:8px;background:#17263a;color:#d9f5ff;font:800 15px Arial;cursor:pointer;';
+    form.append(input, submit, refresh);
     this.add.dom(360, 958, form).setDepth(30);
 
     this.leaderboardStatus = this.add.text(360, 997, '', {
@@ -107,6 +112,7 @@ export class GameOverScene extends Phaser.Scene {
     input.disabled = false;
     submit.disabled = false;
     submit.addEventListener('click', () => void this.submitLeaderboard(input, submit));
+    refresh.addEventListener('click', () => void this.reloadLeaderboard(refresh));
     if (!this.leaderboard.isConfigured) {
       this.leaderboardStatus.setText('닉네임을 입력하면 이 브라우저의 로컬 랭킹에 저장됩니다');
     } else if (!hasProof) {
@@ -115,6 +121,14 @@ export class GameOverScene extends Phaser.Scene {
       this.leaderboardStatus.setText('닉네임을 입력해 내 기록을 등록하세요');
     }
     void this.refreshLeaderboard();
+  }
+
+  private async reloadLeaderboard(refresh: HTMLButtonElement): Promise<void> {
+    refresh.disabled = true;
+    this.leaderboardStatus.setText('최신 완주 기록을 불러오는 중...');
+    const loaded = await this.refreshLeaderboard();
+    if (loaded) this.leaderboardStatus.setText('최신 완주 기록을 불러왔습니다');
+    refresh.disabled = false;
   }
 
   private async submitLeaderboard(input: HTMLInputElement, submit: HTMLButtonElement): Promise<void> {
@@ -137,16 +151,18 @@ export class GameOverScene extends Phaser.Scene {
     }
   }
 
-  private async refreshLeaderboard(): Promise<void> {
+  private async refreshLeaderboard(): Promise<boolean> {
     try {
       const entries = await this.leaderboard.list();
       this.leaderboardEntries.setText(entries.length === 0 ? '아직 등록된 완주 기록이 없습니다' : entries.map((entry) => {
         const characterName = getCharacterById(entry.characterId).name;
-        return `${entry.rank}. ${entry.nickname} · ${characterName} · ${entry.deaths}회`;
+        return `${entry.rank}. ${entry.nickname} · ${characterName} · 사망 ${entry.deaths}회 · ${this.formatTime(entry.completionTimeSeconds)}`;
       }).join('\n'));
+      return true;
     } catch (error) {
       const message = error instanceof LeaderboardServiceError ? error.message : '랭킹을 불러오지 못했습니다';
       this.leaderboardEntries.setText(`${message} · 게임 결과에는 영향이 없습니다`);
+      return false;
     }
   }
 

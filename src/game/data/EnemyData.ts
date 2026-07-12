@@ -6,6 +6,7 @@ export const BASIC_ENEMY: Readonly<EnemyData> = {
   rank: 'NORMAL',
   health: 54,
   attackDamage: 9,
+  defense: 0,
   moveSpeed: 66,
   attackInterval: 850,
   goldReward: 11,
@@ -17,6 +18,7 @@ export const CAPTAIN_ENEMY: Readonly<EnemyData> = {
   rank: 'CAPTAIN',
   health: BASIC_ENEMY.health * 12,
   attackDamage: BASIC_ENEMY.attackDamage * 10,
+  defense: 10,
   moveSpeed: BASIC_ENEMY.moveSpeed * 0.82,
   attackInterval: 1_200,
   goldReward: BASIC_ENEMY.goldReward * 18,
@@ -50,9 +52,9 @@ export function getEnemyVisualProfile(stage: number, rank: EnemyData['rank']): E
 }
 
 export function calculateCaptainSpawnChance(stage: number): number {
-  const safeStage = Math.min(100, Math.max(1, Math.floor(stage)));
-  if (safeStage < 10) return 0;
-  return 0.002 + (safeStage - 10) / 90 * 0.018;
+  const integerStage = Number.isFinite(stage) ? Math.floor(stage) : 1;
+  const safeStage = Math.min(100, Math.max(1, integerStage));
+  return (safeStage - 1) / 99 * 0.35;
 }
 
 export function selectEnemyData(stage: number, randomRoll: number): Readonly<EnemyData> {

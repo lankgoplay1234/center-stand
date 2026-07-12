@@ -79,6 +79,8 @@ describe('character data', () => {
     const byId = new Map(CHARACTERS.map((character) => [character.id, character]));
     expect(byId.get('blade-warden')?.attackArcDegrees).toBe(45);
     expect(byId.get('bastion-gunner')?.attackArcDegrees).toBe(90);
+    expect(byId.get('bastion-gunner')?.attackRange).toBe(60);
+    expect(byId.get('bastion-gunner')?.maxAttackRange).toBe(150);
     expect(byId.get('bastion-gunner')?.attackRange).toBeLessThan(byId.get('blade-warden')?.attackRange ?? 0);
     for (const id of ['arc-ranger', 'rune-mage', 'needle-striker', 'storm-conductor']) {
       expect(byId.get(id)?.attackArcDegrees).toBeNull();

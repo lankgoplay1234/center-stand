@@ -1,6 +1,11 @@
 import type Phaser from 'phaser';
 import { UPGRADE_ORDER, canUpgrade } from '../data/UpgradeData';
 import { MOB_CLEAR_NAME } from '../data/MobClearData';
+import {
+  MOB_CLEAR_SHORTCUT_LABEL,
+  REVIVE_SHORTCUT_LABEL,
+  UPGRADE_SHORTCUT_LABELS,
+} from '../data/KeyboardShortcutData';
 import type { Player } from '../entities/Player';
 import type { GameSpeed } from '../systems/GameSpeedSystem';
 import type { UpgradeSystem } from '../systems/UpgradeSystem';
@@ -42,6 +47,10 @@ export class UIManager {
   private deathOverlay: Phaser.GameObjects.Container | null = null;
   private restartConfirmation: Phaser.GameObjects.Container | null = null;
   private pauseOverlay: Phaser.GameObjects.Container | null = null;
+
+  get isRestartConfirmationVisible(): boolean {
+    return this.restartConfirmation !== null;
+  }
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -125,7 +134,7 @@ export class UIManager {
         ? '★ '
         : id === player.character.upgradeFocus.secondary ? '◇ ' : '';
       button.text.setText(
-        `${focusPrefix}${state.definition.name}  Lv.${state.level}\n${upgrades.getEffectLabel(id)}\n${available ? `비용 ${state.currentCost} G` : 'MAX LEVEL'}`,
+        `${focusPrefix}[${UPGRADE_SHORTCUT_LABELS[id]}] ${state.definition.name}  Lv.${state.level}\n${upgrades.getEffectLabel(id)}\n${available ? `비용 ${state.currentCost} G` : 'MAX LEVEL'}`,
       );
       button.background.setFillStyle(affordable ? 0x173d4b : 0x1a2030, 1)
         .setStrokeStyle(2, affordable ? 0x5be6e6 : 0x3a4358, affordable ? 0.95 : 0.65);
@@ -135,7 +144,7 @@ export class UIManager {
     }
     const canClear = mobClearEnabled && !mobClear.isMaxed && activeEnemies > 0 && run.gold >= mobClear.currentCost;
     this.mobClearButton.text.setText(
-      `${MOB_CLEAR_NAME}\n현재 ${activeEnemies}마리 · 사용 ${mobClear.usageCount}/${mobClear.maxUses}회\n${mobClear.isMaxed ? '사용 완료' : `비용 ${mobClear.currentCost} G`}`,
+      `[${MOB_CLEAR_SHORTCUT_LABEL}] ${MOB_CLEAR_NAME}\n현재 ${activeEnemies}마리 · 사용 ${mobClear.usageCount}/${mobClear.maxUses}회\n${mobClear.isMaxed ? '사용 완료' : `비용 ${mobClear.currentCost} G`}`,
     );
     this.mobClearButton.background.setFillStyle(canClear ? 0x5a2130 : 0x1a2030, 1)
       .setStrokeStyle(2, canClear ? 0xff6b83 : 0x3a4358, canClear ? 0.95 : 0.65);
@@ -204,7 +213,7 @@ export class UIManager {
     }).setOrigin(0.5);
     const reviveBg = this.scene.add.rectangle(360, 650, 430, 86, 0x26b8c5).setStrokeStyle(3, 0xa6fbff)
       .setInteractive({ useHandCursor: true });
-    const reviveText = this.scene.add.text(360, 650, '부활하기', {
+    const reviveText = this.scene.add.text(360, 650, `부활하기  [${REVIVE_SHORTCUT_LABEL}]`, {
       fontFamily: 'Arial Black, sans-serif', fontSize: '29px', color: '#07131d',
     }).setOrigin(0.5);
     const restartBg = this.scene.add.rectangle(360, 760, 430, 76, 0x252f43).setStrokeStyle(2, 0x72819c)
