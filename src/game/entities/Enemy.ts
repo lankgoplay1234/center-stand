@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { calculateAppliedDamage, calculateDamageAfterDefense, type DamageResult } from '../systems/DamageSystem';
 import { calculateEffectiveKnockbackForce, calculateKnockbackPosition } from '../systems/KnockbackSystem';
-import { getEnemyVisualProfile } from '../data/EnemyData';
+import { calculateEnemyGoldReward, getEnemyVisualProfile } from '../data/EnemyData';
 import type { EnemyData } from '../types/GameTypes';
 
 export class Enemy extends Phaser.GameObjects.Image {
@@ -51,7 +51,7 @@ export class Enemy extends Phaser.GameObjects.Image {
     this.defense = Math.round(data.defense + defenseBonus);
     this.moveSpeed = data.moveSpeed * speedMultiplier;
     this.attackInterval = data.attackInterval;
-    this.goldReward = data.goldReward;
+    this.goldReward = calculateEnemyGoldReward(stage, data);
     this.contactRange = data.contactRange;
     this.isAlive = true;
     this.countsTowardStage = true;

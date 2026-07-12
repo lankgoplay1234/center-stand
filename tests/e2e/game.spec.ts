@@ -809,7 +809,8 @@ test('spawns stronger stage-100 captains with distinct visuals from the existing
   expect(result.normal.defense).toBe(99);
   expect(result.captain.attackDamage).toBeGreaterThan(result.normal.attackDamage);
   expect(result.captain.defense).toBeGreaterThan(result.normal.defense);
-  expect(result.captain.goldReward).toBe(result.normal.goldReward * 18);
+  expect(result.normal.goldReward).toBe(20);
+  expect(result.captain.goldReward).toBe(200);
 });
 
 test('locks a level 99 upgrade without spending gold', async ({ page }) => {

@@ -90,7 +90,7 @@ export interface EnemyData {
   defense: number;
   moveSpeed: number;
   attackInterval: number;
-  goldReward: number;
+  goldRewardPerStage: number;
   contactRange: number;
 }
 

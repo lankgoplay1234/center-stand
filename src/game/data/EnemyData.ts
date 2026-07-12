@@ -9,7 +9,7 @@ export const BASIC_ENEMY: Readonly<EnemyData> = {
   defense: 0,
   moveSpeed: 66,
   attackInterval: 850,
-  goldReward: 11,
+  goldRewardPerStage: 0.2,
   contactRange: 44,
 };
 
@@ -21,7 +21,7 @@ export const CAPTAIN_ENEMY: Readonly<EnemyData> = {
   defense: 10,
   moveSpeed: BASIC_ENEMY.moveSpeed * 0.82,
   attackInterval: 1_200,
-  goldReward: BASIC_ENEMY.goldReward * 18,
+  goldRewardPerStage: 2,
   contactRange: 58,
 };
 
@@ -49,6 +49,12 @@ export function calculateEnemyVisualTier(stage: number): number {
 export function getEnemyVisualProfile(stage: number, rank: EnemyData['rank']): EnemyVisualProfile {
   const tier = calculateEnemyVisualTier(stage);
   return (rank === 'CAPTAIN' ? CAPTAIN_VISUALS : NORMAL_VISUALS)[tier - 1]!;
+}
+
+export function calculateEnemyGoldReward(stage: number, data: Pick<EnemyData, 'goldRewardPerStage'>): number {
+  const integerStage = Number.isFinite(stage) ? Math.floor(stage) : 1;
+  const safeStage = Math.min(100, Math.max(1, integerStage));
+  return Math.ceil(data.goldRewardPerStage * safeStage);
 }
 
 export function calculateCaptainSpawnChance(stage: number): number {

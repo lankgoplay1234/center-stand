@@ -1,5 +1,10 @@
 import type { CharacterData, UpgradeId } from '../types/GameTypes';
-import { BASIC_ENEMY, CAPTAIN_ENEMY, calculateCaptainSpawnChance } from './EnemyData';
+import {
+  BASIC_ENEMY,
+  CAPTAIN_ENEMY,
+  calculateCaptainSpawnChance,
+  calculateEnemyGoldReward,
+} from './EnemyData';
 import { calculateOverchargeDamageMultiplier } from './SpecialAbilityData';
 import { calculateStageStats, getStageKillTarget } from './StageData';
 import {
@@ -99,8 +104,9 @@ export function estimateRunGold(killRatio = EXPECTED_RUN_KILL_RATIO): number {
 
 export function estimateStageGold(stage: number): number {
   const captainChance = calculateCaptainSpawnChance(stage);
-  const expectedReward = BASIC_ENEMY.goldReward
-    + captainChance * (CAPTAIN_ENEMY.goldReward - BASIC_ENEMY.goldReward);
+  const normalReward = calculateEnemyGoldReward(stage, BASIC_ENEMY);
+  const captainReward = calculateEnemyGoldReward(stage, CAPTAIN_ENEMY);
+  const expectedReward = normalReward + captainChance * (captainReward - normalReward);
   return Math.floor(getStageKillTarget(stage) * expectedReward);
 }
 
