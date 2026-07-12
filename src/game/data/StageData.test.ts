@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
-  STAGE_KILL_TARGET_SEGMENTS,
+  FINAL_STAGE_KILL_TARGET,
+  FINAL_STAGE_SPAWN_RATE,
+  FIRST_STAGE_KILL_TARGET,
+  FIRST_STAGE_SPAWN_RATE,
   THEORETICAL_FASTEST_CLEAR_MS,
   TOTAL_STAGE_KILL_TARGET,
   calculateStageStats,
@@ -13,10 +16,16 @@ describe('stage difficulty', () => {
   it('raises health and lowers spawn interval', () => {
     const first = calculateStageStats(1);
     const fifth = calculateStageStats(5);
+    const final = calculateStageStats(100);
     expect(fifth.enemyHealthMultiplier).toBeGreaterThan(first.enemyHealthMultiplier);
-    expect(fifth.enemyDamageMultiplier).toBeGreaterThan(first.enemyDamageMultiplier);
+    expect(fifth.enemyAttackBonus).toBe(first.enemyAttackBonus + 4);
+    expect(fifth.enemyDefenseBonus).toBe(first.enemyDefenseBonus + 4);
     expect(fifth.spawnInterval).toBeLessThan(first.spawnInterval);
     expect(fifth.maxActiveEnemies).toBeGreaterThan(first.maxActiveEnemies);
+    expect(first.enemyAttackBonus).toBe(0);
+    expect(first.enemyDefenseBonus).toBe(0);
+    expect(final.enemyAttackBonus).toBe(99);
+    expect(final.enemyDefenseBonus).toBe(99);
   });
 
   it('clamps invalid stages to stage one', () => {
@@ -26,23 +35,25 @@ describe('stage difficulty', () => {
   });
 
   it('uses increasing kill targets instead of fixed stage durations', () => {
-    expect(STAGE_KILL_TARGET_SEGMENTS).toHaveLength(3);
-    expect(getStageKillTarget(1)).toBe(18);
-    expect(getStageKillTarget(5)).toBe(27);
-    expect(getStageKillTarget(10)).toBe(45);
-    expect(getStageKillTarget(15)).toBe(75);
-    expect(getStageKillTarget(20)).toBe(75);
-    expect(getStageKillTarget(21)).toBe(96);
-    expect(getStageKillTarget(60)).toBe(96);
-    expect(getStageKillTarget(61)).toBe(111);
-    expect(getStageKillTarget(100)).toBe(111);
+    expect(getStageKillTarget(1)).toBe(FIRST_STAGE_KILL_TARGET);
+    expect(getStageKillTarget(50)).toBe(174);
+    expect(getStageKillTarget(100)).toBe(FINAL_STAGE_KILL_TARGET);
+    for (let stage = 2; stage <= 100; stage += 1) {
+      expect(getStageKillTarget(stage)).toBeGreaterThan(getStageKillTarget(stage - 1));
+    }
   });
 
-  it('sets a finite 100-stage target and an approximately 20-minute theoretical floor', () => {
-    expect(TOTAL_STAGE_KILL_TARGET).toBe(9_264);
+  it('scales spawn rate linearly from 10 to 100 enemies per second', () => {
+    expect(1_000 / calculateStageStats(1).spawnInterval).toBeCloseTo(FIRST_STAGE_SPAWN_RATE);
+    expect(1_000 / calculateStageStats(50).spawnInterval).toBeCloseTo(54.54545);
+    expect(1_000 / calculateStageStats(100).spawnInterval).toBeCloseTo(FINAL_STAGE_SPAWN_RATE);
+  });
+
+  it('sets a finite 17,500-enemy 100-stage target and theoretical spawn floor', () => {
+    expect(TOTAL_STAGE_KILL_TARGET).toBe(17_500);
     expect(calculateTotalStageKillTarget()).toBe(TOTAL_STAGE_KILL_TARGET);
     expect(calculateTheoreticalFastestClearMs()).toBe(THEORETICAL_FASTEST_CLEAR_MS);
-    expect(THEORETICAL_FASTEST_CLEAR_MS).toBeGreaterThanOrEqual(19 * 60_000);
-    expect(THEORETICAL_FASTEST_CLEAR_MS).toBeLessThanOrEqual(21 * 60_000);
+    expect(THEORETICAL_FASTEST_CLEAR_MS).toBeGreaterThan(5 * 60_000);
+    expect(THEORETICAL_FASTEST_CLEAR_MS).toBeLessThan(6 * 60_000);
   });
 });

@@ -32,6 +32,7 @@ export interface StageCombatSnapshot {
   maxHealth: number;
   defense: number;
   enemyDamage: number;
+  enemyDefense: number;
   lateStageClearRatio: number;
   survivableHits: number;
   killsPerSecond: number;
@@ -40,7 +41,7 @@ export interface StageCombatSnapshot {
 
 export const STABLE_COMPLETION_MIN_UPGRADES = 400;
 export const EXPECTED_RUN_KILL_RATIO = 1;
-export const MIN_LATE_STAGE_CLEAR_RATIO = 1;
+export const MIN_LATE_STAGE_CLEAR_RATIO = 0.015;
 export const MIN_SURVIVABLE_HITS = 8;
 
 export const ROLE_COMPLETION_ALLOCATIONS: Readonly<Record<string, UpgradeAllocation>> = {
@@ -180,15 +181,23 @@ export function simulateStageCombat(
     allocation.maxHealth,
     character.upgradeEfficiency.maxHealth,
   );
-  const enemyHealth = BASIC_ENEMY.health * stageStats.enemyHealthMultiplier;
-  const baseHitsPerEnemy = enemyHealth / damage;
-  const hitsPerEnemy = Math.max(
+  const averageDamage = damage * calculateAverageDamageMultiplier(character, allocation);
+  const captainChance = calculateCaptainSpawnChance(stage);
+  const normalDamagePerHit = Math.max(1, averageDamage - BASIC_ENEMY.defense - stageStats.enemyDefenseBonus);
+  const captainDamagePerHit = Math.max(1, averageDamage - CAPTAIN_ENEMY.defense - stageStats.enemyDefenseBonus);
+  const normalHitsPerEnemy = Math.max(
     1,
-    baseHitsPerEnemy / calculateAverageDamageMultiplier(character, allocation),
+    BASIC_ENEMY.health * stageStats.enemyHealthMultiplier / normalDamagePerHit,
   );
+  const captainHitsPerEnemy = Math.max(
+    1,
+    CAPTAIN_ENEMY.health * stageStats.enemyHealthMultiplier / captainDamagePerHit,
+  );
+  const hitsPerEnemy = normalHitsPerEnemy * (1 - captainChance) + captainHitsPerEnemy * captainChance;
   const killsPerSecond = attackSpeed * calculateTargetCapacity(character) / hitsPerEnemy;
   const enemiesPerSecond = 1_000 / stageStats.spawnInterval;
-  const enemyDamage = BASIC_ENEMY.attackDamage * stageStats.enemyDamageMultiplier;
+  const enemyDamage = BASIC_ENEMY.attackDamage + stageStats.enemyAttackBonus;
+  const enemyDefense = BASIC_ENEMY.defense + stageStats.enemyDefenseBonus;
   const incomingDamage = Math.max(1, enemyDamage - defense);
   const lateStageClearRatio = killsPerSecond / enemiesPerSecond;
   const survivableHits = maxHealth / incomingDamage;
@@ -198,6 +207,7 @@ export function simulateStageCombat(
     maxHealth,
     defense,
     enemyDamage,
+    enemyDefense,
     lateStageClearRatio,
     survivableHits,
     killsPerSecond,

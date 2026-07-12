@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import { GROWTH_PROFILE_LABELS } from '../data/BalanceData';
 import { CHARACTERS } from '../data/CharacterData';
-import { UPGRADE_DEFINITIONS } from '../data/UpgradeData';
 import { getCharacterVisualAsset } from '../data/VisualAssetData';
 import type { AttackType, CharacterData } from '../types/GameTypes';
 import { formatCriticalChance } from '../data/CriticalHitData';
@@ -100,15 +99,11 @@ export class CharacterSelectScene extends Phaser.Scene {
     const description = this.add.text(-132, 2, character.description, {
       fontFamily: 'Arial, sans-serif', fontSize: '13px', color: '#aabbd0', wordWrap: { width: 264 }, lineSpacing: 2,
     }).setOrigin(0, 0);
-    const focus = this.add.text(-132, 41,
-      `추천: ${UPGRADE_DEFINITIONS[character.upgradeFocus.primary].name} → ${UPGRADE_DEFINITIONS[character.upgradeFocus.secondary].name}`,
-      { fontFamily: 'Arial, sans-serif', fontSize: '12px', color: '#fff0a3', fontStyle: 'bold' },
-    ).setOrigin(0, 0);
-    const stats = this.add.text(-132, 57,
+    const stats = this.add.text(-132, 45,
       `HP ${character.maxHealth}  ATK ${character.attackDamage}  SPD ${character.attackSpeed}\nRNG ${character.attackRange}  CRIT ${formatCriticalChance(character.baseCriticalChance)}`,
       { fontFamily: 'Arial, sans-serif', fontSize: '12px', color: '#d6e5f2', lineSpacing: 2 },
     ).setOrigin(0, 0);
-    const card = this.add.container(x, y, [background, portraitAura, portrait, name, role, description, focus, stats]);
+    const card = this.add.container(x, y, [background, portraitAura, portrait, name, role, description, stats]);
     this.cardBackgrounds.set(character.id, background);
     background.on('pointerup', () => {
       this.selectedCharacter = character;

@@ -1,19 +1,10 @@
 import type { StageStats } from '../types/GameTypes';
 
-export interface StageKillTargetSegment {
-  startStage: number;
-  endStage: number;
-  targetAtMaximumSpawnRate: number;
-}
-
-export const STAGE_KILL_TARGET_SEGMENTS: readonly StageKillTargetSegment[] = [
-  { startStage: 1, endStage: 20, targetAtMaximumSpawnRate: 75 },
-  { startStage: 21, endStage: 60, targetAtMaximumSpawnRate: 96 },
-  { startStage: 61, endStage: 100, targetAtMaximumSpawnRate: 111 },
-];
-
 export const STAGE_TRANSITION_SPAWN_DELAY_MS = 800;
-export const MINIMUM_SPAWN_INTERVAL_MS = 120;
+export const FIRST_STAGE_SPAWN_RATE = 10;
+export const FINAL_STAGE_SPAWN_RATE = 100;
+export const FIRST_STAGE_KILL_TARGET = 50;
+export const FINAL_STAGE_KILL_TARGET = 300;
 
 function normalizeStage(stage: number): number {
   const integerStage = Number.isFinite(stage) ? Math.floor(stage) : 1;
@@ -21,26 +12,27 @@ function normalizeStage(stage: number): number {
 }
 
 export function calculateStageStats(stage: number): StageStats {
-  const safeStage = Math.max(1, Math.floor(stage));
+  const safeStage = normalizeStage(stage);
   const step = safeStage - 1;
+  const progress = step / 99;
+  const spawnRate = FIRST_STAGE_SPAWN_RATE
+    + (FINAL_STAGE_SPAWN_RATE - FIRST_STAGE_SPAWN_RATE) * progress;
   return {
     stage: safeStage,
     enemyHealthMultiplier: 1 + step * 0.075,
-    enemyDamageMultiplier: 1 + step * 0.13,
-    enemySpeedMultiplier: Math.min(1.75, 1 + step * 0.035),
-    spawnInterval: Math.max(MINIMUM_SPAWN_INTERVAL_MS, 520 * 0.9 ** step),
-    maxActiveEnemies: Math.min(140, 32 + step * 8),
+    enemyAttackBonus: step,
+    enemyDefenseBonus: step,
+    enemySpeedMultiplier: 1 + 0.75 * progress,
+    spawnInterval: 1_000 / spawnRate,
+    maxActiveEnemies: Math.round(50 + 90 * progress),
   };
 }
 
 export function getStageKillTarget(stage: number): number {
   const safeStage = normalizeStage(stage);
-  const segment = STAGE_KILL_TARGET_SEGMENTS.find(
-    ({ startStage, endStage }) => safeStage >= startStage && safeStage <= endStage,
-  );
-  if (!segment) throw new Error(`Missing kill target data for stage ${safeStage}`);
-  const spawnInterval = calculateStageStats(safeStage).spawnInterval;
-  return Math.ceil(segment.targetAtMaximumSpawnRate * MINIMUM_SPAWN_INTERVAL_MS / spawnInterval);
+  const progress = (safeStage - 1) / 99;
+  return Math.round(FIRST_STAGE_KILL_TARGET
+    + (FINAL_STAGE_KILL_TARGET - FIRST_STAGE_KILL_TARGET) * progress);
 }
 
 export function calculateTotalStageKillTarget(startStage = 1, endStage = 100): number {

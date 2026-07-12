@@ -73,7 +73,7 @@ test('selects all six characters and enters combat', async ({ page }) => {
   for (const chance of ['0.0%', '5.0%', '7.0%', '10.0%', '20.0%']) {
     expect(criticalLabels.some((label) => label.includes(`CRIT ${chance}`))).toBe(true);
   }
-  expect(characterCardTexts).toContain('추천: 공격력 → 공격 속도');
+  expect(characterCardTexts.some((text) => text.startsWith('추천:'))).toBe(false);
 
   for (const card of CHARACTER_CARDS) {
     await clickGamePoint(page, card.x, card.y);
@@ -693,6 +693,7 @@ test('spawns stronger stage-100 captains with distinct visuals from the existing
           texture: { key: string };
           maxHealth: number;
           attackDamage: number;
+          defense: number;
           goldReward: number;
         }>;
         destroyAll: () => void;
@@ -722,6 +723,7 @@ test('spawns stronger stage-100 captains with distinct visuals from the existing
         textureKey: normal.texture.key,
         maxHealth: normal.maxHealth,
         attackDamage: normal.attackDamage,
+        defense: normal.defense,
         goldReward: normal.goldReward,
       },
       captain: {
@@ -730,6 +732,7 @@ test('spawns stronger stage-100 captains with distinct visuals from the existing
         textureKey: captain.texture.key,
         maxHealth: captain.maxHealth,
         attackDamage: captain.attackDamage,
+        defense: captain.defense,
         goldReward: captain.goldReward,
       },
     };
@@ -737,14 +740,17 @@ test('spawns stronger stage-100 captains with distinct visuals from the existing
 
   expect(result.stageOneCaptains).toBe(0);
   expect(result.activeCount).toBe(100);
-  expect(result.captainCount).toBe(2);
+  expect(result.captainCount).toBe(35);
   expect(result.normal.tier).toBe(5);
   expect(result.captain.tier).toBe(5);
   expect(result.captain.radius).toBeGreaterThan(result.normal.radius);
   expect(result.normal.textureKey).toBe('enemy-normal-5');
   expect(result.captain.textureKey).toBe('enemy-captain-5');
   expect(result.captain.maxHealth).toBeGreaterThanOrEqual(result.normal.maxHealth * 11.9);
-  expect(result.captain.attackDamage).toBeGreaterThanOrEqual(result.normal.attackDamage * 9.9);
+  expect(result.normal.attackDamage).toBe(108);
+  expect(result.normal.defense).toBe(99);
+  expect(result.captain.attackDamage).toBeGreaterThan(result.normal.attackDamage);
+  expect(result.captain.defense).toBeGreaterThan(result.normal.defense);
   expect(result.captain.goldReward).toBe(result.normal.goldReward * 18);
 });
 

@@ -33,12 +33,12 @@ const MIN_CLEAR_PRESSURE = 1;
 const MAX_CLEAR_PRESSURE = 2.5;
 
 const ROLE_EXPOSURE: Readonly<Record<AttackType, number>> = {
-  SINGLE_TARGET: 3.16,
-  MULTI_TARGET: 8.96,
-  AREA_MELEE: 3.52,
-  AREA_MAGIC: 2.3,
-  PIERCING: 3.02,
-  CHAIN: 3.18,
+  SINGLE_TARGET: 0.37,
+  MULTI_TARGET: 1.02,
+  AREA_MELEE: 0.35,
+  AREA_MAGIC: 1.01,
+  PIERCING: 1.06,
+  CHAIN: 1.7,
 };
 
 function emptyAllocation(): Record<UpgradeId, number> {
@@ -124,11 +124,9 @@ export function simulateRunDeaths(
     const combat = simulateStageCombat(character, allocation, stage);
     const exposureMultiplier = calculateExposureMultiplier(character, allocation);
     const captainChance = calculateCaptainSpawnChance(stage);
-    const weightedHealthMultiplier = 1 + captainChance * (CAPTAIN_ENEMY.health / BASIC_ENEMY.health - 1);
-    const adjustedClearRatio = combat.lateStageClearRatio / weightedHealthMultiplier;
     const clearPressure = Math.min(
       MAX_CLEAR_PRESSURE,
-      Math.max(MIN_CLEAR_PRESSURE, 1 / Math.max(0.01, adjustedClearRatio)),
+      Math.max(MIN_CLEAR_PRESSURE, 1 / Math.max(0.01, combat.lateStageClearRatio)),
     );
     const stageVariance = 0.9 + random() * 0.2;
     const contactingEnemies = stageStats.maxActiveEnemies
@@ -137,7 +135,7 @@ export function simulateRunDeaths(
       * exposureMultiplier
       * stageVariance;
     const normalDamagePerHit = Math.max(1, combat.enemyDamage - combat.defense);
-    const captainDamage = CAPTAIN_ENEMY.attackDamage * stageStats.enemyDamageMultiplier;
+    const captainDamage = CAPTAIN_ENEMY.attackDamage + stageStats.enemyAttackBonus;
     const captainDamagePerHit = Math.max(1, captainDamage - combat.defense);
     const weightedDamagePerSecond = (1 - captainChance)
       * normalDamagePerHit * 1_000 / BASIC_ENEMY.attackInterval

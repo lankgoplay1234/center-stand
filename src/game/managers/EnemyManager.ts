@@ -116,7 +116,8 @@ export class EnemyManager {
       enemyData,
       stageStats.stage,
       stageStats.enemyHealthMultiplier,
-      stageStats.enemyDamageMultiplier,
+      stageStats.enemyAttackBonus,
+      stageStats.enemyDefenseBonus,
       stageStats.enemySpeedMultiplier,
     );
     enemy.countsTowardStage = countsTowardStage;

@@ -87,6 +87,7 @@ export interface EnemyData {
   rank: 'NORMAL' | 'CAPTAIN';
   health: number;
   attackDamage: number;
+  defense: number;
   moveSpeed: number;
   attackInterval: number;
   goldReward: number;
@@ -130,7 +131,8 @@ export interface UpgradeState {
 export interface StageStats {
   stage: number;
   enemyHealthMultiplier: number;
-  enemyDamageMultiplier: number;
+  enemyAttackBonus: number;
+  enemyDefenseBonus: number;
   enemySpeedMultiplier: number;
   spawnInterval: number;
   maxActiveEnemies: number;

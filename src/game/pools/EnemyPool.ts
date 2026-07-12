@@ -15,7 +15,8 @@ export class EnemyPool {
     data: EnemyData,
     stage: number,
     healthMultiplier: number,
-    damageMultiplier: number,
+    attackBonus: number,
+    defenseBonus: number,
     speedMultiplier: number,
   ): Enemy {
     let enemy = this.items.find((item) => !item.active);
@@ -23,7 +24,7 @@ export class EnemyPool {
       enemy = new Enemy(this.items[0]?.scene ?? (() => { throw new Error('Enemy pool has no scene'); })(), this.items.length);
       this.items.push(enemy);
     }
-    enemy.activate(x, y, data, stage, healthMultiplier, damageMultiplier, speedMultiplier);
+    enemy.activate(x, y, data, stage, healthMultiplier, attackBonus, defenseBonus, speedMultiplier);
     return enemy;
   }
 

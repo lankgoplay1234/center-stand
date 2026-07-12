@@ -35,21 +35,23 @@ describe('enemy stage progression', () => {
     expect(CAPTAIN_ENEMY.health).toBeGreaterThanOrEqual(BASIC_ENEMY.health * 10);
     expect(CAPTAIN_ENEMY.attackDamage).toBeGreaterThanOrEqual(BASIC_ENEMY.attackDamage * 10);
     expect(CAPTAIN_ENEMY.goldReward).toBeGreaterThan(BASIC_ENEMY.goldReward);
+    expect(CAPTAIN_ENEMY.defense).toBeGreaterThan(BASIC_ENEMY.defense);
   });
 
-  it('starts captain spawns at stage 10 and reaches two percent at stage 100', () => {
+  it('increases captain chance linearly from zero to 35 percent', () => {
     expect(calculateCaptainSpawnChance(1)).toBe(0);
-    expect(calculateCaptainSpawnChance(9)).toBe(0);
-    expect(calculateCaptainSpawnChance(10)).toBeCloseTo(0.002);
-    expect(calculateCaptainSpawnChance(50)).toBeGreaterThan(calculateCaptainSpawnChance(10));
-    expect(calculateCaptainSpawnChance(100)).toBeCloseTo(0.02);
+    expect(calculateCaptainSpawnChance(50)).toBeCloseTo(49 / 99 * 0.35);
+    expect(calculateCaptainSpawnChance(100)).toBeCloseTo(0.35);
+    for (let stage = 2; stage <= 100; stage += 1) {
+      expect(calculateCaptainSpawnChance(stage)).toBeGreaterThan(calculateCaptainSpawnChance(stage - 1));
+    }
   });
 
   it('selects a captain only when the random roll is inside the current chance', () => {
-    expect(selectEnemyData(9, 0)).toBe(BASIC_ENEMY);
-    expect(selectEnemyData(10, 0.001)).toBe(CAPTAIN_ENEMY);
-    expect(selectEnemyData(10, 0.003)).toBe(BASIC_ENEMY);
-    expect(selectEnemyData(100, 0.019)).toBe(CAPTAIN_ENEMY);
-    expect(selectEnemyData(100, 0.02)).toBe(BASIC_ENEMY);
+    expect(selectEnemyData(1, 0)).toBe(BASIC_ENEMY);
+    expect(selectEnemyData(50, 0.17)).toBe(CAPTAIN_ENEMY);
+    expect(selectEnemyData(50, 0.18)).toBe(BASIC_ENEMY);
+    expect(selectEnemyData(100, 0.349)).toBe(CAPTAIN_ENEMY);
+    expect(selectEnemyData(100, 0.35)).toBe(BASIC_ENEMY);
   });
 });
