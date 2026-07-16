@@ -47,6 +47,15 @@ export class EnemyManager {
     }
 
     for (const enemy of this.activeEnemies) {
+      enemy.updateKnockback(delta);
+      if (enemy.knockbackDuration > 0) {
+        const dx = this.player.x - enemy.x;
+        const dy = this.player.y - enemy.y;
+        enemy.rotation = Math.atan2(dy, dx);
+        enemy.restoreVisual();
+        continue;
+      }
+
       const dx = this.player.x - enemy.x;
       const dy = this.player.y - enemy.y;
       const distanceSquared = dx * dx + dy * dy;
