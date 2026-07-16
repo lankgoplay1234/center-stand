@@ -190,16 +190,44 @@ export function selectChainTargets<T extends TargetCandidate>(
   while (selected.length < limit) {
     let nearest: T | null = null;
     let nearestDistanceSquared = Number.POSITIVE_INFINITY;
+
+    // 플레이어 몸에 초근접(32px 이하)한 적이 연쇄 전이 범위(chainRange) 내에 있다면 최우선적으로 전이
+    let bestUltraClose: T | null = null;
+    let minUltraCloseDistSq = Number.POSITIVE_INFINITY;
+
     for (const candidate of candidates) {
       if (!candidate.isAlive || seen.has(candidate.poolId)) continue;
-      const dx = candidate.x - current.x;
-      const dy = candidate.y - current.y;
-      const distanceSquared = dx * dx + dy * dy;
-      if (distanceSquared <= rangeSquared && distanceSquared < nearestDistanceSquared) {
-        nearest = candidate;
-        nearestDistanceSquared = distanceSquared;
+      const dxPlayer = candidate.x - originX;
+      const dyPlayer = candidate.y - originY;
+      const distToPlayerSq = dxPlayer * dxPlayer + dyPlayer * dyPlayer;
+
+      const dxCurrent = candidate.x - current.x;
+      const dyCurrent = candidate.y - current.y;
+      const distToCurrentSq = dxCurrent * dxCurrent + dyCurrent * dyCurrent;
+
+      if (distToPlayerSq <= 32 * 32 && distToCurrentSq <= rangeSquared) {
+        if (distToPlayerSq < minUltraCloseDistSq) {
+          bestUltraClose = candidate;
+          minUltraCloseDistSq = distToPlayerSq;
+        }
       }
     }
+
+    if (bestUltraClose) {
+      nearest = bestUltraClose;
+    } else {
+      for (const candidate of candidates) {
+        if (!candidate.isAlive || seen.has(candidate.poolId)) continue;
+        const dx = candidate.x - current.x;
+        const dy = candidate.y - current.y;
+        const distanceSquared = dx * dx + dy * dy;
+        if (distanceSquared <= rangeSquared && distanceSquared < nearestDistanceSquared) {
+          nearest = candidate;
+          nearestDistanceSquared = distanceSquared;
+        }
+      }
+    }
+
     if (!nearest) break;
     selected.push(nearest);
     seen.add(nearest.poolId);
