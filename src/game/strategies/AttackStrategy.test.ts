@@ -135,17 +135,17 @@ describe('AREA_MELEE', () => {
   it('hits only enemies inside the aimed 45-degree blade cone', () => {
     const withinAngle = 20 * Math.PI / 180;
     const outsideAngle = 30 * Math.PI / 180;
-    const attack = context(attacker({ attackRange: 60, attackArcDegrees: 45 }), [
-      target(1, 30, 0),
-      target(2, Math.cos(withinAngle) * 45, Math.sin(withinAngle) * 45),
-      target(3, Math.cos(outsideAngle) * 45, Math.sin(outsideAngle) * 45),
-      target(4, -40, 0),
+    const attack = context(attacker({ attackRange: 70, attackArcDegrees: 45 }), [
+      target(1, 50, 0),
+      target(2, Math.cos(withinAngle) * 55, Math.sin(withinAngle) * 55),
+      target(3, Math.cos(outsideAngle) * 55, Math.sin(outsideAngle) * 55),
+      target(4, -50, 0),
     ]);
     expect(createAttackStrategy<FakeTarget>('AREA_MELEE').execute(attack)).toBe(2);
     const attackedIds = attack.applyInstantDamage.mock.calls.map((call) => (call[0] as FakeTarget).poolId);
     expect(attackedIds).toEqual([1, 2]);
     expect(attack.emitEffect).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'AREA_MELEE', radius: 60, arcDegrees: 45, targetX: 30, targetY: 0,
+      type: 'AREA_MELEE', radius: 70, arcDegrees: 45, targetX: 50, targetY: 0,
     }));
   });
 });

@@ -98,10 +98,12 @@ export class Enemy extends Phaser.GameObjects.Image {
     if (safeForce <= 0) return false;
     const dx = this.x - originX;
     const dy = this.y - originY;
-    const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const unitX = distance > 0.0001 ? dx / distance : 1;
+    const unitY = distance > 0.0001 ? dy / distance : 0;
     const duration = 200;
-    this.knockbackX = (dx / distance) * (safeForce / (duration / 1000));
-    this.knockbackY = (dy / distance) * (safeForce / (duration / 1000));
+    this.knockbackX = unitX * (safeForce / (duration / 1000));
+    this.knockbackY = unitY * (safeForce / (duration / 1000));
     this.knockbackDuration = duration;
     return true;
   }

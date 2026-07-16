@@ -128,7 +128,7 @@ describe('nearest target selection ultra-close test', () => {
 
     const candidates = [
       target(1, 20, 0),
-      target(2, 40, 0),
+      target(2, 60, 0),
     ];
 
     const selected = selectNearestUniqueTargets(candidates, 0, 0, 10, 2);

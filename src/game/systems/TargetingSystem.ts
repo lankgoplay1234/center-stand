@@ -31,7 +31,7 @@ export function selectNearestUniqueTargets<T extends TargetCandidate>(
     const dx = target.x - originX;
     const dy = target.y - originY;
     const distanceSquared = dx * dx + dy * dy;
-    const isUltraClose = distanceSquared <= 32 * 32;
+    const isUltraClose = distanceSquared <= 48 * 48;
     if (!isUltraClose && distanceSquared > rangeSquared) continue;
 
     let insertAt = selected.length;
@@ -97,7 +97,7 @@ export function selectNearestUniqueTargetsInCone<T extends TargetCandidate>(
     const dx = target.x - originX;
     const dy = target.y - originY;
     const distanceSquared = dx * dx + dy * dy;
-    const isUltraClose = distanceSquared <= 32 * 32;
+    const isUltraClose = distanceSquared <= 48 * 48;
     if (!isUltraClose && distanceSquared > rangeSquared) continue;
     const distance = Math.sqrt(distanceSquared);
     const dot = distance === 0 ? 1 : (dx * unitAimX + dy * unitAimY) / distance;
@@ -147,7 +147,7 @@ export function selectPiercingTargets<T extends TargetCandidate>(
     const relativeX = target.x - originX;
     const relativeY = target.y - originY;
     const distToPlayerSq = relativeX * relativeX + relativeY * relativeY;
-    const isUltraClose = distToPlayerSq <= 32 * 32;
+    const isUltraClose = distToPlayerSq <= 48 * 48;
 
     const projection = relativeX * unitX + relativeY * unitY;
     if (!isUltraClose) {
@@ -197,7 +197,7 @@ export function selectChainTargets<T extends TargetCandidate>(
     let nearest: T | null = null;
     let nearestDistanceSquared = Number.POSITIVE_INFINITY;
 
-    // 플레이어 몸에 초근접(32px 이하)한 적이 연쇄 전이 범위(chainRange) 내에 있다면 최우선적으로 전이
+    // 플레이어 몸에 초근접(48px 이하)한 적이 연쇄 전이 범위(chainRange) 내에 있다면 최우선적으로 전이
     let bestUltraClose: T | null = null;
     let minUltraCloseDistSq = Number.POSITIVE_INFINITY;
 
@@ -211,7 +211,7 @@ export function selectChainTargets<T extends TargetCandidate>(
       const dyCurrent = candidate.y - current.y;
       const distToCurrentSq = dxCurrent * dxCurrent + dyCurrent * dyCurrent;
 
-      if (distToPlayerSq <= 32 * 32 && distToCurrentSq <= rangeSquared) {
+      if (distToPlayerSq <= 48 * 48 && distToCurrentSq <= rangeSquared) {
         if (distToPlayerSq < minUltraCloseDistSq) {
           bestUltraClose = candidate;
           minUltraCloseDistSq = distToPlayerSq;
