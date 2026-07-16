@@ -138,3 +138,53 @@ describe('nearest target selection ultra-close test', () => {
     expect(selectedIds).not.toContain(2);
   });
 });
+
+describe('targeting fallback on perfect overlap', () => {
+  const target = (poolId: number, x: number, y = 0): TargetCandidate => ({ poolId, x, y, isAlive: true });
+
+  it('selects targets in cone and avoids collapsing the aim vector to (0,0) when closest target overlaps player', () => {
+    // 플레이어 위치 (0, 0)
+    // candidates:
+    // - 1번 몹: (0, 0) -> 플레이어와 완전히 겹침 (가장 가까운 몹)
+    // - 2번 몹: (50, 0) -> 플레이어 우측 (0도 방향)에 있음 (조준선 우측으로 복구 시 콘 각도 내에 포함되어야 함)
+    // - 3번 몹: (0, 50) -> 플레이어 하단 (90도 방향)에 있음 (90도 콘 각도 범위 밖)
+
+    const candidates = [
+      target(1, 0, 0),
+      target(2, 50, 0),
+      target(3, 0, 50),
+    ];
+
+    // 콘 각도 90도 (우측 1,0 기준 +/- 45도)
+    const selected = selectNearestUniqueTargetsInCone(candidates, 0, 0, 100, 90, 3);
+    const selectedIds = selected.map((entry) => entry.poolId);
+
+    // 1번(겹침)과 2번(우측 0도)은 정상 선택되어야 하고 3번(하단 90도)은 제외되어야 함
+    expect(selectedIds).toContain(1);
+    expect(selectedIds).toContain(2);
+    expect(selectedIds).not.toContain(3);
+  });
+
+  it('selects piercing targets and avoids collapsing the direction vector to (0,0) when closest target overlaps player', () => {
+    // 플레이어 위치 (0, 0)
+    // candidates:
+    // - 1번 몹: (0, 0) -> 플레이어와 완전히 겹침 (가장 가까운 몹)
+    // - 2번 몹: (50, 0) -> 플레이어 우측 (0도 방향)에 있음 (조준선 우측 복구 시 관통 광선 폭/거리 내 포함)
+    // - 3번 몹: (50, 40) -> projection = 50, perpendicular = 40 (광선 폭 20px 초과로 제외)
+
+    const candidates = [
+      target(1, 0, 0),
+      target(2, 50, 0),
+      target(3, 50, 40),
+    ];
+
+    const result = selectPiercingTargets(candidates, 0, 0, 100, 20, 3);
+    expect(result).not.toBeNull();
+    const selectedIds = result!.targets.map((entry) => entry.poolId);
+
+    // 1번(겹침)과 2번(우측 0도)은 정상 선택되어야 하고 3번은 제외되어야 함
+    expect(selectedIds).toContain(1);
+    expect(selectedIds).toContain(2);
+    expect(selectedIds).not.toContain(3);
+  });
+});

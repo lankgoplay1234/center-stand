@@ -82,9 +82,9 @@ export function selectNearestUniqueTargetsInCone<T extends TargetCandidate>(
   if (!first) return [];
   const aimX = first.x - originX;
   const aimY = first.y - originY;
-  const aimLength = Math.sqrt(aimX * aimX + aimY * aimY) || 1;
-  const unitAimX = aimX / aimLength;
-  const unitAimY = aimY / aimLength;
+  const aimLength = Math.sqrt(aimX * aimX + aimY * aimY);
+  const unitAimX = aimLength > 0.0001 ? aimX / aimLength : 1;
+  const unitAimY = aimLength > 0.0001 ? aimY / aimLength : 0;
   const halfRadians = Math.min(360, Math.max(0, arcDegrees)) * Math.PI / 360;
   const minimumDot = Math.cos(halfRadians);
   const rangeSquared = range * range;
@@ -134,9 +134,9 @@ export function selectPiercingTargets<T extends TargetCandidate>(
   if (!first) return null;
   const directionX = first.x - originX;
   const directionY = first.y - originY;
-  const directionLength = Math.sqrt(directionX * directionX + directionY * directionY) || 1;
-  const unitX = directionX / directionLength;
-  const unitY = directionY / directionLength;
+  const directionLength = Math.sqrt(directionX * directionX + directionY * directionY);
+  const unitX = directionLength > 0.0001 ? directionX / directionLength : 1;
+  const unitY = directionLength > 0.0001 ? directionY / directionLength : 0;
   const limit = Math.max(1, Math.floor(targetCount));
   const widthSquared = halfWidth * halfWidth;
   const selected: Array<{ target: T; projection: number }> = [];
