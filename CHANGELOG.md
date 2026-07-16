@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.62.0 - 2026-07-16
+
+### Added
+
+- 몬스터 넉백 시 순간이동이 아닌, 부드러운 지수 감속(Exponential Decay) 물리 벡터 모션을 추가 (`Enemy.updateKnockback`)
+- 넉백 중인 동안에는 플레이어 방향으로 스스로 전진하는 이동(AI)을 일시정지하여 넉백의 물리적 피격감을 실감나게 개선 (`EnemyManager.update` 내 knockbackDuration 분기 처리)
+
+### Verified
+
+- `KnockbackSystem.test.ts` 등의 단위 테스트가 기존 넉백 좌표 및 바운더리 체크 규칙을 준수하며 성공적으로 통과함 확인
+- typecheck, lint, Vitest 테스트 186개, production build 전체 통과 확인
+
 ## 0.61.0 - 2026-07-16
 
 ### Changed
