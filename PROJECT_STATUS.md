@@ -149,6 +149,8 @@
 
 ## 최근 테스트 결과
 
+- 2026-07-16 `TARGET-005` (사용자 커스텀): 블레이드 워든 및 각도 한계 캐릭터의 몸비비기 밀착 몹 타겟팅 딜 누수 및 넉백 무효화 해결. 몹의 접촉 타격 범위인 44px을 안전하게 포용하기 위해 초근접 구제 임계값을 32px에서 48px로 상향. Enemy.ts 의 applyKnockback 에서 플레이어와 몹이 겹쳐 넉백 벡터가 0으로 소실되는 버그에 대해 기본 우측 (1, 0) 방향 Fallback을 주입하여 정상 넉백으로 겹침 해제 보장. AttackStrategy.test.ts 및 TargetingSystem.test.ts 의 몹 거리 단정값을 임계값 변화에 맞게 최적화. typecheck, lint, Vitest 테스트 192개, build 전체 성공
+
 - 2026-07-16 `TARGET-004` (사용자 커스텀): 캐릭터가 몬스터에 둘러싸여 중심 좌표가 완벽히 겹쳤을 때, 조준선 길이 0에 의한 방향 벡터 (0, 0) 찌러짐 현상을 해결. 거리가 0에 근접한 경우 기본 방향 벡터 (1, 0)을 유지하는 Fallback 로직을 selectNearestUniqueTargetsInCone 및 selectPiercingTargets 에 적용하여 주변 몬스터들이 정상 타겟팅 및 피격되도록 버그 수정. TargetingSystem.test.ts 유닛 테스트 보강 완료. typecheck, lint, Vitest 테스트 192개, build 전체 성공
 
 - 2026-07-16 `COMBAT-004` (사용자 커스텀): 캐릭터 방어력이 몬스터 공격력을 상회하는 경우 피격 시 50% 확률로 "MISS" 회피 발동 기능 추가. 50% 확률로 피해량을 0으로 무효화하고, 플레이어 중심 머리 위에 "MISS" 플로팅 텍스트 이펙트(Phaser Tween 연출)를 상향 페이드아웃하며 띄움. 나머지 50% 확률로는 기존과 동일하게 최소 피해 1을 차감하여 긴장감 유지. typecheck, lint, Vitest 테스트 190개, build 전체 성공
