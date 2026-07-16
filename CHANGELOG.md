@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.65.0 - 2026-07-16
+
+### Fixed
+
+- 니들 스트라이커(관통선 너비 22px 사각지대)를 포함한 6종 캐릭터 전체에 대해, 플레이어 몸에 겹쳐진 초근접 적(32px 이하)이 무기 사거리, 공격 각도, 공격선 너비 등 모든 타겟팅 한계를 우회하여 무조건 우선 공격 대상에 포함되도록 전방위 구제 로직 공통 적용
+- `TargetingSystem.ts` 의 핵심 선택 함수(`selectNearestUniqueTargets`, `selectNearestUniqueTargetsInCone`, `selectPiercingTargets`)에 플레이어 중심 초근접 타겟팅 면제 필터를 일관되게 주입하여 전 캐릭터 공통 사각지대 전면 해결 (360도 광역기인 `selectAllUniqueTargetsInRange` 는 불필요하므로 제외)
+
+### Verified
+
+- `TargetingSystem.test.ts` 에 관통(Piercing) 공격 시 조준선 반대편 좌측(-10, 0)에 있으나 32px 이내에 초근접한 몹이 구제되는 케이스 및 기본 사거리가 극도로 좁은(10px) 상태에서도 32px 이내 초근접 몹이 구제되는 케이스의 단위 테스트 추가
+- typecheck, lint, Vitest 테스트 190개, production build 전체 성공 확인
+
 ## 0.64.0 - 2026-07-16
 
 ### Fixed
