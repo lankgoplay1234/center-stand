@@ -1,4 +1,5 @@
 import type { StageStats } from '../types/GameTypes';
+import { BASIC_ENEMY } from './EnemyData';
 
 export const STAGE_TRANSITION_SPAWN_DELAY_MS = 800;
 export const FIRST_STAGE_SPAWN_RATE = 10;
@@ -17,11 +18,22 @@ export function calculateStageStats(stage: number): StageStats {
   const progress = step / 99;
   const spawnRate = FIRST_STAGE_SPAWN_RATE
     + (FINAL_STAGE_SPAWN_RATE - FIRST_STAGE_SPAWN_RATE) * progress;
+
+  const enemyHealthMultiplier = safeStage <= 5
+    ? 1
+    : 1 + step * 0.075;
+  const enemyAttackBonus = safeStage <= 5
+    ? -BASIC_ENEMY.attackDamage + 1.5 + (safeStage - 1) * 0.5
+    : step;
+  const enemyDefenseBonus = safeStage <= 5
+    ? 0
+    : step;
+
   return {
     stage: safeStage,
-    enemyHealthMultiplier: 1 + step * 0.075,
-    enemyAttackBonus: step,
-    enemyDefenseBonus: step,
+    enemyHealthMultiplier,
+    enemyAttackBonus,
+    enemyDefenseBonus,
     enemySpeedMultiplier: 1 + 0.75 * progress,
     spawnInterval: 1_000 / spawnRate,
     maxActiveEnemies: Math.round(50 + 90 * progress),

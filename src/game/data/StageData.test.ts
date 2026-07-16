@@ -16,13 +16,16 @@ describe('stage difficulty', () => {
   it('raises health and lowers spawn interval', () => {
     const first = calculateStageStats(1);
     const fifth = calculateStageStats(5);
+    const sixth = calculateStageStats(6);
     const final = calculateStageStats(100);
-    expect(fifth.enemyHealthMultiplier).toBeGreaterThan(first.enemyHealthMultiplier);
-    expect(fifth.enemyAttackBonus).toBe(first.enemyAttackBonus + 4);
-    expect(fifth.enemyDefenseBonus).toBe(first.enemyDefenseBonus + 4);
+    expect(final.enemyHealthMultiplier).toBeGreaterThan(sixth.enemyHealthMultiplier);
+    expect(fifth.enemyAttackBonus).toBeCloseTo(first.enemyAttackBonus + 2);
+    expect(fifth.enemyDefenseBonus).toBe(first.enemyDefenseBonus);
+    expect(final.enemyAttackBonus).toBeGreaterThan(sixth.enemyAttackBonus);
+    expect(final.enemyDefenseBonus).toBeGreaterThan(sixth.enemyDefenseBonus);
     expect(fifth.spawnInterval).toBeLessThan(first.spawnInterval);
     expect(fifth.maxActiveEnemies).toBeGreaterThan(first.maxActiveEnemies);
-    expect(first.enemyAttackBonus).toBe(0);
+    expect(first.enemyAttackBonus).toBeCloseTo(-6);
     expect(first.enemyDefenseBonus).toBe(0);
     expect(final.enemyAttackBonus).toBe(99);
     expect(final.enemyDefenseBonus).toBe(99);
