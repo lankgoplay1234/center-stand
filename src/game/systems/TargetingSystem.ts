@@ -99,7 +99,8 @@ export function selectNearestUniqueTargetsInCone<T extends TargetCandidate>(
     if (distanceSquared > rangeSquared) continue;
     const distance = Math.sqrt(distanceSquared);
     const dot = distance === 0 ? 1 : (dx * unitAimX + dy * unitAimY) / distance;
-    if (dot + Number.EPSILON < minimumDot) continue;
+    const isUltraClose = distance <= 32;
+    if (!isUltraClose && dot + Number.EPSILON < minimumDot) continue;
 
     let insertAt = selected.length;
     while (insertAt > 0 && selected[insertAt - 1]!.distanceSquared > distanceSquared) insertAt -= 1;
