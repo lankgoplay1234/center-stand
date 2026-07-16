@@ -56,7 +56,7 @@ describe('character data', () => {
     expect(Object.fromEntries(CHARACTERS.map((character) => [character.id, character.maxHealth]))).toEqual({
       'arc-ranger': 86,
       'blade-warden': 118,
-      'bastion-gunner': 150,
+      'bastion-gunner': 200,
       'rune-mage': 104,
       'needle-striker': 64,
       'storm-conductor': 114,

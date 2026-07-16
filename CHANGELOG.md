@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.70.0 - 2026-07-16
+
+### Changed
+
+- 모든 캐릭터의 기본 공격력(`attackDamage`)을 **2배** 상향 조정
+  - 아크 레인저: `30` ➔ `60`
+  - 블레이드 워든: `33` ➔ `66`
+  - 바스티온: `16` ➔ `32`
+  - 룬 메이지: `22` ➔ `44`
+  - 니들 스트라이커: `14` ➔ `28`
+  - 스톰 컨덕터: `20` ➔ `40`
+- 바스티온의 기본 체력(`maxHealth`)을 `150` 에서 **`200`** 으로 상향 조정
+- 캐릭터 공격력 2배 및 바스티온 체력 상향에 따른 시뮬레이션 기반 클리어 시간 단정치 완화 및 평균 사망 수(평균 약 31회) 기댓값 테스트 보정 반영
+  - `CharacterData.test.ts`, `FastClearSimulation.test.ts`, `RunBalanceSimulation.test.ts`, `MinimumDeathBuildSimulation.test.ts` 유닛 테스트 코드 수정
+
 ## 0.69.0 - 2026-07-16
 
 ### Fixed

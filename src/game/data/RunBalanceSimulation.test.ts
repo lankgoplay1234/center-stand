@@ -77,7 +77,7 @@ describe('400-upgrade completion balance', () => {
   it('keeps high-pressure clear times finite and sensitive to upgrade choices', () => {
     for (const character of CHARACTERS) {
       const fastMinutes = estimateRunClearTimeMs(character, getRoleCompletionAllocation(character)) / 60_000;
-      expect(fastMinutes, character.name).toBeGreaterThanOrEqual(15);
+      expect(fastMinutes, character.name).toBeGreaterThanOrEqual(11);
       expect(fastMinutes, character.name).toBeLessThanOrEqual(90);
     }
     const arc = CHARACTERS.find((character) => character.id === 'arc-ranger')!;
