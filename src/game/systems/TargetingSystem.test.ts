@@ -4,6 +4,7 @@ import {
   selectNearestUniqueTargets,
   selectNearestUniqueTargetsInCone,
   selectChainTargets,
+  selectPiercingTargets,
   type TargetCandidate,
 } from './TargetingSystem';
 
@@ -85,5 +86,55 @@ describe('chain target selection', () => {
 
     // 3번(가장 가까우므로 first)과 1번(연쇄 전이 대상)이 순서대로 선택되어야 함
     expect(selectedIds).toEqual([3, 1]);
+  });
+});
+
+describe('piercing target selection', () => {
+  const target = (poolId: number, x: number, y = 0): TargetCandidate => ({ poolId, x, y, isAlive: true });
+
+  it('selects piercing targets and exempts ultra-close targets even if outside the line width and range direction', () => {
+    // 플레이어 위치 (0, 0), 첫 타겟 조준 대상 (100, 0) -> 우측(0도) 방향으로 뻗음
+    // 관통 폭 halfWidth = 20px (y축 +/- 20px)
+    // candidates:
+    // - 1번 몹: (100, 0) -> 조준 기준 몹 (projection = 100, perpendicular = 0) -> 포함
+    // - 2번 몹: (50, 40) -> projection = 50, perpendicular = 40 (폭 20 초과로 제외) -> 제외
+    // - 3번 몹: (-10, 0) -> 플레이어 좌측(0도 반대방향). projection = -10 (투영 범위 밖). 플레이어와의 거리 = 10px (초근접) -> 포함 (구제)
+
+    const candidates = [
+      target(1, 20, 0),
+      target(2, 50, 40),
+      target(3, -10, 0),
+    ];
+
+    const result = selectPiercingTargets(candidates, 0, 0, 150, 20, 3);
+    expect(result).not.toBeNull();
+    const selectedIds = result!.targets.map((entry) => entry.poolId);
+
+    // 1번과 3번(초근접 구제 대상)은 포함되어야 하고 2번은 제외되어야 함
+    expect(selectedIds).toContain(1);
+    expect(selectedIds).toContain(3);
+    expect(selectedIds).not.toContain(2);
+  });
+});
+
+describe('nearest target selection ultra-close test', () => {
+  const target = (poolId: number, x: number, y = 0): TargetCandidate => ({ poolId, x, y, isAlive: true });
+
+  it('exempts ultra-close targets from range limit checks', () => {
+    // 플레이어 위치 (0, 0), 사거리 10px로 극단적으로 짧음
+    // candidates:
+    // - 1번 몹: (20, 0) -> 플레이어와의 거리 = 20px (사거리 10px 초과이지만 32px 이하 초근접) -> 포함 (구제)
+    // - 2번 몹: (40, 0) -> 플레이어와의 거리 = 40px (사거리 10px 초과 및 32px 초과) -> 제외
+
+    const candidates = [
+      target(1, 20, 0),
+      target(2, 40, 0),
+    ];
+
+    const selected = selectNearestUniqueTargets(candidates, 0, 0, 10, 2);
+    const selectedIds = selected.map((entry) => entry.poolId);
+
+    expect(selectedIds).toContain(1);
+    expect(selectedIds).not.toContain(2);
   });
 });

@@ -31,7 +31,8 @@ export function selectNearestUniqueTargets<T extends TargetCandidate>(
     const dx = target.x - originX;
     const dy = target.y - originY;
     const distanceSquared = dx * dx + dy * dy;
-    if (distanceSquared > rangeSquared) continue;
+    const isUltraClose = distanceSquared <= 32 * 32;
+    if (!isUltraClose && distanceSquared > rangeSquared) continue;
 
     let insertAt = selected.length;
     while (insertAt > 0 && selected[insertAt - 1]!.distanceSquared > distanceSquared) insertAt -= 1;
@@ -96,10 +97,10 @@ export function selectNearestUniqueTargetsInCone<T extends TargetCandidate>(
     const dx = target.x - originX;
     const dy = target.y - originY;
     const distanceSquared = dx * dx + dy * dy;
-    if (distanceSquared > rangeSquared) continue;
+    const isUltraClose = distanceSquared <= 32 * 32;
+    if (!isUltraClose && distanceSquared > rangeSquared) continue;
     const distance = Math.sqrt(distanceSquared);
     const dot = distance === 0 ? 1 : (dx * unitAimX + dy * unitAimY) / distance;
-    const isUltraClose = distance <= 32;
     if (!isUltraClose && dot + Number.EPSILON < minimumDot) continue;
 
     let insertAt = selected.length;
@@ -145,11 +146,16 @@ export function selectPiercingTargets<T extends TargetCandidate>(
     if (!target.isAlive || seen.has(target.poolId)) continue;
     const relativeX = target.x - originX;
     const relativeY = target.y - originY;
+    const distToPlayerSq = relativeX * relativeX + relativeY * relativeY;
+    const isUltraClose = distToPlayerSq <= 32 * 32;
+
     const projection = relativeX * unitX + relativeY * unitY;
-    if (projection < 0 || projection > range) continue;
-    const perpendicularX = relativeX - projection * unitX;
-    const perpendicularY = relativeY - projection * unitY;
-    if (perpendicularX * perpendicularX + perpendicularY * perpendicularY > widthSquared) continue;
+    if (!isUltraClose) {
+      if (projection < 0 || projection > range) continue;
+      const perpendicularX = relativeX - projection * unitX;
+      const perpendicularY = relativeY - projection * unitY;
+      if (perpendicularX * perpendicularX + perpendicularY * perpendicularY > widthSquared) continue;
+    }
 
     let insertAt = selected.length;
     while (insertAt > 0 && selected[insertAt - 1]!.projection > projection) insertAt -= 1;
