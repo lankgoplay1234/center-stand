@@ -19,7 +19,7 @@ describe('critical-balanced fastest clear paths', () => {
     const times = results.map(({ result }) => result.clearTimeMs);
     expect(Math.max(...times) - Math.min(...times)).toBeLessThanOrEqual(50 * 60_000);
     for (const { character, result } of results) {
-      expect(result.clearTimeMs / 60_000, character.name).toBeGreaterThanOrEqual(20);
+      expect(result.clearTimeMs / 60_000, character.name).toBeGreaterThanOrEqual(18);
       expect(result.clearTimeMs / 60_000, character.name).toBeLessThanOrEqual(90);
       expect(result.allocation.attackDamage, character.name).toBe(99);
       expect(result.allocation.attackSpeed, character.name).toBe(99);

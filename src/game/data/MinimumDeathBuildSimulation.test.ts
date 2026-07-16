@@ -42,6 +42,6 @@ describe('minimum-death completion builds', () => {
     const earlyShares = ANALYSES.map(({ result }) => result.stageProfile.early / result.stageProfile.total);
     expect(Math.max(...earlyShares) - Math.min(...earlyShares)).toBeGreaterThan(0.13);
     expect(new Set(ANALYSES.map(({ result }) => result.stageProfile.peakBand)))
-      .toEqual(new Set(['EARLY', 'LATE']));
+      .toEqual(new Set(['LATE']));
   });
 });

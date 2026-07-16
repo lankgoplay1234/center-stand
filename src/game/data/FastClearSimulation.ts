@@ -9,6 +9,7 @@ import {
   calculateUpgradeCost,
   canUpgrade,
 } from './UpgradeData';
+import { STARTING_GOLD } from './BalanceData';
 
 export interface FastClearSimulationResult {
   clearTimeMs: number;
@@ -38,7 +39,7 @@ function estimateRemainingTimeMs(
 export function simulateFastestClearPath(character: CharacterData): FastClearSimulationResult {
   const allocation = emptyAllocation();
   let clearTimeMs = 0;
-  let gold = 0;
+  let gold = STARTING_GOLD;
   let spentGold = 0;
 
   for (let stage = 1; stage <= 100; stage += 1) {

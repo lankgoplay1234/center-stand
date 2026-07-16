@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.61.0 - 2026-07-16
+
+### Changed
+
+- 게임 시작 시 플레이어가 100골드를 지니고 시작하도록 수정 (`STARTING_GOLD = 100`)
+- 밸런스 및 클리어 시뮬레이션 시스템(`estimateRunGold`, `buildWeightedPlan`, `simulateFastestClearPath`)에 `STARTING_GOLD`를 반영하여 일관된 밸런스 예측 보장
+- 시작 골드 변경에 맞춰 6종 캐릭터의 100스테이지 완주 시 최소 사망 평균 횟수 범위 갱신 (`50.88 ~ 72.25` 회)
+
+### Verified
+
+- `RunBalanceSimulation.test.ts` 에서 100골드 상승에 따른 총 획득 골드 기댓값 `188,210` 갱신 및 검증 완료
+- `FastClearSimulation.test.ts` 에서 시작 골드 100G 지급으로 인한 니들 스트라이커의 클리어 타임 단축(18.43분)에 맞춰 하한선 기준 18분으로 조정 및 검증 완료
+- `MinimumDeathBuildSimulation.test.ts` 에서 초반 사망율 감소로 인한 모든 캐릭터 피크 위험 구간 `LATE` 수렴 변경 적용 및 검증 완료
+- typecheck, lint, Vitest 테스트 186개, production build 전체 통과 확인
+
 ## 0.60.0 - 2026-07-16
 
 ### Changed

@@ -4,6 +4,7 @@ import { UPGRADE_DEFINITIONS, UPGRADE_ORDER, calculateUpgradedStat } from './Upg
 export const FAST_CLEAR_REFERENCE_MS = 20 * 60_000;
 export const LONG_CLEAR_REFERENCE_MS = 60 * 60_000;
 export const EXPECTED_REVIVE_DECISION_MS = 1_200;
+export const STARTING_GOLD = 100;
 
 export function estimateWallClockRunMs(
   simulationDurationMs: number,

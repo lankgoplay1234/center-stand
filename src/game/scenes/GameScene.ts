@@ -24,6 +24,7 @@ import { StageDeathTracker } from '../systems/StageDeathTracker';
 import type { RunStats, UpgradeId } from '../types/GameTypes';
 import { calculatePlayerCriticalChance } from '../data/CriticalHitData';
 import { getGameplayShortcut } from '../data/KeyboardShortcutData';
+import { STARTING_GOLD } from '../data/BalanceData';
 
 export class GameScene extends Phaser.Scene {
   private player!: Player;
@@ -49,7 +50,7 @@ export class GameScene extends Phaser.Scene {
   private gameSpeed: GameSpeed = 1;
   private simulationTime = 0;
   private readonly stageDeaths = new StageDeathTracker();
-  private run: RunStats = { gold: 0, earnedGold: 0, kills: 0, deaths: 0, elapsedSeconds: 0 };
+  private run: RunStats = { gold: STARTING_GOLD, earnedGold: STARTING_GOLD, kills: 0, deaths: 0, elapsedSeconds: 0 };
 
   constructor() {
     super('GameScene');
@@ -65,7 +66,7 @@ export class GameScene extends Phaser.Scene {
     this.stageDeaths.enterStage(1);
     this.time.timeScale = 1;
     this.tweens.timeScale = 1;
-    this.run = { gold: 0, earnedGold: 0, kills: 0, deaths: 0, elapsedSeconds: 0 };
+    this.run = { gold: STARTING_GOLD, earnedGold: STARTING_GOLD, kills: 0, deaths: 0, elapsedSeconds: 0 };
     this.cameras.main.setBackgroundColor('#090d1a');
     this.backgroundShakeLayer = this.add.container(0, 0).setDepth(-3);
     this.enemyShakeLayer = this.add.container(0, 0).setDepth(4);

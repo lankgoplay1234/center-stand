@@ -17,6 +17,7 @@ import {
   calculateUpgradeCost,
   canUpgrade,
 } from './UpgradeData';
+import { STARTING_GOLD } from './BalanceData';
 export interface MinimumDeathPurchase {
   stage: number;
   id: UpgradeId;
@@ -52,7 +53,7 @@ function buildWeightedPlan(priorityWeights: Readonly<Record<UpgradeId, number>>)
   const allocation = emptyAllocation();
   const stageAllocations: UpgradeAllocation[] = [];
   const purchases: MinimumDeathPurchase[] = [];
-  let gold = 0;
+  let gold = STARTING_GOLD;
   let spentGold = 0;
 
   for (let stage = 1; stage <= 100; stage += 1) {

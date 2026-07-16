@@ -18,6 +18,7 @@ import {
   calculateExpectedCriticalDamageMultiplier,
   calculatePlayerCriticalChance,
 } from './CriticalHitData';
+import { STARTING_GOLD } from './BalanceData';
 
 export type UpgradeAllocation = Readonly<Record<UpgradeId, number>>;
 
@@ -95,7 +96,7 @@ export function estimateRunSpawnCount(): number {
 
 export function estimateRunGold(killRatio = EXPECTED_RUN_KILL_RATIO): number {
   const safeRatio = Math.min(1, Math.max(0, killRatio));
-  let total = 0;
+  let total = STARTING_GOLD;
   for (let stage = 1; stage <= 100; stage += 1) {
     total += estimateStageGold(stage) * safeRatio;
   }
