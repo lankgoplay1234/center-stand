@@ -144,7 +144,35 @@ export class Player extends Phaser.GameObjects.Container {
   }
 
   takeDamage(rawDamage: number): number {
-    const applied = Math.max(1, rawDamage - this.defense);
+    const netDamage = rawDamage - this.defense;
+    let applied = 0;
+
+    if (netDamage < 0) {
+      if (Math.random() < 0.5) {
+        const missText = this.scene.add.text(this.x, this.y - 30, 'MISS', {
+          fontFamily: 'Outfit, Arial, sans-serif',
+          fontSize: '18px',
+          fontStyle: 'bold',
+          color: '#e0e0e0',
+          stroke: '#000000',
+          strokeThickness: 3,
+        }).setOrigin(0.5);
+
+        this.scene.tweens.add({
+          targets: missText,
+          y: this.y - 70,
+          alpha: 0,
+          duration: 800,
+          ease: 'Cubic.easeOut',
+          onComplete: () => missText.destroy(),
+        });
+        return 0;
+      }
+      applied = 1;
+    } else {
+      applied = Math.max(1, netDamage);
+    }
+
     this.health = roundStat(Math.max(0, this.health - applied));
     this.scene.tweens.killTweensOf(this.core);
     this.core.setFillStyle(0xff5d7a);
