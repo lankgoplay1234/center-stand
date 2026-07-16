@@ -21,13 +21,13 @@ describe('minimum-death completion builds', () => {
 
   it('records the higher death pressure caused by the reduced stage reward budget', () => {
     const averages = ANALYSES.map(({ character, result }) => {
-      expect(result.averageDeaths, character.name).toBeGreaterThanOrEqual(80);
-      expect(result.averageDeaths, character.name).toBeLessThanOrEqual(135);
+      expect(result.averageDeaths, character.name).toBeGreaterThanOrEqual(50);
+      expect(result.averageDeaths, character.name).toBeLessThanOrEqual(80);
       return result.averageDeaths;
     });
-    expect(Math.max(...averages) - Math.min(...averages)).toBeLessThanOrEqual(45);
+    expect(Math.max(...averages) - Math.min(...averages)).toBeLessThanOrEqual(30);
     expect(averages.reduce((sum, deaths) => sum + deaths, 0) / averages.length)
-      .toBeCloseTo(100, -1);
+      .toBeCloseTo(70, -1);
   });
 
   it('records distinct role-aware priorities and nonzero early, middle, and late deaths', () => {

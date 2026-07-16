@@ -54,12 +54,12 @@ describe('character data', () => {
 
   it('uses minimum-death balanced base health values', () => {
     expect(Object.fromEntries(CHARACTERS.map((character) => [character.id, character.maxHealth]))).toEqual({
-      'arc-ranger': 78,
-      'blade-warden': 114,
-      'bastion-gunner': 140,
-      'rune-mage': 96,
-      'needle-striker': 54,
-      'storm-conductor': 106,
+      'arc-ranger': 86,
+      'blade-warden': 118,
+      'bastion-gunner': 150,
+      'rune-mage': 104,
+      'needle-striker': 64,
+      'storm-conductor': 114,
     });
   });
 

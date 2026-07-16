@@ -16,7 +16,7 @@ describe('UpgradeRecommendationSystem', () => {
     const expected = {
       'arc-ranger': 'attackDamage',
       'blade-warden': 'attackDamage',
-      'bastion-gunner': 'attackDamage',
+      'bastion-gunner': 'defense',
       'rune-mage': 'attackSpeed',
       'needle-striker': 'attackDamage',
       'storm-conductor': 'attackSpeed',
