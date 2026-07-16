@@ -149,6 +149,8 @@
 
 ## 최근 테스트 결과
 
+- 2026-07-16 `TARGET-004` (사용자 커스텀): 캐릭터가 몬스터에 둘러싸여 중심 좌표가 완벽히 겹쳤을 때, 조준선 길이 0에 의한 방향 벡터 (0, 0) 찌러짐 현상을 해결. 거리가 0에 근접한 경우 기본 방향 벡터 (1, 0)을 유지하는 Fallback 로직을 selectNearestUniqueTargetsInCone 및 selectPiercingTargets 에 적용하여 주변 몬스터들이 정상 타겟팅 및 피격되도록 버그 수정. TargetingSystem.test.ts 유닛 테스트 보강 완료. typecheck, lint, Vitest 테스트 192개, build 전체 성공
+
 - 2026-07-16 `COMBAT-004` (사용자 커스텀): 캐릭터 방어력이 몬스터 공격력을 상회하는 경우 피격 시 50% 확률로 "MISS" 회피 발동 기능 추가. 50% 확률로 피해량을 0으로 무효화하고, 플레이어 중심 머리 위에 "MISS" 플로팅 텍스트 이펙트(Phaser Tween 연출)를 상향 페이드아웃하며 띄움. 나머지 50% 확률로는 기존과 동일하게 최소 피해 1을 차감하여 긴장감 유지. typecheck, lint, Vitest 테스트 190개, build 전체 성공
 
 - 2026-07-16 `STAGE-006` (사용자 커스텀): 1스테이지의 비정상적으로 빽빽했던 몬스터 물량 압박을 조율하여 초반 난이도 완화. 1스테이지 스폰 속도를 초당 10마리에서 2마리로 하향 조정하고, 최대 동시 활성 몬스터 수를 50마리에서 15마리로 완화하여 무강화 플레이어의 1단계 돌파 피로도를 제거함. StageData.test.ts 및 MinimumDeathBuildSimulation.test.ts 유닛 테스트 기대치 최적화. typecheck, lint, Vitest 테스트 190개, build 전체 성공

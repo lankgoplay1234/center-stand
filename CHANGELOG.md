@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.68.0 - 2026-07-16
+
+### Fixed
+
+- 몬스터와 캐릭터의 중심이 완벽히 겹쳤을 때(몬스터에게 완전히 둘러싸였을 때) 조준 단위 벡터가 `(0, 0)`으로 찌그러져 32px 구제 범위 바깥의 외부 적들이 공격 각도 및 관통 너비 제한 필터에서 몽땅 탈락하여 데미지가 들어가지 않던 버그 해결
+  - `TargetingSystem.ts` 의 `selectNearestUniqueTargetsInCone` 및 `selectPiercingTargets` 에서 가장 가까운 기준 몹과의 거리가 `0` 에 수렴할 경우, 조준 방향 벡터가 소실되지 않도록 우측 기본 벡터 `(1, 0)`을 안전하게 복구하여 주변 몹들이 정상 피해를 입도록 보정
+- `TargetingSystem.test.ts` 에 플레이어 위치와 몹이 완벽히 겹친 상황에서 우측 Fallback 조준선 복구를 통해 콘 각도 및 관통 한계 범위 내 몹들이 정상 타겟팅되는지 검증하는 단위 테스트 추가
+- typecheck, lint, Vitest 테스트 192개, production build 전체 성공 확인
+
 ## 0.67.0 - 2026-07-16
 
 ### Added
