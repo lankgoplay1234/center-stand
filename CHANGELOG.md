@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.63.0 - 2026-07-16
+
+### Fixed
+
+- 바스티온 및 블레이드 워든 등 콘(Cone) 공격 범위를 사용하는 캐릭터로 여러 번 부활 시 플레이어 몸에 겹친 몬스터가 90도 공격 각도를 벗어나 타겟팅 사각지대에 갇혀 데미지를 입지 않고 무한 사망을 유발하던 버그 수정
+- 플레이어 몸에 밀착한 초근접 거리(32px 이하)에 들어온 몬스터는 조준 각도 검사를 생략하고 항상 공격 대상에 포함하도록 구제 조건 추가 (`TargetingSystem.selectNearestUniqueTargetsInCone`)
+
+### Verified
+
+- `TargetingSystem.test.ts` 에 콘 타겟팅 시 사각지대 몹이 필터링되는 기본 동작 및 32px 이내 초근접 몹이 면제되어 정상 타겟팅되는 예외 동작 검증용 단위 테스트 추가
+- typecheck, lint, Vitest 테스트 187개, production build 전체 성공 확인
+
 ## 0.62.0 - 2026-07-16
 
 ### Added
