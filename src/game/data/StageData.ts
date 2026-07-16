@@ -2,7 +2,7 @@ import type { StageStats } from '../types/GameTypes';
 import { BASIC_ENEMY } from './EnemyData';
 
 export const STAGE_TRANSITION_SPAWN_DELAY_MS = 800;
-export const FIRST_STAGE_SPAWN_RATE = 10;
+export const FIRST_STAGE_SPAWN_RATE = 2;
 export const FINAL_STAGE_SPAWN_RATE = 100;
 export const FIRST_STAGE_KILL_TARGET = 50;
 export const FINAL_STAGE_KILL_TARGET = 300;
@@ -36,7 +36,7 @@ export function calculateStageStats(stage: number): StageStats {
     enemyDefenseBonus,
     enemySpeedMultiplier: 1 + 0.75 * progress,
     spawnInterval: 1_000 / spawnRate,
-    maxActiveEnemies: Math.round(50 + 90 * progress),
+    maxActiveEnemies: Math.round(15 + 125 * progress),
   };
 }
 

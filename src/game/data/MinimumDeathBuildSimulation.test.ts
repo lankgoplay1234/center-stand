@@ -27,7 +27,7 @@ describe('minimum-death completion builds', () => {
     });
     expect(Math.max(...averages) - Math.min(...averages)).toBeLessThanOrEqual(30);
     expect(averages.reduce((sum, deaths) => sum + deaths, 0) / averages.length)
-      .toBeCloseTo(65, -1);
+      .toBeCloseTo(53, -1);
   });
 
   it('records distinct role-aware priorities and nonzero early, middle, and late deaths', () => {

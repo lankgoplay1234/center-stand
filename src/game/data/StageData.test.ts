@@ -46,9 +46,9 @@ describe('stage difficulty', () => {
     }
   });
 
-  it('scales spawn rate linearly from 10 to 100 enemies per second', () => {
+  it('scales spawn rate linearly from first to final stage settings', () => {
     expect(1_000 / calculateStageStats(1).spawnInterval).toBeCloseTo(FIRST_STAGE_SPAWN_RATE);
-    expect(1_000 / calculateStageStats(50).spawnInterval).toBeCloseTo(54.54545);
+    expect(1_000 / calculateStageStats(50).spawnInterval).toBeCloseTo(50.50505);
     expect(1_000 / calculateStageStats(100).spawnInterval).toBeCloseTo(FINAL_STAGE_SPAWN_RATE);
   });
 
@@ -57,6 +57,6 @@ describe('stage difficulty', () => {
     expect(calculateTotalStageKillTarget()).toBe(TOTAL_STAGE_KILL_TARGET);
     expect(calculateTheoreticalFastestClearMs()).toBe(THEORETICAL_FASTEST_CLEAR_MS);
     expect(THEORETICAL_FASTEST_CLEAR_MS).toBeGreaterThan(5 * 60_000);
-    expect(THEORETICAL_FASTEST_CLEAR_MS).toBeLessThan(6 * 60_000);
+    expect(THEORETICAL_FASTEST_CLEAR_MS).toBeLessThan(8 * 60_000);
   });
 });
